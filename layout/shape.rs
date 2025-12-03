@@ -1,6 +1,6 @@
 use std::fmt
 
-#derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Shape {
     #[default]
     Row,
@@ -14,6 +14,16 @@ pub trait ShapeTrait{
     fn houses(&self, house: Coord) -> CellSet;
     fn house(&self, house: Coord, index: usize) -> House;
 }
+
+    fn is_row(&self) -> bool {
+        matches!(self, Shape::Row)
+    }
+    fn is_column(&self) -> bool {
+        matches!(self, Shape::Column)
+    }
+    fn is_block(&self) -> bool {
+        matches!(self, Shape::Block)
+    }
 
 impl ShapeTrait for Shape {
     fn label(&self) -> &str {
@@ -35,4 +45,21 @@ impl ShapeTrait for Shape {
     fn house(&self, house: Coord, index: usize) -> House {
         House::new(*self, house)
     }
+
+    impl From<char> for Shape {
+        fn from(c: char) -> Self {
+            match c {
+                'R' => Shape::Row,
+                'C' => Shape::Column,
+                'B' => Shape::Block,
+                _ => panic!("Invalid character for Shape"),
+            }
+        }
+    }
+    impl Shape {
+        pub fn iter() -> ShapeIter {
+        ShapeIter::new()
+        }
+    }
 }
+
