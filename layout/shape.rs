@@ -1,12 +1,12 @@
 use std::fmt
 
-#[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
-pub enum Form {
+#derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
+pub enum Shape {
     #[default]
     Row,
     Column,
     Block,
-}
+};
 
 pub trait ShapeTrait{
     fn label(&self) -> &str;
@@ -15,12 +15,12 @@ pub trait ShapeTrait{
     fn house(&self, house: Coord, index: usize) -> House;
 }
 
-impl ShapeTrait for Form {
+impl ShapeTrait for Shape {
     fn label(&self) -> &str {
         match self {
-            Form::Row => "Row",
-            Form::Column => "Col",
-            Form::Block => "Box",
+            Shape::Row => "Row",
+            Shape::Column => "Col",
+            Shape::Block => "Box",
         }
     }
 
