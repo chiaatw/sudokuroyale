@@ -1,5 +1,6 @@
 use std::fmt
 use once_cell::sync::Lazy;
+use std::array;
 
 #[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Shape {
@@ -71,6 +72,7 @@ impl Cell {
     }
 }
 
+//TODO CellSet stores no data
 #[derive(Copy, Clone)]
 pub struct CellSet;
 
@@ -128,11 +130,7 @@ impl ShapeCells for Shape {
     }
     fn cell_sets(&self) -> [CellSet; 9] {
         let cells = self.cells();
-        let mut sets: [CellSet; 9] = [CellSet::empty(); 9];
-        for house in 0..9 {
-            sets[house] = CellSet::of::<9>(&cells[house]);
-        }
-        sets
+        array::from_fn(|i| CellSet::of::<9>(&cells[i]))
     }
 }
 
@@ -214,6 +212,18 @@ impl fmt::Debug for Shape {
     }
 }
 
+impl fmt::Debug for Coord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("Coord").field(&self.0).finish()
+    }
+}
+
+impl fmt::Debug for Cell {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("Cell").field(&self.0).finish()
+    }
+}
+
 pub struct ShapeIter(u8);
 
 impl ShapeIter {
@@ -236,6 +246,7 @@ impl Iterator for ShapeIter {
     }
 }
 
+//TODO return 3, meaning total items not remaining!!!
 impl ExactSizeIterator for ShapeIter {
     fn len(&self) -> usize { 3 }
 }
