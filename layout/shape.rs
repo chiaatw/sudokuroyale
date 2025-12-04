@@ -21,6 +21,7 @@ pub trait ShapeTrait{
     fn cells(&self, house: Coord) -> CellSet;
 }
 
+//house_at
 impl ShapeTrait for Shape {
     fn label(&self) -> &str {
         match self {
