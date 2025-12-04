@@ -13,6 +13,12 @@ pub trait ShapeTrait{
     fn index(&self) -> usize;
     fn houses(&self, house: Coord) -> CellSet;
     fn house(&self, house: Coord, index: usize) -> House;
+    fn is_row(&self) -> bool;
+    fn is_column(&self) -> bool;
+    fn is_block(&self) -> bool;
+    fn house_iter(&self) -> HouseIter;
+    fn iter() -> ShapeIter;
+    fn cells(&self, house: Coord) -> CellSet;
 }
 
 impl ShapeTrait for Shape {
@@ -53,10 +59,9 @@ impl ShapeTrait for Shape {
     fn cells(&self, house: Coord) -> CellSet {
         CELL_SETS[self.index()][house.usize()]
     }
-    fn const fn house(&self, house: Coord) -> House {
-        House::new(*self, house)
-    }
-    fn From<char> for Shape {
+}
+
+    impl From<char> for Shape {
         fn from(c: char) -> Self {
             match c {
                 'R' => Shape::Row,
@@ -66,7 +71,12 @@ impl ShapeTrait for Shape {
             }
         }
     }
-}
+
+    impl Shape {
+        pub const fn house_const(&self, house: Coord) -> House {
+            House::new(*self, house)
+        }
+    }
 
 // Change to Trait Implementation
 impl fmt::Display for Shape {
