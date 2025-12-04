@@ -1,4 +1,5 @@
 use std::fmt
+use once_cell::sync::Lazy;
 
 #[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Shape {
@@ -6,7 +7,7 @@ pub enum Shape {
     Row,
     Column,
     Block,
-};
+}
 
 #[derive(Copy, Clone)]
 pub struct Coord(u8);
@@ -16,9 +17,50 @@ impl Coord {
         Coord(value)
     }
     const fn u8(self) -> u8 {
+        self.0 
+    }
+    const fn usize(self) -> u8 {
         self.0 as usize
     }
 }
+
+#[derive(Copy, Clone, Debug)]
+pub struct House {
+    pub shape: Shape,
+    pub coord: Coord,
+}
+
+impl House {
+    pub const fn new(shape: Shape, coord: Coord) -> Self {
+        House { shape, coord }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct HouseIter {
+    shape: Shape,
+    index: u8,
+}
+
+impl HouseIter {
+    pub const fn new(shape: Shape) -> Self {
+        HouseIter { shape, index: 0 }
+    }
+}
+
+impl Iterator for HouseIter {
+    type Item = House;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < 9 {
+            let h = House::new(self.shape, Coord::new(self.index));
+            self.index += 1;
+            Some(h)
+        } else {
+            None
+            }
+        }
+    }
 
 #[derive(Copy, Clone)]
 struct Cell(u8);
@@ -33,7 +75,7 @@ impl Cell {
 pub struct CellSet;
 
 impl CellSet {
-    const fn empty() -> Self {
+    pub const fn empty() -> Self {
         CellSet
     }
     pub const fn of <const N: usize>(_: &[Cell; N]) -> Self {
@@ -150,8 +192,13 @@ impl ShapeTrait for Shape {
     }
 
     impl Shape {
-        pub const fn house_const(&self, house: Coord) -> House {
-            House::new(*self, house)
+        pub const fn new(index: u8) -> Self {
+            match index {
+                0 => Shape::Row,
+                1 => Shape::Column,
+                2 => Shape::Block,
+                _ => Shape::Row,
+            }
         }
     }
 
@@ -194,6 +241,18 @@ impl ExactSizeIterator for ShapeIter {
         3 - self.0 as usize
     }
 }
+
+pub static CELLS: Lazy<[[[Cell; 9]; 9]; 3]> = Lazy::new(|| [
+    Shape::Row.cells(),
+    Shape::Column.cells(),
+    Shape::Block.cells(),
+]);
+
+pub static CELL_SETS: Lazy<[[CellSet; 9]; 3]> = Lazy::new(|| [
+    Shape::Row.cell_sets(),
+    Shape::Column.cell_sets(),
+    Shape::Block.cell_sets(),
+]);
 
 
 
