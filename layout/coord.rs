@@ -42,17 +42,17 @@ impl Coord {
     }
 
     pub const fn from_index(index: u32) -> Self {
-        debug_assert!(index <9);
+        debug_assert!(index < 9);
         match index {
-            0 => Coord::C0;
-            1 => Coord::C1;
-            2 => Coord::C2;
-            3 => Coord::C3;
-            4 => Coord::C4;
-            5 => Coord::C5;
-            6 => Coord::C6;
-            7 => Coord::C7;
-            8 => Coord::C8;
+            0 => Coord::C0,
+            1 => Coord::C1,
+            2 => Coord::C2,
+            3 => Coord::C3,
+            4 => Coord::C4,
+            5 => Coord::C5,
+            6 => Coord::C6,
+            7 => Coord::C7,
+            8 => Coord::C8,
             _ => unreachable!(),
         }
     }
@@ -69,7 +69,7 @@ impl Coord {
         1 << self.index()
     }
 
-    pub const fn label (&self) -> char {
+    pub const fn label(&self) -> char {
         (b'1' + self.index()) as char 
     }
 
@@ -80,16 +80,17 @@ impl Coord {
     pub const fn max(self, other: Self) -> Self {
         if self.index() >= other.index() { self } else { other }
     }
+}
 
     impl From <i32> for Coord {
         fn from(coord: i32) -> Self {
-            debug_assert! (coord >=0);
+            debug_assert! (coord >= 0);
             Coord::new(coord as u8)
         }
     }
     impl From <u8> for Coord {
         fn from(coord: u8) -> Self {
-            Coord::newcoord)
+            Coord::new(coord)
         }
     }
 
@@ -121,4 +122,5 @@ impl Coord {
 
     pub(crate) use coord;
     
+
 
