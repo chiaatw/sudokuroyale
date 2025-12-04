@@ -81,7 +81,7 @@ impl Coord {
         if self.index() >= other.index() { self } else { other }
     }
 }
-}
+
     impl From <i32> for Coord {
         fn from(coord: i32) -> Self {
             debug_assert! (coord >= 0);
