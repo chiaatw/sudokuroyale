@@ -16,12 +16,12 @@ impl Coord {
         Coord(value)
     }
     const fn u8(self) -> u8 {
-        self.0
+        self.0 as usize
     }
 }
 
 #[derive(Copy, Clone)]
-struct Cell(u8)
+struct Cell(u8);
 
 impl Cell {
     const fn new(value: u8) -> Self {
@@ -67,7 +67,7 @@ pub trait ShapeCells {
 
 impl ShapeCells for Shape {
     fn cells(&self) -> [[Cell; 9]; 9] {
-        let mul cells: [[Cell; 9]; 9] = [[Cell::new(0); 9]; 9];
+        let mut cells: [[Cell; 9]; 9] = [[Cell::new(0); 9]; 9];
         for house in 0..9 {
             for coord in 0..9 {
                 cells[house][coord] = match self {
@@ -86,7 +86,7 @@ impl ShapeCells for Shape {
     }
     fn cell_sets(&self) -> [CellSet; 9] {
         let cells = self.cells();
-        let mut sets: [CellSet; 9] = [CellSet::empty(); 9]
+        let mut sets: [CellSet; 9] = [CellSet::empty(); 9];
         for house in 0..9 {
             sets[house] = CellSet::of::<9>(&cells[house]);
         }
