@@ -11,18 +11,24 @@ pub enum Shape {
 pub trait ShapeTrait{
     fn label(&self) -> &str;
     fn index(&self) -> usize;
-    fn houses(&self, house: Coord) -> CellSet;
-    fn house(&self, house: Coord, index: usize) -> House;
+
+    fn cells(&self, house: Coord) -> CellSet; //returns all cells of one house
+    fn cell_at(&self, house: Coord, index: usize) -> Cell; //returns a single cell of a house    
+    fn house(&self, coord: Coord) -> House; //Returns the House struct: Row/Column/Block + Coordinate
+
     fn is_row(&self) -> bool;
     fn is_column(&self) -> bool;
     fn is_block(&self) -> bool;
-    fn house_iter(&self) -> HouseIter;
-    fn iter() -> ShapeIter;
-    fn cells(&self, house: Coord) -> CellSet;
+
+    fn house_iter(&self) -> HouseIter; //Returns an iterator over all houses of this shape
+
+    fn iter() -> ShapeIter 
+    where 
+        Self: Sized; //Returns an iterator over all shape types
 }
 
-//house_at
 impl ShapeTrait for Shape {
+
     fn label(&self) -> &str {
         match self {
             Shape::Row => "Row",
@@ -30,18 +36,20 @@ impl ShapeTrait for Shape {
             Shape::Block => "Box",
         }
     }
-
     fn index(&self) -> usize {
         *self as usize
     }
 
-    fn houses(&self, house: Coord) -> CellSet {
+    fn cells(&self, house: Coord) -> CellSet {
         CELL_SETS[self.index()][house.usize()]
     }
-
-    fn house(&self, house: Coord, index: usize) -> House {
-        House::new(*self, house)
+    fn cell_at(&self, house: Coord, index: usize) -> Cell {
+        CELLS[self.index()][house.usize()][index]
     }
+    fn house(&self, coord: Coord) -> House {
+        House::new(*self, coord)
+    }
+
     fn is_row(&self) -> bool {
         matches!(self, Shape::Row)
     }
@@ -51,14 +59,15 @@ impl ShapeTrait for Shape {
     fn is_block(&self) -> bool {
         matches!(self, Shape::Block)
     }
+
     fn house_iter(&self) -> HouseIter {
         HouseIter::new(*self)
     }
-    fn iter() -> ShapeIter {
+    fn iter() -> ShapeIter 
+    where
+        Self: Sized,
+    {
         ShapeIter::new()
-    }
-    fn cells(&self, house: Coord) -> CellSet {
-        CELL_SETS[self.index()][house.usize()]
     }
 }
 
