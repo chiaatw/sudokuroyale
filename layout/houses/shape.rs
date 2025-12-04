@@ -8,6 +8,39 @@ pub enum Shape {
     Block,
 };
 
+#[derive(Copy, Clone)]
+pub struct Coord(u8);
+
+impl Coord {
+    const fn new(value: u8) -> Self {
+        Coord(value)
+    }
+    const fn u8(self) -> u8 {
+        self.0
+    }
+}
+
+#[derive(Copy, Clone)]
+struct Cell(u8)
+
+impl Cell {
+    const fn new(value: u8) -> Self {
+        Cell(value)
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct CellSet;
+
+impl CellSet {
+    const fn empty() -> Self {
+        CellSet
+    }
+    pub const fn of <const N: usize>(_: &[Cell; N]) -> Self {
+        CellSet
+    }
+}
+
 pub trait ShapeTrait{
     fn label(&self) -> &str;
     fn index(&self) -> usize;
@@ -25,6 +58,40 @@ pub trait ShapeTrait{
     fn iter() -> ShapeIter 
     where 
         Self: Sized; //Returns an iterator over all shape types
+}
+
+pub trait ShapeCells {
+    fn cells(&self) -> [[Cell; 9]; 9];
+    fn cell_sets(&self) -> [CellSet; 9];
+}
+
+impl ShapeCells for Shape {
+    fn cells(&self) -> [[Cell; 9]; 9] {
+        let mul cells: [[Cell; 9]; 9] = [[Cell::new(0); 9]; 9];
+        for house in 0..9 {
+            for coord in 0..9 {
+                cells[house][coord] = match self {
+                    Shape::Row => Cell::new(9 * house + coord),
+                    Shape::Column => Cell::new(house + 9 * coord),
+                    Shape::Block => Cell::new(
+                        (house / 3) * 27
+                        + (house % 3) * 3
+                        + (coord / 3) * 9
+                        + (coord % 3),
+                    ),
+                };
+            }
+        }
+        cells
+    }
+    fn cell_sets(&self) -> [CellSet; 9] {
+        let cells = self.cells();
+        let mut sets: [CellSet; 9] = [CellSet::empty(); 9]
+        for house in 0..9 {
+            sets[house] = CellSet::of::<9>(&cells[house]);
+        }
+        sets
+    }
 }
 
 impl ShapeTrait for Shape {
@@ -128,66 +195,15 @@ impl ExactSizeIterator for ShapeIter {
     }
 }
 
-const CELLS: [[[Cell; 9]; 9]; 3] = {
-    let mut cells: [[[Cell; 9]; 9]; 3] = [[[Cell::new(0); 9]; 9]; 3];
 
-    const fn shape_cells(shape: Shape) -> [[Cell; 9]; 9] {
-        let mut cells: [[Cell; 9]; 9] = [[Cell::new(0); 9]; 9];
-        let mut house = 0;
 
-        while house < 9 {
-            cells[house] = house_cells(shape, Coord::new(house as u8));
-            house += 1;
-        }
-        cells
-    }
 
-    const fn house_cells(shape: Shape, house: Coord) -> [Cell; 9] {
-        let mut cells: [Cell; 9] = [Cell::new(0); 9];
-        let mut coord = 0;
 
-        while coord < 9 {
-            cells[coord] = house_cell(shape, house, Coord::new(coord as u8));
-            coord += 1;
-        }
-        cells
-    }
 
-    const fn house_cell(shape: Shape, house: Coord, coord: Coord) -> Cell {
-        match shape {
-            Shape::Row => Cell::new(9 * house.u8() + coord.u8()),
-            Shape::Column => Cell::new(house.u8() + 9 * coord.u8()),
-            Shape::Block => Cell::new(
-                (house.u8() / 3) * 27
-                    + (house.u8() % 3) * 3
-                    + (coord.u8() / 3) * 9
-                    + (coord.u8() % 3),
-            ),
-        }
-    }
 
-    cells[Shape::Row.usize()] = shape_cells(Shape::Row);
-    cells[Shape::Column.usize()] = shape_cells(Shape::Column);
-    cells[Shape::Block.usize()] = shape_cells(Shape::Block);
-    cells
-};
 
-const CELL_SETS: [[CellSet; 9]; 3] = {
-    let mut sets: [[CellSet; 9]; 3] = [[CellSet::empty(); 9]; 3];
 
-    const fn cell_sets(shape: Shape) -> [CellSet; 9] {
-        let mut cell_sets: [CellSet; 9] = [CellSet::empty(); 9];
-        let mut house = 0;
 
-        while house < 9 {
-            cell_sets[house] = CellSet::of::<9>(&CELLS[shape.usize()][house]);
-            house += 1;
-        }
-        cell_sets
-    }
 
-    sets[Shape::Row.usize()] = cell_sets(Shape::Row);
-    sets[Shape::Column.usize()] = cell_sets(Shape::Column);
-    sets[Shape::Block.usize()] = cell_sets(Shape::Block);
-    sets
-};
+
+
