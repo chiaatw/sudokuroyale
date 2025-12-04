@@ -8,4 +8,22 @@ pub trait HouseLike {
     fn has(&self, cell: Cell) -> bool {
         self.cells.has(cell)
     }
+
+    fn label(&self) -> &str;
+    fn console_label(&self) -> char;
+
+    fn intersect(&self, other: &dyn HouseLike) -> CellSet;
+    fn crossing_houses(&self, cells: CellSet) -> HouseSet;
+}
+
+pub struct Row {
+    coord: Coord,
+}
+
+pub struct Column {
+    coord: Coord,
+}
+
+pub struct {
+    coord: Coord,
 }
