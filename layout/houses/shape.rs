@@ -88,7 +88,6 @@ impl ShapeTrait for Shape {
         }
     }
 
-// Change to Trait Implementation
 impl fmt::Display for Shape {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.label())
