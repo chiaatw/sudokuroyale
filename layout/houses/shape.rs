@@ -19,7 +19,7 @@ impl Coord {
     const fn u8(self) -> u8 {
         self.0 
     }
-    const fn usize(self) -> u8 {
+    const fn usize(self) -> usize {
         self.0 as usize
     }
 }
@@ -197,7 +197,7 @@ impl ShapeTrait for Shape {
                 0 => Shape::Row,
                 1 => Shape::Column,
                 2 => Shape::Block,
-                _ => Shape::Row,
+                _ => panic!("Invalid Shape index"),
             }
         }
     }
@@ -237,9 +237,7 @@ impl Iterator for ShapeIter {
 }
 
 impl ExactSizeIterator for ShapeIter {
-    fn len(&self) -> usize {
-        3 - self.0 as usize
-    }
+    fn len(&self) -> usize { 3 }
 }
 
 pub static CELLS: Lazy<[[[Cell; 9]; 9]; 3]> = Lazy::new(|| [
