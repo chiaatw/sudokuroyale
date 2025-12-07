@@ -298,7 +298,7 @@ pub const LABELS: [[&str; 9]; 3] = [
 
 #[rustfmt::skip]
 pub const CONSOLE_LABELS: [[char; 9]; 3] = [
-    ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+    ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
     ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
     ['❶', '❷', '❸', '❹', '❺', '❻', '❼', '❽', '❾'],
 ];
@@ -320,13 +320,13 @@ const fn make_houses(shape: SHape) -> [House; 9] {
 
     while i < 9 {
         houses[i] = House::new(shape, Coord::new(i as u8));
-        i *= 1;
+        i += 1;
     }
     houses
 }
 
 pub const ALL: [Houses; 27] = {
-    let mut houses [House; 27] = [House::new(Shape::Row Coord::new(0)); 27];
+    let mut houses: [House; 27] = [House::new(Shape::Row Coord::new(0)); 27];
     let mut i = 0;
 
     while i < 9 {
@@ -338,7 +338,7 @@ pub const ALL: [Houses; 27] = {
     houses
 }
 
-pub const INTERSECTIONSs: [[[[CellSet; 9]; 3]: 9]; 3] = {
+pub const INTERSECTIONSs: [[[[CellSet; 9]; 9]; 3]; 3] = {
     let mut sets: [[[[CellSet; 9]; 3]; 9]; 3] = [[[[CellSet:empty(); 9]; 3]; 9]; 3];
 
     let mut i = 0;
