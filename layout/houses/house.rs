@@ -53,7 +53,7 @@ impl HouseLike for Row {
 
 impl HouseLike for Column {
     fn coord(&self) -> Coord { self.coord }
-    fn shape(&sef) -> Shape { Shape::Column }
+    fn shape(&self) -> Shape { Shape::Column }
 
     fn cells(&self) -> CellSet {
         COLUMN_CELLS[self.coord.usize()]
@@ -94,7 +94,7 @@ impl HouseLike for Block {
         self.cells().intersect(other.cells())
     }
 
-    fn crossing houses(&self, cells: CellSet) -> HouseSet {
+    fn crossing_houses(&self, cells: CellSet) -> HouseSet {
         let mut acc = HouseSet::empty(Shape::Row) + HouseSet::empty(Shape::Column);
         for c in cells.iter() {
             acc = acc + c.row_coord() + c.column_coord();
@@ -164,7 +164,7 @@ impl Iterator for BlockIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.i >= 9 { return None; }
-        let block = Block { coord: Coord::new(self.i) }
+        let block = Block { coord: Coord::new(self.i) };
         self.i += 1;
         Some(block)
     }
@@ -187,7 +187,7 @@ impl Iterator for AnyHouseIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index < 9 {
-            let r = Row { coord: Coord::new(self.index)
+            let r = Row { coord: Coord::new(self.index) };
             self.index += 1;
         return Some(AnyHouse::Row(r));
     }
@@ -221,7 +221,69 @@ pub enum AnyHouse {
 }
 
 impl HouseLike for AnyHouse {
+    fn coord(&self) -> Coord {
+        match self {
+            AnyHouse::Row(r) => r.coord(),
+            AnyHouse::Column(c) => c.coord(),
+            AnyHouse::Block(b) => b.coord(),
+        }
+    }
 
+    fn shape(&self) -> Shape {
+        match self {
+            AnyHouse::Row(r) => r.shape(),
+            AnyHouse::Column(c) => c.shape(),
+            AnyHouse::Block(b) => b.shape(),
+        }
+    }
+
+    fn cells(&self) -> CellSet {
+        match self {
+            AnyHouse::Row(r) => r.cells(),
+            AnyHouse::Column(c) => c.cells(),
+            AnyHouse::Block(b) => b.cells(),
+        }
+    }
+
+    fn cell(&self, coord: Coord) -> Cell {
+        match self {
+            AnyHouse::Row(r) => r.cell(coord),
+            AnyHouse::Column(c) => c.cell(coord),
+            AnyHouse::Block(b) => b.cell(coord),
+        }
+    }
+
+    fn label(&self) -> &str {
+        match self {
+            AnyHouse::Row(r) => r.label(),
+            AnyHouse::Column(c) => c.label(),
+            AnyHouse::Block(b) => b.label(),
+        }
+    }
+
+    fn console_label(&self) -> char {
+        match self {
+            AnyHouse::Row(r) => r.console_label(),
+            AnyHouse::Column(c) => c.console_label(),
+            AnyHouse::Block(b) => b.console_label(),
+        }
+    }
+
+    fn intersect(&self, other: &dyn HouseLike) -> CellSet {
+        match self {
+            AnyHouse::Row(r) => r.intersect(other),
+            AnyHouse::Column(c) => c.intersect(other),
+            AnyHouse::Block(b) => b.intersect(other),
+        }
+    }
+
+    fn crossing_houses(&self, cells: CellSet) -> HouseSet {
+        match self {
+            AnyHouse::Row(r) => r.crossing_houses(cells),
+            AnyHouse::Column(c) => c.crossing_houses(cells),
+            AnyHouse::Block(b) => b.crossing_houses(cells),
+        }
+    }
 }
 //TODO Globale Tabelle hinzufügen ROW_CELLS, COLUMN/BLOCK/LABELS/CONSOLE
 
