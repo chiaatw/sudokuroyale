@@ -133,27 +133,85 @@ impl HouseIterator for Row {
 }
 
 pub struct ColumnIter {
-    i = u8,
+    i: u8,
 }
 
 impl Iterator for ColumnIter {
+    type Item = Column;
 
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i >= 9 { return None; }
+        let col = Column { coord: Coord::new(self.i) };
+        self.i += 1;
+        Some(col)
+    }
 }
 
 impl HouseIterator for Column {
+    type Item = Column;
 
+    fn iter() -> Box<dyn Iterator<Item = Self::Item>> {
+        Box::new(ColumnIter { i:0 })
+    }
 }
 
 pub struct BlockIter {
-    i = u8,
+    i: u8,
 }
 
 impl Iterator for BlockIter {
+    type Item = Block;
 
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i >= 9 { return None; }
+        let block = Block { coord: Coord::new(self.i) }
+        self.i += 1;
+        Some(block)
+    }
 }
 
 impl HouseIterator for Block {
+    type Item = Block;
 
+    fn iter() -> Box<dyn Iterator<Item = Self::Item>> {
+        Box::new(BlockIter { i:0 })
+    }
+}
+
+pub struct AnyHouseIter {
+    index: u8,
+}
+
+impl Iterator for AnyHouseIter {
+    type Item = AnyHouse;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < 9 {
+            let r = Row { coord: Coord::new(self.index)
+            self.index += 1;
+        return Some(AnyHouse::Row(r));
+    }
+    if self.index < 18 {
+        let c = Column { coord: Coord::new(self.index - 9) };
+        self.index += 1;
+        return Some(AnyHouse::Column(c));
+    }
+    if self.index < 27 {
+        let b = Block { coord: Coord::new(self.index - 18) };
+        self.index += 1;
+        return Some(AnyHouse::Block(b));
+    }
+    None
+        }
+    }
+}
+
+impl HouseIterator for AnyHouse {
+    type Item = AnyHouse;
+
+    fn iter() -> Box<dyn Iterator<Item = Self::Item>> {
+        Box::new(AnyHouseIter { index:0 })
+    }
 }
 
 pub enum AnyHouse {
