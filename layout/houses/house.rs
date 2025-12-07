@@ -311,3 +311,69 @@ const ROW_ROWS: [HouseSet; 9] = [
     rows!(8),
     rows!(9),
 ];
+
+const COLUMN_ROWS: [HouseSet; 9] = [House::all_rows(); 9];
+
+#[rustfmt::skip]
+const BLOCK_ROWS: [HouseSet; 9] = [
+    rows!(123), rows!(123), rows!(123),
+    rows!(456), rows!(456), rows!(456),
+    rows!(789), rows!(789), rows!(789),
+];
+
+const ROW_COLUMNS: [HouseSet; 9] = [House::all_columns(); 9];
+
+const COLUMN_COLUMNS: [HouseSet; 9] = [
+    cols!(1),
+    cols!(2),
+    cols!(3),
+    cols!(4),
+    cols!(5),
+    cols!(6),
+    cols!(7),
+    cols!(8),
+    cols!(9),
+];
+
+#[rustfmt::skip]
+const BLOCK_COLUMNS: [HouseSet; 9] = [
+    cols!(123), cols!(456), cols!(789),
+    cols!(123), cols!(456), cols!(789),
+    cols!(123), cols!(456), cols!(789),
+];
+
+const ROW_BLOCKS: [HouseSet; 9] = [
+    blocks!(123),
+    blocks!(123),
+    blocks!(123),
+    blocks!(456),
+    blocks!(456),
+    blocks!(456),
+    blocks!(789),
+    blocks!(789),
+    blocks!(789),
+];
+
+const COLUMN_BLOCKS: [HouseSet; 9] = [
+    blocks!(147),
+    blocks!(147),
+    blocks!(147),
+    blocks!(258),
+    blocks!(258),
+    blocks!(258),
+    blocks!(369),
+    blocks!(369),
+    blocks!(369),
+];
+
+const BLOCK_BLOCKS: [HouseSet; 9] = [
+    blocks!(1),
+    blocks!(2),
+    blocks!(3),
+    blocks!(4),
+    blocks!(5),
+    blocks!(6),
+    blocks!(7),
+    blocks!(8),
+    blocks!(9),
+];
