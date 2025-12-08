@@ -439,38 +439,4 @@ pub const ALT_CONSOLE_LABELS: [[char; 9]; 3] = [
 
 
 
-const fn make_houses(shape: Shape) -> [House; 9] {
-    let mut houses: [House; 9 ] = [House::new(Shape::Row, Coord::new(0)); 9];
-    let mut i = 0;
-
-    while i < 9 {
-        houses[i] = House::new(shape, Coord::new(i as u8));
-        i += 1;
-    }
-    houses
-}
-
-pub const INTERSECTIONS: [[[[CellSet; 9]; 9]; 3]; 3] = {
-    let mut sets: [[[[CellSet; 9]; 3]; 9]; 3] = [[[[CellSet:empty(); 9]; 3]; 9]; 3];
-
-    let mut i = 0;
-    while i < 3 {
-        let mut ii = 0;
-        while ii < 9 {
-            let mut j = 0;
-            while j < 3 {
-                let mut jj = 0;
-                while jj < 9 {
-                    sets[i][ii][j][jj] = House::new(Shape::new(i as u8), Coord::new(ii as u8)).cells()
-                        .intersect(House::new(Shape::new(j as u8), Coord::new (jj as u8)).cells());
-                    jj += 1;
-                }
-                j += 1;
-            }
-            ii += 1;
-        }
-        i += 1;
-    }
-    sets
-};
 
