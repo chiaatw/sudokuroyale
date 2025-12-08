@@ -26,3 +26,22 @@ impl CoordSet {
       CoordSet::Bits(bits) => bits,
     }
   }
+fn bits mut (&mut self) -> &mut Bits {
+  match self {
+    CoordSet::Bits(bits) => bits,
+  }
+}
+
+  pub const fn empty() -> Self {
+    CoordSet::Bits(0)
+  }
+
+  pub const fn full() -> Self {
+    CoordSet::Bits(ALL_SET)
+  }
+
+  pub const fn new(bits: Bits) -> Self {
+    debug_assert!(bits <= ALL_SET);
+    CoordSet::Bits(bits)
+  }
+  
