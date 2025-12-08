@@ -1,6 +1,21 @@
-pub trait HouseLike {
+use std::cmp::Ordering;
+use std::fmt;
+use std::ops::{Add, Neg};
+
+use crate::layout::houses::house_set::{blocks, cols, rows};
+use crate::layout::{Cell, CellSet, Coord};
+
+use super::{HouseSet, Iter, Shape};
+
+
+//Trait, describes House-API
+pub trait HouseLike: Copy + Clone + Eq + PartialEq + Sized {
     fn coord(&self) -> Coord;
     fn shape(&self) -> Shape;
+
+    fn usize(&self) -> usize {
+        self.coord().usize()
+    }
 
     fn cells(&self) -> CellSet;
     fn cell(&self, coord: Coord) -> Cell;
@@ -12,20 +27,298 @@ pub trait HouseLike {
     fn label(&self) -> &str;
     fn console_label(&self) -> char;
 
-    fn intersect(&self, other: &dyn HouseLike) -> CellSet;
+    fn is_row(&self) -> bool {
+        matches!(self.shape(), Shape::Row)
+    }
+    fn is_column(&self) -> bool {
+        matches!(self.shape(), Shape::Column)
+    }
+    fn is_block(&self) -> bool {
+        matches!(self.shape(), Shape::Block)
+    }
+
+    fn is_top(&self) -> bool {
+        self.is_row() && self.coord().u8() == 0
+    }
+    fn is_bottom(&self) -> bool {
+        self.is_row() && self.coord().u8() == 8
+    }
+    fn is_left(&self) -> bool {
+        self.is_column() &&self.coord().u8() == 0
+    }
+    fn is_right(&self) -> bool {
+        self.is_column() && self.coord().u8() == 0
+    }
+    fn is_block_top(&self) -> bool {
+        self.is_row() && self.coord().u8() % 3 == 0
+    }
+    fn is_block_bottom(&self) -> bool {
+        self.is_row() && self.coord().u8() % 3 == 2
+    }
+    fn is_block_left(&self) -> bool {
+        self.is_column() && self.coord().u8() % 3 == 0
+    }
+    fn is_block_right(&self) -> bool {
+        self.is_column() && self.coord().u8() % 3 == 2
+    }
+
+
+    fn intersect<H: HouseLike>(&self, other: H) -> CellSet {
+        self.cells().intersect(other.cells())
+    }
+
     fn crossing_houses(&self, cells: CellSet) -> HouseSet;
+
+
+    //Returns the set of houses of a given shape that belong to this house
+    fn houses(&self, shape: Shape) -> HouseSet;
+
+    fn rows(&self) -> HouseSet {
+        self.houses(Shape::Row)
+    }
+    fn column(&self) -> HouseSet {
+        self.houses(Shape::Column)
+    }
+    fn blocks(&self) -> HouseSet {
+        self.houses(Shape::Block)
+    }
 }
 
+#[derive(Clone, Copy, Debug, Default Hash, Eq, PartialEq)]
+pub struct House {
+    shape: Shape,
+    coord: Coord,
+}
+
+impl House {
+    pub const COUNT: u8 = 9;
+
+    pub const fn new(shape:Shape, coord. Coord) -> Self {
+        Self { shape, coord }
+    }
+
+    pub const fn shape(&self) -> Shape {
+        self.shape
+    }
+    pub const fn coord(&self) -> Coord {
+        self.coord
+    }
+    pub const fn usize(&self) -> usize {
+        self.coord.usize()
+    }
+    pub const fn label(&self) -> &str {
+        LABELS[self.shape.usize()][self.coord.usize()]
+    }
+    pub const fn console_label(&self) -> char {
+        CONSOLE_LABELS[self.shape.usize()][self.coord.usize()]
+    }
+
+    pub const fn is_row(&self) -> bool {
+        self.shape.is_row()
+    }
+
+    pub const fn is_column(&self) -> bool {
+        self.shape.is_column()
+    }
+
+    pub const fn is_block(&self) -> bool {
+        self.shape.is_block()
+    }
+
+    pub const fn cell(&self, coord: Coord) -> Cell {
+        self.shape.cell(self.coord, coord)
+    }
+
+    pub const fn cells(&self) -> CellSet {
+        self.shape.cells(self.coord)
+    }
+
+    pub const fn has(&self, cell: Cell) -> bool {
+        self.cells().has(cell)
+    }
+
+    pub fn crossing_houses(&self, cells: CellSet) -> HouseSet {
+        match self.shape() {
+            Shape::Row => cells
+                .iter()
+                .fold(HouseSet::empty(Shape::Column), | acc, cell | {
+                    acc+ cell.column_coord()
+                }),
+            Shape::Column => cells.iter().fold(HouseSet::empty(Shape::Row), | acc, cell | {
+                acc + cell.row_coord()
+            }),
+            Shape::Block => {
+                let mut acc = HouseSet::empty(Shape::Row) + HouseSet::empty(Shape::Column);
+                for c in cells.iter() {
+                    acc = acc + c.row_coord() + c.column_coord();
+                }
+                acc
+            }
+        }
+    }
+
+    pub const fn intersect(&self, other: House) -> CellSet {
+        INTERSECTIONS[self.shape.usize()][self.coord.usize()][other.shape.usize()]
+            [other.coord.usize()]
+    }
+
+    pub const fn houses(&self, shape: Shape) -> HouseSet {
+        match shape {
+            Shape::Row => self.rows(),
+            Shape::Column => self.columns(),
+            Shape::Block => self.blocks(),
+        }
+    }
+
+    pub const fn rows(&self) -> HouseSet {
+        match self.shape {
+            Shape::Row => ROW_ROWS[self.coord.usize()],
+            Shape::Column => COLUMN_ROWS[self.coord.usize()],
+            Shape::Block => BLOCK_RPWS[self.coord.usize()],
+        }
+    }
+
+    pub const fn columns(&self) -> HouseSet {
+        match self.shape {
+            Shape::Row => ROW_ROWS[self.coord.usize()],
+            Shape::Column => COLUMN_ROWS[self.coord.usize()],
+            Shape::Block => BLOCK_ROWS[self.coord.usize()],
+        }
+    }
+
+    pub const fn blocks(&self) -> HouseSet {
+        match self.shape {
+            Shape::Row => ROW_BLOCKS[self.coord.usize()],
+            Shape::Column => COLUMN_BLOCKS[self.coord.usize()],
+            Shape::Block => BLOCK_BLOCKS[self.coord.usize()],
+        }
+    }
+
+    pub fn iter() -> HouseIter {
+        HouseIter::new()
+    }
+
+    pub const fn all_rows() -> HouseSet {
+        HouseSet::full(Shape::Row)
+    }
+
+    pub fn rows_iter() -> HouseIter {
+        HouseIter::new(Shape::Row)
+    }
+
+    pub const fn all_columns() -> HouseSet {
+        HouseSet::full(Shape::Column)
+    }
+
+    pub fn columns_iter() -> HouseIter {
+        HouseIter::new(Shape::Column)
+    }
+
+    pub const fn all_blocks() -> HouseSet {
+        HouseSet::full(Shape::Block)
+    }
+
+    pub fn blocks_iter() -> HouseIter {
+        HouseIter::new(Shape::Block)
+    }
+}
+
+impl HouseLike for House {
+    fn shape(&self) -> Shape {
+        self.shape
+    }
+    fn coord(&self) -> Coord {
+        self.coord
+    }
+    fn label(&self) -> &str {
+        self.label()
+    }
+    fn console_label(&self) -> char {
+        self.console_label()
+    }
+    fn cells(&self) -> CellSet {
+        self.cells()
+    }
+    fn cell(&self, coord: Coord) -> Cell {
+        self.cell(coord)
+    }
+    fn crossing_houses(&self, cells: CellSet) -> HouseSet {
+        self.crossing_houses(cells)
+    }
+    fn houses(&self, shape: Shape) -> HouseSet {
+        self.houses(shape)
+    }
+}
+
+
+impl From<&str> for House {
+    fn from(label: &str) -> Self {
+        if label.len() != 2 {
+            panic!(
+                "Invalid house: \"{}\"; must be (R | C | B) and a digit",
+                label
+            );
+        }
+        let mut chars = label.chars();
+        let shape = chars.next().unwrap();
+        if shape != 'R' && shape != 'C' && shape != 'B' {
+            panic!("Invalid house shape: \"{}\"; must be (R | C | B)", label);
+        }
+        let coord = chars.next().unwrap() as u8 - b'1';
+        if coord > 9 {
+            panic!("Invalid house coord: \"{}\"; must be 1-9", label);
+        }
+
+        Self {
+            shape: Shape::from(shape),
+            coord: Coord::from(coord),
+        }
+    }
+}
+
+impl PartialOrd<Self> for House {
+    fn partial_cmp(&self, other: Self) -> Option<Ordering> {
+        match self.shape.partial_cmp(&other.shape) {
+            Some(Ordering::Equal) => self.coord.partial_cmp(&other.coord),
+            result => result,
+        }
+    }
+}
+
+impl Add<House> for House {
+    type Output = HouseSet;
+
+    fn add(self, rhs: House) -> HouseSet {
+        HouseSet::empty(self.shape) + self + rhs
+    }
+}
+
+impl Neg for House {
+    type Output = HouseSet;
+
+    fn neg(self) -> HouseSet {
+        HouseSet::full(self.shape) - self
+    }
+}
+
+impl fmt::Display for House {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt:Result {
+        write!(f, "{}", self.label())
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Row {
     coord: Coord,
 }
 
-pub struct Column {
-    coord: Coord,
-}
-
-pub struct Block{
-    coord: Coord,
+impl Row {
+    pub const fn new(coord: Coord) -> Self {
+        Self { coord }
+    }
+    pub const fn from_coord(coord: Coord) -> Self {
+        Self::new(coord)
+    }
 }
 
 impl HouseLike for Row {
@@ -43,11 +336,26 @@ impl HouseLike for Row {
     fn label(&self) -> &str { &LABELS[0][self.coord.usize()]}
     fn console_label(&self) -> char { CONSOLE_LABELS[0][self.coord.usize()]}
 
-    fn intersect(&self, other: &dyn HouseLike) -> CellSet {
-        self.cells().intersect(other.cells())
-    }
     fn crossing_houses(&self, cells: CellSet) -> HouseSet {
         cells.iter().fold(HouseSet::empty(Shape::Column), |acc, c| acc + c.column_coord())
+    }
+    fn houses(&self, shape: Shape) -> HouseSet {
+        match shape {
+            Shape::Row => ROW_ROWS[self.coord.usize()],
+            Shape::Column => ROW_COLUMNS[self.coord.usize()],
+            Shape::Block => ROW_BLOCKS[self.coord.usize()],
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct Column {
+    coord: Coord,
+}
+
+impl Column {
+    pub const fn new(coord: Coord) -> Self {
+        Self { coord }
     }
 }
 
@@ -66,12 +374,26 @@ impl HouseLike for Column {
     fn label(&self) -> &str { &LABELS[1][self.coord.usize()] }
     fn console_label(&self) -> char { CONSOLE_LABELS[1][self.coord.usize()] }
 
-    fn intersect(&self, other: &dyn HouseLike) -> CellSet {
-        self.cells().intersect(other.cells())
-    }
-
     fn crossing_houses(&self, cells: CellSet) -> HouseSet {
         cells.iter().fold(HouseSet::empty(Shape::Row), |acc, c| acc + c.row_coord())
+    }
+    fn houses(&self, shape: Shape) -> HouseSet {
+        match shape {
+            Shape::Row => COLUMN_ROWS[self.coord.usize()],
+            Shape::Column => COLUMN_COLUMNS[self.coord.usize()],
+            Shape::Block => COLUMN_BLOCKS[self.coord.usize()],
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct Block{
+    coord: Coord,
+}
+
+impl Block {
+    pub const fn new(coord: Coord) -> Self {
+        Self { coord }
     }
 }
 
@@ -90,10 +412,6 @@ impl HouseLike for Block {
     fn label(&self) -> &str { &LABELS[2][self.coord.usize()] }
     fn console_label(&self) -> char { CONSOLE_LABELS[2][self.coord.usize()] }
 
-    fn intersect(&self, other: &dyn HouseLike) -> CellSet {
-        self.cells().intersect(other.cells())
-    }
-
     fn crossing_houses(&self, cells: CellSet) -> HouseSet {
         let mut acc = HouseSet::empty(Shape::Row) + HouseSet::empty(Shape::Column);
         for c in cells.iter() {
@@ -101,7 +419,104 @@ impl HouseLike for Block {
         }
         acc
     }
+    fn houses(&self, shape: Shape) -> HouseSet {
+        match shape {
+            Shape::Row => BLOCK_ROWS[self.coord.usize()],
+            Shape::Column => BLOCK_COLUMNS[self.coord.usize()],
+            Shape::Block => BLOCK_BLOCKS[self.coord.usize()],
+        }
+    }
 }
+
+pub struct HouseIter {
+    shape: Shape,
+    coord: u8,
+}
+
+impl HouseIter {
+    pub const fn new(shape: Shape) -> Self {
+        Self { shape, coord: 0}
+    }
+}
+
+impl Iterator for HouseIter {
+    type Item = House;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.coord == 9 {
+            None
+        } else {
+            let house = House::new(self.shape, self.coord.into());
+            self.coord += 1;
+            Some(house)
+        }
+    }
+}
+
+impl ExactSizeIterator for HouseIter {
+    fn len(&self) -> usize {
+        9 - self.coord as usize
+    }
+}
+
+pub struct HousesIter {
+    shape: Shape, 
+    coord: u8,
+}
+
+impl HousesIter {
+    pub const fn new() -> Self {
+        Self {
+            shape: Shape::Row,
+            coord: 0,
+        }
+    }
+}
+
+impl Iterator for HousesIter {
+    type Item = House;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.coord == 9 {
+            match self.shape {
+                Shape::Row => {
+                    self.shape = Shape::Column;
+                    self.coord = 0;
+                }
+                Shape::Column => {
+                    self.shape = Shape::Block;
+                    self.coord = 0;
+                }
+                Shape::Block => return None,
+            }
+        }
+        let house = House::new(self.shape, self.coord.into());
+        self.coord += 1;
+        Some(house)
+    }
+}
+
+impl ExactSizeIterator for HouseIter {
+    fn len(&self) -> usize {
+        match self.shape {
+            Shape::Row => 18 +9 - self.coord as usize,
+            Shape::Column => 9 + 9 - self.coord as usize,
+            Shape::Block => 9 - self.coord as usize,
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
     pub const fn is_top(&self) -> bool {
         self.is_row() && self.coord.u8() == 0
@@ -265,52 +680,8 @@ impl HouseIterator for AnyHouse {
         HouseIter::new(Shape::Block)
     }
 
-impl From<&str> for House {
-    fn from(label: &str) -> Self {
-        if label.len() != 2 {
-            panic!(
-                "Invalid house: \"{}\"; must be (R | C | B) and a digit",
-                label
-            );
-        }
-        let mut chars = label.chars();
-        let shape = chars.next().unwrap();
-        if shape != 'R' && shape != 'C' && shape != 'B' {
-            panic!("Invalid house shape: \"{}\"; must be (R | C | B)", label);
-        }
-        let coord = chars.next().unwarp() as u8 - b'1';
-        if coord > 9 {
-            panic!("Invalid house coord: \"{}\"; must be 1-9", label);
-        }
 
-        Self {
-            shape: Shape::from(shape),
-            coord: Coord::from(coord),
-        }
-    }
-}
 
-impl Add<House> for House {
-    type Output = HouseSet;
-
-    fn add(self, rhs: House) -> HouseSet {
-        HouseSet::empty(self.shape) + self + rhs
-    }
-}
-
-impl Neg for House {
-    type Output = HouseSet;
-
-    fn neg(self) -> HouseSet {
-        HouseSet::full(self.shape) - self
-    }
-}
-
-impl fmt::Display for House {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt:Result {
-        write!(f, "{}", self.label())
-    }
-}
 
     pub const fn houses(&self, shape: Shape) -> HouseSet {
         match shape {
