@@ -195,7 +195,7 @@ impl House {
     }
 
     pub fn iter() -> HouseIter {
-        HouseIter::new()
+        HouseIter::all()
     }
 
     pub const fn all_rows() -> HouseSet {
@@ -225,10 +225,10 @@ impl House {
 
 impl HouseLike for House {
     fn shape(&self) -> Shape {
-        self.shape
+        House::shape(self)
     }
     fn coord(&self) -> Coord {
-        self.coord
+        House::coord(self)
     }
     fn label(&self) -> &str {
         House::label(self)
@@ -237,13 +237,13 @@ impl HouseLike for House {
         House::console_label(self)
     }
     fn cells(&self) -> CellSet {
-        self.cells()
+        House::cells(self)
     }
     fn cell(&self, coord: Coord) -> Cell {
-        self.cell(coord)
+        House::cell(self, coord)
     }
     fn crossing_houses(&self, cells: CellSet) -> HouseSet {
-        self.crossing_houses(cells)
+        House::crossing_houses(self, cells)
     }
     fn houses(&self, shape: Shape) -> HouseSet {
         House::houses(self, shape)
@@ -302,7 +302,7 @@ impl Neg for House {
 }
 
 impl fmt::Display for House {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt:Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.label())
     }
 }
@@ -680,7 +680,7 @@ macro_rules! col {
 #[allow(unused_macros)]
 macro_rules! block {
     ($c:expr) => {
-        House::block(coord($c))
+        House::block(coord!($c))
     };
 }
 
