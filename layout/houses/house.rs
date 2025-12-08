@@ -103,6 +103,26 @@ impl HouseLike for Block {
     }
 }
 
+    pub const fn is_top(&self) -> bool {
+        self.is_row() && self.coord.u8() == 0
+    }
+
+    pub const fn is_bottom(&self) -> bool {
+        self.is_row() && self.coord.u8() == 8
+    }
+
+    pub const fn is_left(&self) -> bool {
+        self.is_column() && self.coord.u8() == 0
+    }
+
+    pub const fn is_right(&self) -> bool {
+        self.is_column() && self.coord.u8() == 8
+    }
+
+    pub const fn is_block_top(&self) -> bool {
+        self.is_row() && self.coord.u8() % 3 == 0
+    }
+
 pub trait HouseIterator {
     type Item: HouseLike;
 
@@ -190,19 +210,19 @@ impl Iterator for AnyHouseIter {
             let r = Row { coord: Coord::new(self.index) };
             self.index += 1;
         return Some(AnyHouse::Row(r));
-    }
+        }
 
     if self.index < 18 {
         let c = Column { coord: Coord::new(self.index - 9) };
         self.index += 1;
         return Some(AnyHouse::Column(c));
-    }
+        }
 
     if self.index < 27 {
         let b = Block { coord: Coord::new(self.index - 18) };
         self.index += 1;
         return Some(AnyHouse::Block(b));
-    }
+        }
 
     None
     }
@@ -216,6 +236,113 @@ impl HouseIterator for AnyHouse {
         Box::new(AnyHouseIter { index:0 })
     }
 }
+
+    pub fn iter() -> HousesIter {
+        HousesIter::new()
+    }
+
+    pub const fn all_rows() -> HouseSet {
+        HouseSet::full(Shape::Row)
+    }
+
+    pub fn rows_iter() -> HouseIter {
+        HouseIter::new(Shape::Row)
+    }
+
+    pub const fn all_columns() -> HouseSet {
+        HouseSet::full(Shape::Column)
+    }
+
+    pub fn columns_iter() -> HouseIter {
+        HouseIter::new(Shape::Column)
+    }
+
+    pub const fn all_blocks() -> HouseSet {
+        HouseSet::full(Shape::Block)
+    }
+
+    pub fn blocks_iter() -> HouseIter {
+        HouseIter::new(Shape::Block)
+    }
+
+impl From<&str> for House {
+    fn from(label: &str) -> Self {
+        if label.len() != 2 {
+            panic!(
+                "Invalid house: \"{}\"; must be (R | C | B) and a digit",
+                label
+            );
+        }
+        let mut chars = label.chars();
+        let shape = chars.next().unwrap();
+        if shape != 'R' && shape != 'C' && shape != 'B' {
+            panic!("Invalid house shape: \"{}\"; must be (R | C | B)", label);
+        }
+        let coord = chars.next().unwarp() as u8 - b'1';
+        if coord > 9 {
+            panic!("Invalid house coord: \"{}\"; must be 1-9", label);
+        }
+
+        Self {
+            shape: Shape::from(shape),
+            coord: Coord::from(coord),
+        }
+    }
+}
+
+impl Add<House> for House {
+    type Output = HouseSet;
+
+    fn add(self, rhs: House) -> HouseSet {
+        HouseSet::empty(self.shape) + self + rhs
+    }
+}
+
+impl Neg for House {
+    type Output = HouseSet;
+
+    fn neg(self) -> HouseSet {
+        HouseSet::full(self.shape) - self
+    }
+}
+
+impl fmt::Display for House {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt:Result {
+        write!(f, "{}", self.label())
+    }
+}
+
+    pub const fn houses(&self, shape: Shape) -> HouseSet {
+        match shape {
+            Shape::Row => self.rows(),
+            Shape::Column => self.columns(),
+            Shape::Block => self.blocks(),
+        }
+    }
+
+    pub const fn rows(&self) -> HouseSet {
+        match self.shape {
+            Shape::Row => ROW_ROWS[self.coord.usize()],
+            Shape::Column => COLUMN_ROWS[self.coord.usize()],
+            Shape::Block => BLOCK_ROWS[self.coord.usize()],
+        }
+    }
+
+    pub const fn columns(&self) -> HouseSet {
+        match self.shape {
+            Shape::Row => ROW_COLUMNS[self.coord.usize()],
+            Shape::Column => COLUMN_COLUMNS[self.coord.usize()],
+            Shape::Block => BLOCK_COLUMNS[self.coord.usize()],
+        }
+    }
+
+    pub const fn blocks(&self) -> HouseSet {
+        match self.shape {
+            Shape::Row => ROW_BLOCKS[self.coord.usize()],
+            Shape::Column => COLUMN_BLOCKS[self.coord.usize()],
+            Shape::Block => BLOCK_BLOCKS[self.coord.usize()],
+        }
+    }
 
 pub enum AnyHouse {
     Row(Row),
