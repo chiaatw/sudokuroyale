@@ -496,7 +496,7 @@ impl Iterator for HousesIter {
     }
 }
 
-impl ExactSizeIterator for HouseIter {
+impl ExactSizeIterator for HousesIter {
     fn len(&self) -> usize {
         match self.shape {
             Shape::Row => 18 +9 - self.coord as usize,
@@ -690,5 +690,106 @@ impl House {
     }
     pub const fn block(coord: Coord) -> Self {
         BLOCKS[coord.usize()]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::cells::cell_set::cells;
+    use crate::layout::houses::coord::coord;
+    use crate::layout::houses::house_set::houses;
+
+    #[test]
+    fn houses() {
+        let house_sets = [House::all_rows(), House::all_columns(), House::all_blocks()];
+
+        for houses in house_sets {
+            let mut all = CellSet::empty();
+
+            for (i, house) in houses.iter().enumerate() {
+                assert_eq!(house, House::new(houses.shape(), Coord::new(i as u8)));
+                assert_eq!(houses.shape(), house.shape());
+                assert_eq!(Coord::new(i as u8), house.coord());
+                assert_eq!(i, house.usize());
+                if !matches!(houses.shape(), Shape::Row) {
+                    assert_eq!(format!("{} {}", houses.shape(), i + 1), house.label());
+                }
+
+                let mut house_cells = CellSet::empty();
+                (0..9).for_each(|c| {
+                    let cell = house.cell(c.into());
+                    assert_eq!(house, cell.house(houses.shape()));
+                    house_cells += cell
+                });
+                assert_eq!(house.cells(), house_cells);
+
+                all |= house.cells();
+            }
+
+            assert_eq!(CellSet::full(), all);
+        }
+    }
+
+    #[test]
+    fn intersect() {
+        assert_eq!(cells!("A1 A2 A3"), House::row(coord!(1)).intersect(House::block(coord!(1))));
+    }
+
+    #[test]
+    fn row_cells() {
+        assert_eq!(cells!("A1 A2 A3 A4 A5 A6 A7 A8 A9"), House::row(coord!(1)).cells());
+        assert_eq!(cells!("B1 B2 B3 B4 B5 B6 B7 B8 B9"), House::row(coord!(2)).cells());
+        assert_eq!(cells!("C1 C2 C3 C4 C5 C6 C7 C8 C9"), House::row(coord!(3)).cells());
+        assert_eq!(cells!("D1 D2 D3 D4 D5 D6 D7 D8 D9"), House::row(coord!(4)).cells());
+        assert_eq!(cells!("E1 E2 E3 E4 E5 E6 E7 E8 E9"), House::row(coord!(5)).cells());
+        assert_eq!(cells!("F1 F2 F3 F4 F5 F6 F7 F8 F9"), House::row(coord!(6)).cells());
+        assert_eq!(cells!("G1 G2 G3 G4 G5 G6 G7 G8 G9"), House::row(coord!(7)).cells());
+        assert_eq!(cells!("H1 H2 H3 H4 H5 H6 H7 H8 H9"), House::row(coord!(8)).cells());
+        assert_eq!(cells!("J1 J2 J3 J4 J5 J6 J7 J8 J9"), House::row(coord!(9)).cells());
+    }
+
+    #[test]
+    fn column_cells() {
+        assert_eq!(cells!("A1 B1 C1 D1 E1 F1 G1 H1 J1"), House::column(coord!(1)).cells());
+        assert_eq!(cells!("A2 B2 C2 D2 E2 F2 G2 H2 J2"), House::column(coord!(2)).cells());
+        assert_eq!(cells!("A3 B3 C3 D3 E3 F3 G3 H3 J3"), House::column(coord!(3)).cells());
+        assert_eq!(cells!("A4 B4 C4 D4 E4 F4 G4 H4 J4"), House::column(coord!(4)).cells());
+        assert_eq!(cells!("A5 B5 C5 D5 E5 F5 G5 H5 J5"), House::column(coord!(5)).cells());
+        assert_eq!(cells!("A6 B6 C6 D6 E6 F6 G6 H6 J6"), House::column(coord!(6)).cells());
+        assert_eq!(cells!("A7 B7 C7 D7 E7 F7 G7 H7 J7"), House::column(coord!(7)).cells());
+        assert_eq!(cells!("A8 B8 C8 D8 E8 F8 G8 H8 J8"), House::column(coord!(8)).cells());
+        assert_eq!(cells!("A9 B9 C9 D9 E9 F9 G9 H9 J9"), House::column(coord!(9)).cells());
+    }
+
+    #[test]
+    fn block_cells() {
+        assert_eq!(cells!("A1 A2 A3 B1 B2 B3 C1 C2 C3"), House::block(coord!(1)).cells());
+        assert_eq!(cells!("A4 A5 A6 B4 B5 B6 C4 C5 C6"), House::block(coord!(2)).cells());
+        assert_eq!(cells!("A7 A8 A9 B7 B8 B9 C7 C8 C9"), House::block(coord!(3)).cells());
+        assert_eq!(cells!("D1 D2 D3 E1 E2 E3 F1 F2 F3"), House::block(coord!(4)).cells());
+        assert_eq!(cells!("D4 D5 D6 E4 E5 E6 F4 F5 F6"), House::block(coord!(5)).cells());
+        assert_eq!(cells!("D7 D8 D9 E7 E8 E9 F7 F8 F9"), House::block(coord!(6)).cells());
+        assert_eq!(cells!("G1 G2 G3 H1 H2 H3 J1 J2 J3"), House::block(coord!(7)).cells());
+        assert_eq!(cells!("G4 G5 G6 H4 H5 H6 J4 J5 J6"), House::block(coord!(8)).cells());
+        assert_eq!(cells!("G7 G8 G9 H7 H8 H9 J7 J8 J9"), House::block(coord!(9)).cells());
+    }
+
+    #[test]
+    fn columns_cross_rows() {
+        let main = House::row(coord!(2));
+        let cells = cells!("B1 B2");
+        let got = main.crossing_houses(cells);
+
+        assert_eq!(houses!("C1 C2"), got);
+    }
+
+    #[test]
+    fn rows_cross_columns() {
+        let main = House::column(coord!(6));
+        let cells = cells!("C6 F6");
+        let got = main.crossing_houses(cells);
+
+        assert_eq!(houses!("R3 R6"), got);
     }
 }
