@@ -191,20 +191,23 @@ impl Iterator for AnyHouseIter {
             self.index += 1;
         return Some(AnyHouse::Row(r));
     }
+
     if self.index < 18 {
         let c = Column { coord: Coord::new(self.index - 9) };
         self.index += 1;
         return Some(AnyHouse::Column(c));
     }
+
     if self.index < 27 {
         let b = Block { coord: Coord::new(self.index - 18) };
         self.index += 1;
         return Some(AnyHouse::Block(b));
     }
+
     None
-        }
     }
 }
+
 
 impl HouseIterator for AnyHouse {
     type Item = AnyHouse;
@@ -285,9 +288,6 @@ impl HouseLike for AnyHouse {
         }
     }
 }
-//TODO Globale Tabelle hinzufügen ROW_CELLS, COLUMN/BLOCK/LABELS/CONSOLE
-
-
 
 #[rustfmt::skip]
 pub const LABELS: [[&str; 9]; 3] = [
