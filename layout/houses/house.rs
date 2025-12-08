@@ -692,7 +692,3 @@ impl House {
         BLOCKS[coord.usize()]
     }
 }
-
-
-
-
