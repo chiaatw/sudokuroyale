@@ -162,38 +162,6 @@ impl House {
             [other.coord.usize()]
     }
 
-    pub const fn houses(&self, shape: Shape) -> HouseSet {
-        match shape {
-            Shape::Row => self.rows(),
-            Shape::Column => self.columns(),
-            Shape::Block => self.blocks(),
-        }
-    }
-
-    pub const fn rows(&self) -> HouseSet {
-        match self.shape {
-            Shape::Row => ROW_ROWS[self.coord.usize()],
-            Shape::Column => COLUMN_ROWS[self.coord.usize()],
-            Shape::Block => BLOCK_ROWS[self.coord.usize()],
-        }
-    }
-
-    pub const fn columns(&self) -> HouseSet {
-        match self.shape {
-            Shape::Row => ROW_COLUMNS[self.coord.usize()],
-            Shape::Column => COLUMN_COLUMNS[self.coord.usize()],
-            Shape::Block => BLOCK_COLUMNS[self.coord.usize()],
-        }
-    }
-
-    pub const fn blocks(&self) -> HouseSet {
-        match self.shape {
-            Shape::Row => ROW_BLOCKS[self.coord.usize()],
-            Shape::Column => COLUMN_BLOCKS[self.coord.usize()],
-            Shape::Block => BLOCK_BLOCKS[self.coord.usize()],
-        }
-    }
-
     pub fn iter() -> HouseIter {
         HouseIter::all()
     }
