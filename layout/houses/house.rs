@@ -276,8 +276,8 @@ impl From<&str> for House {
     }
 }
 
-impl PartialOrd<Self> for House {
-    fn partial_cmp(&self, other: Self) -> Option<Ordering> {
+impl PartialOrd for House {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match self.shape.partial_cmp(&other.shape) {
             Some(Ordering::Equal) => self.coord.partial_cmp(&other.coord),
             result => result,
