@@ -142,6 +142,35 @@ impl HouseSetLike for HouseSet {
 
 impl HouseSet {
 
+    pub fn from_labels(shape: Shape, labels: &str) -> Self {
+        labels
+            .split_whitespace()
+            .map(House::from)
+            .fold(HouseSet::empty(shape), |set, h| set + h)
+    }
+
+    pub fn with_coord(&self, coord: Coord) -> Self {
+        Self {
+            shape: self.shape,
+            coords: self.coords.with(coord),
+        }
+    }
+
+    pub fn without_coord(&self, coord: Coord) -> Self {
+        Self {
+            shape: self.shape,
+            coords: self.coords.without(coord),
+        }
+    }
+
+    pub fn add_coord(&mut self, coord: Coord) {
+        self.coords += coord;
+    }
+
+    pub fn remove_coord(&mut self, coord: Coord) {
+        self.coords -= coord;
+    }
+
     pub fn has(&self, house: House) -> bool {
         if self.shape != house.shape() {
             panic!("{} cannot be in {} set", house, self.shape);
@@ -211,7 +240,7 @@ impl HouseSet {
         *self = *self | other;
     }
 
-    pub intersect_with(&mut self, other: Self) {
+    pub fn intersect_with(&mut self, other: Self) {
         *self = *self & other;
     }
 
@@ -222,6 +251,44 @@ impl HouseSet {
     pub fn invert(&mut self) {
         *self = !*self;
     }
+
+    pub fn debug(&self) -> String {
+        format!("HouseSet({} {})", self.shape, self.coords.debug())
+    }
+}
+
+impl From<&str> for HouseSet {
+    fn from(labels: &str) -> Self {
+        HouseSet::from_labels(Shape::House, labels)
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! houses {
+    ($labels:expr) => {
+        HouseSet::from_labels(Shape::House, $labels)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! rows {
+    ($coords:literal) => {
+        HouseSet::from_coords(Shape::Row, $coords)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! cols {
+    ($coords:literal) => {
+        HouseSet::from_coords(Shape::Column, $coords)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! blocks {
+    ($coords:literal) => {
+        HouseSet::from_coords(Shape::Block, $coords)
+    };
 }
 
 impl Add<House> for HouseSet {
@@ -231,10 +298,24 @@ impl Add<House> for HouseSet {
     }
 }
 
+impl Add<Coord> for HouseSet {
+    type Output = Self;
+    fn add(self, rhs: Coord) -> Self {
+        self.with_coord(rhs)
+    }
+}
+
 impl Sub<House> for HouseSet {
     type Output = Self;
     fn sub(self, rhs: House) -> Self {
         self.without(rhs)
+    }
+}
+
+impl Sub<Coord> for HouseSet {
+    type Output = Self;
+    fn sub(self, rhs: Coord) -> Self {
+        self.without_coord(rhs)
     }
 }
 
@@ -265,9 +346,21 @@ impl AddAssign<House> for HouseSet {
     }
 }
 
+impl AddAssign<Coord> for HouseSet {
+    fn add_assign(&mut self, rhs: Coord) {
+        self.add_coord(rhs)
+    }
+}
+
 impl SubAssign<House> for HouseSet {
     fn sub_assign(&mut self, rhs: House) {
         *self = *self - rhs;
+    }
+}
+
+impl SubAssign<Coord> for HouseSet {
+    fn sub_assign(&mut self, rhs: coord) {
+        self.remove_coord(rhs)
     }
 }
 
@@ -309,6 +402,54 @@ impl Iterator for Iter {
 }
 
 impl FusedIterator for Iter {}
+
+impl IntoIterator for HouseSet {
+    type Item = House;
+    type IntoIter = Iter;
+
+    fn into_iter(self) -> Self::IntoIter{
+        self.iter()
+    }
+}
+
+impl FromIterator<House> for HouseSet {
+    fn from_iter<I: IntoIterator<Item = House>>(iter: I) -> Self {
+        iter.into_iter().fold(HouseSet::empty(Shape::Row), |acc, h| {
+            if acc.shape == Shape::Row {
+                h.into()
+            } else {
+                acc + h
+            }
+        })
+    }
+}
+
+impl FromIterator<HouseSet> for HouseSet {
+    fn from_iter<I: IntoIterator<Item = HouseSet>>(iter:: I) -> Self {
+        iter.into_iter().fold(HouseSet::empty(Shape::Row), |accm set| acc | set)
+    }
+}
+
+impl Index<House> for HouseSet {
+    type Output = BLOCK_COLUMNSfn index(&self, house: House) -> &bool {
+        if self.has(house) {
+            &true
+        } else {
+            &false
+        }
+    }
+}
+
+impl Index<Coord> for HouseSet {
+    type Output = bool;
+    fn index(&self, coord: Coord) -> &bool {
+        if self.has_coord(coord) {
+            &true
+        } else {
+            &false
+        }
+    }
+}
 
 impl fmt::Display for HouseSet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
