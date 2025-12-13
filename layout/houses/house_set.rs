@@ -1,7 +1,7 @@
 use std::fmt;
 use std::iter::FusedIterator;
 use std::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Not, Sub, SubAssign,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Not, Sub, SubAssign, 
 };
 
 use crate::layout::CellSet;
@@ -31,12 +31,12 @@ pub trait HouseSetLike: Copy + Sized {
         !self.intersect(other).is_empty()
     }
 
-    fn has_all(self, subset: Self) _> bool {
-        self.shape() == subset.shape() && self.intersect(subset).coords() subset.coords()
+    fn has_all(self, subset: Self) -> bool {
+        self.shape() == subset.shape() && self.intersect(subset).coords() == subset.coords()
     }
 
     fn is_subset_of(self, superset: Self) -> bool {
-        self.shape() ==  superset.shape() && self.intersect(supterset).coords() == self.coords()
+        self.shape() ==  superset.shape() && self.intersect(superset).coords() == self.coords()
     }
 
     fn coords(&self) -> CoordSet;
@@ -262,34 +262,6 @@ impl From<&str> for HouseSet {
     }
 }
 
-#[allow(unused_macros)]
-macro_rules! houses {
-    ($labels:expr) => {
-        HouseSet::from_labels(Shape::House, $labels)
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! rows {
-    ($coords:literal) => {
-        HouseSet::from_coords(Shape::Row, $coords)
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! cols {
-    ($coords:literal) => {
-        HouseSet::from_coords(Shape::Column, $coords)
-    };
-}
-
-#[allow(unused_macros)]
-macro_rules! blocks {
-    ($coords:literal) => {
-        HouseSet::from_coords(Shape::Block, $coords)
-    };
-}
-
 impl Add<House> for HouseSet {
     type Output = Self;
     fn add(self, rhs: House) -> Self {
@@ -358,7 +330,7 @@ impl SubAssign<House> for HouseSet {
 }
 
 impl SubAssign<Coord> for HouseSet {
-    fn sub_assign(&mut self, rhs: coord) {
+    fn sub_assign(&mut self, rhs: Coord) {
         self.remove_coord(rhs)
     }
 }
@@ -413,40 +385,41 @@ impl IntoIterator for HouseSet {
 
 impl FromIterator<House> for HouseSet {
     fn from_iter<I: IntoIterator<Item = House>>(iter: I) -> Self {
-        iter.into_iter().fold(HouseSet::empty(Shape::Row), |acc, h| {
-            if acc.shape == Shape::Row {
-                h.into()
-            } else {
-                acc + h
-            }
-        })
+        let mut iter = iter.into_iter();
+        let first = match iter.next() {
+            Some(h) => h,
+            None => return HouseSet::empty(Shape::Row),
+        };
+
+        let mut set = HouseSet::empty(first.shape());
+        set.add(first);
+
+        for h in iter {
+            set.add(h)
+        }
+
+        set
     }
 }
 
 impl FromIterator<HouseSet> for HouseSet {
-    fn from_iter<I: IntoIterator<Item = HouseSet>>(iter:: I) -> Self {
-        iter.into_iter().fold(HouseSet::empty(Shape::Row), |accm set| acc | set)
-    }
-}
+    fn from_iter<I: IntoIterator<Item = HouseSet>>(iter: I) -> Self {
+        let mut iter = iter.into_iter();
 
-impl Index<House> for HouseSet {
-    type Output = BLOCK_COLUMNSfn index(&self, house: House) -> &bool {
-        if self.has(house) {
-            &true
-        } else {
-            &false
-        }
-    }
-}
+        let first = match iter.next() {
+            Some(s) => s,
+            None => return HouseSet::empty(Shape::Row),
+        };
 
-impl Index<Coord> for HouseSet {
-    type Output = bool;
-    fn index(&self, coord: Coord) -> &bool {
-        if self.has_coord(coord) {
-            &true
-        } else {
-            &false
+        let shape = first.shape();
+        let mut acc = first;
+
+        for set in iter {
+            debug_assert!(set.shape() == shape);
+            acc = acc | set;
         }
+
+        acc
     }
 }
 
