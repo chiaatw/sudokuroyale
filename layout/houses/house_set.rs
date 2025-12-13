@@ -228,3 +228,77 @@ impl SubAssign for HouseSet {
     }
 }
 
+impl Index<House> for HouseSet {
+    type Output = bool;
+    fn index(&self, house: House) -> &bool {
+        if self.has(house) { &true } else { &false}
+    }
+}
+
+impl INdex<Coord> for HouseSet {
+    type Output = bool;
+    fn index(&self, coord: Coord) -> &bool {
+        if self.has_coord(coord) { &true } else { &false }
+    }
+}
+
+pub struct Iter {
+    shape: Shape,
+    coords: u16,
+}
+
+impl Iterator for Iter {
+    type Item = House;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if.self.coords == 0 {
+            None
+        } else {
+            let coord = self.coords.trailing_zeros() as u8;
+            self.coords &= !(1 << coord);
+            Some(House::new(self.shape, coord.into()))
+        }
+    }
+}
+
+impl FusedIterator for Iter {}
+
+impl fmt::Display for HouseSet {
+    fn fmt(&self, f: &mut fmt::Foratter<'_>) -> fmt::Result {
+        if self.is_empty() {
+            write!(f, "{} {}", self.shape.label(), EMPTY_SET)
+        } else {
+            write!(f, "{} {}", self.shape.label(), self.coords)
+        }
+    }
+}
+
+impl fmt::Debug for HouseSet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {}", self.shape, self.coords)
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! houses {
+    ($coords:literal) => {
+        <HouseSet as HouseSetLike>::from_coords(Shape::Row, $coords)
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! cols {
+    ($coords:literal) => {
+        <HouseSet as HouseSetLike>::from_coords(Shape::Column, $coords)
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! blocks {
+    ($coords:literal) => {
+        <HouseSet as HouseSetLike>::from_coords(Shape::Block, $coords)
+    }
+}
+
+#[allow(unused_imports)]
+pub(crate) use {blocks, cols, houses, rows};
