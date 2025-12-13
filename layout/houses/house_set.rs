@@ -209,13 +209,6 @@ impl HouseSet {
         }
     }
 
-    pub const fn iter(&self) -> Iter {
-        Iter {
-            shape: self.shape,
-            coords: self.coords.bits()
-        }
-    }
-
     pub fn as_single(&self) -> Option<House> {
         self.coords.as_single().map(|c| House::new(self.shape, c))
     }
@@ -229,11 +222,11 @@ impl HouseSet {
     }
 
     pub fn add(&mut self, house: House) {
-        *self = *self + house;
+        self.coords += house.coord();
     }
 
     pub fn remove(&mut self, house: House) {
-        *self = *self - house;
+        self.coords -= house.coord();
     }
 
     pub fn union_with(&mut self, other:Self) {
@@ -259,7 +252,13 @@ impl HouseSet {
 
 impl From<&str> for HouseSet {
     fn from(labels: &str) -> Self {
-        HouseSet::from_labels(Shape::House, labels)
+       labels
+            .split_whitespace()
+            .map(House::from)
+            .fold(HouseSet::empty(Shape::House), |mut acc, h| {
+                acc.add(h);
+                acc
+            })
     }
 }
 
