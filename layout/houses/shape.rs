@@ -246,9 +246,10 @@ impl Iterator for ShapeIter {
     }
 }
 
-//TODO return 3, meaning total items not remaining!!!
 impl ExactSizeIterator for ShapeIter {
-    fn len(&self) -> usize { 3 }
+    fn len(&self) -> usize {
+        3 - self.0 as usize
+    }
 }
 
 pub static CELLS: Lazy<[[[Cell; 9]; 9]; 3]> = Lazy::new(|| [
