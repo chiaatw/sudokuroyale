@@ -1,7 +1,7 @@
 use std::fmt;
 use std::iter::FusedIterator;
 use std::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Index, Not, Sub, SubAssign,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Not, Sub, SubAssign,
 };
 
 use crate::layout::CellSet;
@@ -26,6 +26,20 @@ pub trait HouseSetLike: Copy + Sized {
     fn intersect(self, other: Self) -> Self;
     fn minus(self, other: Self) -> Self;
     fn inverted(self) -> Self;
+
+    fn has_any(self, other: Self) -> bool {
+        !self.intersect(other).is_empty()
+    }
+
+    fn has_all(self, subset: Self) _> bool {
+        self.shape() == subset.shape() && self.intersect(subset).coords() subset.coords()
+    }
+
+    fn is_subset_of(self, superset: Self) -> bool {
+        self.shape() ==  superset.shape() && self.intersect(supterset).coords() == self.coords()
+    }
+
+    fn coords(&self) -> CoordSet;
 }
 
 #[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
@@ -69,7 +83,7 @@ impl HouseSetLike for HouseSet {
     }
 
     fn is_empty(&self) -> bool {
-        self.coord,is_empty()
+        self.coords.is_empty()
     }
 
     fn is_full(&self) -> bool {
@@ -120,6 +134,10 @@ impl HouseSetLike for HouseSet {
             coords: !self.coords,
         }
     }
+
+    fn coords(&self) -> CoordSet {
+        self.coords
+    }
 }
 
 impl HouseSet {
@@ -161,6 +179,49 @@ impl HouseSet {
             coords: self.coords.bits(),
         }
     }
+
+    pub const fn iter(&self) -> Iter {
+        Iter {
+            shape: self.shape,
+            coords: self.coords.bits()
+        }
+    }
+
+    pub fn as_single(&self) -> Option<House> {
+        self.coords.as_single().map(|c| House::new(self.shape, c))
+    }
+
+    pub fn as_pair(&self) -> Option<(House, House)> {
+        self.coords.as_pair().map(|(a, b)| (House::new(self.shape, a), House::new(self.shape, b)))
+    }
+
+    pub fn as_triple(&self) -> Option<(House, House, House)> {
+        self.coords.as_triple().map(|(a, b, c)| (House::new(self.shape, a), House::new(self.shape, b), House::new(self.shape, c)))
+    }
+
+    pub fn add(&mut self, house: House) {
+        *self = *self + house;
+    }
+
+    pub fn remove(&mut self, house: House) {
+        *self = *self - house;
+    }
+
+    pub fn union_with(&mut self, other:Self) {
+        *self = *self | other;
+    }
+
+    pub intersect_with(&mut self, other: Self) {
+        *self = *self & other;
+    }
+
+    pub fn subtract(&mut self, other: Self) {
+        *self = *self - other;
+    }
+
+    pub fn invert(&mut self) {
+        *self = !*self;
+    }
 }
 
 impl Add<House> for HouseSet {
@@ -187,7 +248,7 @@ impl BitOr for HouseSet {
 impl BitAnd for HouseSet {
     type Output = Self;
     fn bitand(self, rhs: Self) -> Self {
-        self.minus(rhs)
+        self.intersect(rhs)
     }
 }
 
@@ -200,7 +261,7 @@ impl Not for HouseSet {
 
 impl AddAssign<House> for HouseSet {
     fn add_assign(&mut self, rhs: House) {
-        self = *self + rhs;
+        *self = *self + rhs;
     }
 }
 
@@ -212,7 +273,7 @@ impl SubAssign<House> for HouseSet {
 
 impl BitOrAssign for HouseSet {
     fn bitor_assign(&mut self, rhs: Self) {
-        +self = *self | rhs;
+        *self = *self | rhs;
     }
 }
 
@@ -228,20 +289,6 @@ impl SubAssign for HouseSet {
     }
 }
 
-impl Index<House> for HouseSet {
-    type Output = bool;
-    fn index(&self, house: House) -> &bool {
-        if self.has(house) { &true } else { &false}
-    }
-}
-
-impl INdex<Coord> for HouseSet {
-    type Output = bool;
-    fn index(&self, coord: Coord) -> &bool {
-        if self.has_coord(coord) { &true } else { &false }
-    }
-}
-
 pub struct Iter {
     shape: Shape,
     coords: u16,
@@ -251,7 +298,7 @@ impl Iterator for Iter {
     type Item = House;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if.self.coords == 0 {
+        if self.coords == 0 {
             None
         } else {
             let coord = self.coords.trailing_zeros() as u8;
@@ -264,7 +311,7 @@ impl Iterator for Iter {
 impl FusedIterator for Iter {}
 
 impl fmt::Display for HouseSet {
-    fn fmt(&self, f: &mut fmt::Foratter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_empty() {
             write!(f, "{} {}", self.shape.label(), EMPTY_SET)
         } else {
@@ -275,14 +322,21 @@ impl fmt::Display for HouseSet {
 
 impl fmt::Debug for HouseSet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {}", self.shape, self.coords)
+        write!(f, "HouseSet({} {})", self.shape, self.coords)
     }
+}
+
+#[allow(unused_macros)]
+macro_rules! rows {
+    ($coords:literal) => {
+        <HouseSet as HouseSetLike>::from_coords(Shape::Row, $coords)
+    };
 }
 
 #[allow(unused_macros)]
 macro_rules! houses {
     ($coords:literal) => {
-        <HouseSet as HouseSetLike>::from_coords(Shape::Row, $coords)
+        <HouseSet as HouseSetLike>::from_coords(Shape::House, $coords)
     };
 }
 
