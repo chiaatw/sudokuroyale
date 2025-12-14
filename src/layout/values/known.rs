@@ -136,7 +136,7 @@ impl KnownIter {
 impl Iterator for KnownIter {
     type Item = Known;
 
-    fn next(&mut self) -> Optioin<Self::Item> {
+    fn next(&mut self) -> Option<Self::Item> {
         if self.0 < 9 {
             let k = Known::from_index(self.0);
             self.0 += 1;
@@ -156,7 +156,7 @@ impl ExactSizeIterator for KnownIter {
 
 #[allow(unused_macros)]
 macro_rules! known {
-    ($:expr) => {
+    ($k:expr) => {
         Known::from_str($k)
     };
 }
