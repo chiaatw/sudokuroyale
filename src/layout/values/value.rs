@@ -23,12 +23,12 @@ pub trait ValueLike: Copy + Eq + Ord {
         if self.is_unknown() {
             MISSING
         } else {
-            (b'0' + sel.raw()) as char
+            (b'0' + self.raw()) as char
         }
     }
 }
 
-#[derive(Clone, Copy, Default, Hash, Eq, PartialEq, OrdPartialOrd)]
+#[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Value(u8);
 
 impl Value {
@@ -41,8 +41,7 @@ impl Value {
 
     #[inline(always)]
     pub const fn new(value: u8) -> Self {
-        debug_assert!(value <= 9);
-        Self(value)
+        if value <= 9 { Self(value) } else { Self(Self::UNKNOWN) }
     }
 
     #[inline(always)]
@@ -75,7 +74,7 @@ impl From<u8> for Value {
 impl From<char> for Value {
     #[inline(always)]
     fn from(label: char) -> Self {
-        if ('1' .. = '9').contains(&label) {
+        if ('1'..='9').contains(&label) {
             Value::new(label as u8 - b'0')
         } else {
             Value::unknown()
@@ -86,7 +85,7 @@ impl From<char> for Value {
 impl From<&str> for Value {
     #[inline(always)]
     fn from(label: &str) -> Self {
-        Value::from(label.chars().next().unwrap())
+        label.chars().next().map(Value::from).unwrap_or(Value::unknown())
     }
 }
 
