@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{BitAnd: BitAmdAssign};
+use std::ops::{BitAnd, BitAndAssign};
 
 use crate::io::format_for_fancy_console;
 use crate::layout::{Cell, CellSet, House, Known, KnownSet, Value};
@@ -61,10 +61,10 @@ impl Board {
     #[rustfmt::skip]
     pub const fn new() -> Board {
         Board {
-            givens_ CellSet::empty(),
+            givens: CellSet::empty(),
             knowns: CellSet::empty(),
-            values [Value::unknown(); 81],
-            candidate_knowns_by_cell: [KnownSet::ful(); 81],
+            values: [Value::unknown(); 81],
+            candidate_knowns_by_cell: [KnownSet::full(); 81],
             candidate_cells_by_known: [CellSet::full(); 9],
             cells_with_n_candidates: [
                 CellSet::empty(), CellSet::empty(), CellSet::empty(),
@@ -83,7 +83,7 @@ impl Board {
 
     #[inline(always)]
     pub const fn is_known(&self, cell: Cell) -> bool {
-        self.known.has(cell)
+        self.knowns.has(cell)
     }
 
     #[inline(always)]
@@ -92,7 +92,7 @@ impl Board {
     }
 
     #[inline(always)]
-    pub const fn value(&self, cell: cell) -> Value {
+    pub const fn value(&self, cell: Cell) -> Value {
         self.values[cell.usize()]
     }
 
@@ -123,7 +123,7 @@ impl Board {
         .map(|cell| (cell, self.value(cell).known().unwrap()))
     }
 
-    pub fn knowns_iter(&self, cells: CellSet) -> impl Iterator<Item = (cell, Known)> + '_ {
+    pub fn knowns_iter(&self, cells: CellSet) -> impl Iterator<Item = (Cell, Known)> + '_ {
         (cells & self.knowns)
         .into_iter()
         .map(|cell| (cell, self.value(cell).known().unwrap()))
@@ -180,7 +180,7 @@ impl Board {
     }
 
     pub fn set_known(&mut self, cell: Cell, known: Known, effects: &mut Effects) -> Change {
-        if let Some(current) = self.value(cell). known() {
+        if let Some(current) = self.value(cell).known() {
             if current == known {
                 return Change::None;
             } else {
@@ -206,7 +206,7 @@ impl Board {
         let mut change = Change::Valid;
         let mut candidates = self.candidate_knowns_by_cell[cell.usize()];
         self.cells_with_n_candidates[candidates.len()] -= cell;
-        self.cell_candidates_with_n_candidates[0] += cell;
+        self.cells_with_n_candidates[0] += cell;
         candidates -= known;
         self.candidate_knowns_by_cell[cell.usize()] = KnownSet::empty();
 
@@ -224,11 +224,6 @@ impl Board {
 
     pub fn pseudo_cell(&self, cells: CellSet) -> PseudoCell {
         PseudoCell::new(cells, self.all_candidates(cells))
-    }
-
-    #[inline(always)]
-    pub const fn is_candidate(&self, cell: Cell, known: Known) -> bool {
-        self.candidate_knowns_by_cell[cell.usize()].has(known)
     }
 
     #[inline(always)]
@@ -271,12 +266,16 @@ impl Board {
         n: usize,
     ) -> impl Iterator<Item = (Cell, KnownSet)> + '_ {
         self.cells_with_n_candidates(n)
-        .iter
+        .iter()
         .map(|cell| (cell, self.candidates(cell)))
     }
 
     pub const fn candidate_cells(&self, known: Known) -> CellSet {
-        house.cells() & self.candidate_cells(known)
+        self.candidate_cells_by_known[known.usize()]
+    }
+
+    pub fn house_candidate_cells(&self, house: House, known: Known) -> CellSet {
+        self.candidate_cells(known) & house.cells()
     }
 
     pub fn remove_candidate(&mut self, cell: Cell, known: Known, effects: &mut Effects) -> Change {
@@ -305,7 +304,7 @@ impl Board {
     fn remove_candidate_cell_from_houses(
         &mut self,
         cell: Cell,
-        known: Known
+        known: Known,
         effects: &mut Effects,
     ) -> Change {
         let mut change = Change::None;
@@ -315,13 +314,13 @@ impl Board {
                 continue;
             }
 
-            change &= Change::Valid;
             let candidates = self.house_candidate_cells(house, known);
             if candidates.is_empty() {
                 effects.add_error(Error::UnsolvableHouse(house, known));
                 change &= Change::Invalid;
             } else if candidates.len() == 1 {
                 effects.add_set(Strategy::HiddenSingle, candidates.as_single().unwrap(), known);
+                change &= Change::Valid;
             }
         }
 
@@ -330,7 +329,8 @@ impl Board {
 
     pub fn remove_candidates(
         &mut self,
-        cell: Cellknowns: KnownSet,
+        cell: Cell,
+        knowns: KnownSet,
         effects: &mut Effects,
     ) -> Change {
         let mut change = Change::None;
@@ -343,7 +343,7 @@ impl Board {
     pub fn remove_candidate_from_cells(
         &mut self,
         cells: CellSet,
-        known: known,
+        known: Known,
         effects: &mut Effects,
     ) -> Change {
         let mut change = Change::None;
@@ -353,7 +353,7 @@ impl Board {
         change
     }
 
-    pub fn remove_candidates_cell_from_cells(
+    pub fn remove_candidates_from_cells(
         &mut self,
         cells: CellSet,
         knowns: KnownSet,
