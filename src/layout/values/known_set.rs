@@ -36,7 +36,7 @@ pub trait KnownSetLike: Copy + Eq + Ord {
 
     #[inline(always)]
     fn is_full(self) -> bool {
-        self.bits() == (1<< 9) - 1
+        self.bits() == (1 << Known::COUNT) - 1
     }
 
     #[inline(always)]
@@ -64,7 +64,7 @@ pub trait KnownSetLike: Copy + Eq + Ord {
     fn union_with(&mut self, other: Self);
     fn intersect_with(&mut self, other: Self);
     fn subtract(&mut self, other: Self);
-    fn invert(& mut self);
+    fn invert(&mut self);
 }
 
 // Known type
@@ -171,7 +171,7 @@ impl KnownSet {
     pub fn debug(&self) -> String {
         format!(
             "{:01}:{:09b}",
-            self.len,
+            self.len(),
             self.bits().reverse_bits() >> (16 - 9)
         )
     }
@@ -199,7 +199,7 @@ impl KnownSetLike for KnownSet {
     }
 
     fn inverted(self) -> Self {
-        Self(!self.0 & ((1 << 9) - 1))
+        Self(!self.0 & ((1 << Known::COUNT) - 1))
     }
 
     fn has_any(self, other: Self) -> bool {
@@ -235,7 +235,7 @@ impl KnownSetLike for KnownSet {
     }
 
     fn invert(&mut self) {
-        self.0 = !self.0 & ((1 << 9) - 1)
+        self.0 = !self.0 & ((1 << Known::COUNT) - 1)
     }
 }
 
@@ -249,7 +249,7 @@ impl Add<Known> for KnownSet{
 
 impl AddAssign<Known> for KnownSet {
     fn add_assign(&mut self, rhs: Known) {
-        self.add(rhs)
+        KnownSetLike::add(self,rhs)
     }
 }
 
@@ -435,18 +435,18 @@ pub trait KnownSetIteratorUnion {
 
 impl<I> KnownSetIteratorUnion for I
     where
-    I: Iterator<Item = Known>,
+    I: Iterator<Item = KnownSet>,
     {
         fn union(self) -> KnownSet {
             self.union_knowns()
         }
 
         fn union_knowns(self) -> KnownSet {
-            self.fold(KnownSet::empty(), |acc, h| acc + h)
+            self.fold(KnownSet::empty(), |acc, h| acc | h)
         }
     }
 
-pub trait KnownSetIteratorUnion {
+pub trait KnownSetIteratorIntersection {
     fn intersection(self) -> KnownSet;
 }
 
