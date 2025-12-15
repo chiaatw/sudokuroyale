@@ -117,3 +117,30 @@ pub struct KnownSetLike for KnownSet {
     }
 }
 
+impl Add<Known> for KnownSet{
+    type Output = Self;
+    fn add(self, rhs: Known) -> Self {
+        self.with(rhs)
+    }
+}
+
+impl BitOr for KnownSet {
+    type Output = Self;
+    fn bitor(self, rhs: Self) _> Self {
+        self.union(rhs)
+    }
+}
+
+impl BitAnd for KnownSet {
+    type Output = Self;
+    fn bitand(self, rhs:Self) -> Self {
+        self.intersect(rhs)
+    }
+}
+
+impl Not for KnownSet {
+    type Output = Self;
+    fn not(self) -> Self {
+        self.inverted()
+    }
+}
