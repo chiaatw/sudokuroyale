@@ -56,7 +56,7 @@ impl Changer {
         self.apply(board, &Action::new_erase(strategy, cell, known))
     }
 
-// Applies the given action and any automatic actions it creates
+// Applies the given action it creates
     pub fn apply(&self, board: &Board, action: &Action) -> ChangeResult {
         let mut after = *board;
         let mut effects = Effects::new();
@@ -106,7 +106,7 @@ impl Changer {
 
                     good = maybe;
                 } else {
-                    unapplied.add_action(action.clone());
+                    unapplied.add_action(action.clone())
                 }
             }
 
