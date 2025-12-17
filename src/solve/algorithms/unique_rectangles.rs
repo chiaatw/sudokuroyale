@@ -517,3 +517,152 @@ fn sort_by_column(first: Cell, second: Cell) -> (Cell, Cell) {
         (second, first)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::io::{Parse, Parser};
+    use crate::layout::cells::cell::cell;
+    use crate::layout::cells::cell_set::cells;
+    use crate::layout::values::known::known;
+    use crate::layout::values::known_set::knowns;
+
+    use super::*;
+
+    #[test]
+    fn test_type_1() {
+        let parser = Parse::wiki();
+        let (board, effects, failed) = parser.parse(
+            "k0k02109050h81031181110c21g1030k410sgkgs03418111gki8ish6g60hh009412181g40981h0h02105030h41g421410h03810911g4jkgkh4034109hgi0815048h8810h21h005032i0q810511g141282o",
+        );
+        assert_eq!(None, failed);
+        assert!(!effects.has_errors());
+
+        if let Some(got) = find_unique_rectangles(&board, true) {
+            let mut action =
+                Action::new_erase_knowns(Strategy::UniqueRectangle, cell!("D1"), knowns!("2 9"));
+            action.clue_cells_for_knowns(Verdict::Primary, cells!("D9 F1 F9"), knowns!("2 9"));
+            action.clue_cell_for_knowns(Verdict::Secondary, cell!("D1"), knowns!("1 5"));
+            assert_eq!(format!("{:?}", action), format!("{:?}", got.actions()[0]));
+        } else {
+            panic!("not found");
+        }
+    }
+
+    #[test]
+    fn test_type_2() {
+        let parser = Parse::packed_with_options(Options::all());
+        let (board, effects, failed) = parser.parse(
+            "42.9..386 .6.2..794 8.9.6.251 7....3.25 9..1.26.3 2..5....8 ..4.2.567 6827..439 ......812",
+        );
+        assert_eq!(None, failed);
+        assert!(!effects.has_errors());
+
+        if let Some(got) = find_unique_rectangles(&board, true) {
+            let mut action =
+                Action::new_erase_cells(Strategy::UniqueRectangle, cells!("A3 C6"), known!("7"));
+            action.clue_cells_for_knowns(Verdict::Primary, cells!("A5 A6 H5 H6"), knowns!("1 5"));
+            action.clue_cells_for_known(Verdict::Secondary, cells!("A5 A6"), known!("7"));
+            assert_eq!(format!("{:?}", action), format!("{:?}", got.actions()[0]));
+        } else {
+            panic!("not found");
+        }
+    }
+
+    #[test]
+    fn test_type_2_diagonal() {
+        let parser = Parse::wiki();
+        let (board, effects, failed) = parser.parse(
+            "814kg10s2u246c116e110922812m41i42mg42i4k621sg134812m6e05g10h215081030950418128g11c0334240h2803114c4c0h64g181gq4g055g81j0j822jagg1181032k09g441i4ga214a5454h40h81he",
+        );
+        assert_eq!(None, failed);
+        assert!(!effects.has_errors());
+
+        if let Some(got) = find_unique_rectangles(&board, true) {
+            let mut action =
+                Action::new_erase_cells(Strategy::UniqueRectangle, cells!("A9 C9 G7"), known!("6"));
+            action.clue_cells_for_knowns(Verdict::Primary, cells!("B7 B9 H7 H9"), knowns!("2 9"));
+            action.clue_cells_for_known(Verdict::Secondary, cells!("B7 H9"), known!("6"));
+            assert_eq!(format!("{:?}", action), format!("{:?}", got.actions()[0]));
+        } else {
+            panic!("not found");
+        }
+    }
+
+    #[test]
+    fn test_type_3() {
+        let parser = Parse::wiki();
+        let (board, effects, failed) = parser.parse(
+            "gg800541081102igiggi4111g2210408gg81g209200go2o00540100812g08104607g3i2i21040h10k002k08009811240g80gi8j0j20440g18a20928o1g050i05210agal2ko80hqgi100g8a05o2o8i0ia40",
+        );
+        assert_eq!(None, failed);
+        assert!(!effects.has_errors());
+
+        if let Some(got) = find_unique_rectangles(&board, true) {
+            let mut action = Action::new(Strategy::UniqueRectangle);
+            action.erase_knowns(cell!("H8"), knowns!("4 9"));
+            action.erase_knowns(cell!("J8"), knowns!("6 9"));
+            action.clue_cells_for_knowns(Verdict::Primary, cells!("D2 D8 F2 F8"), knowns!("1 5"));
+            action.clue_cell_for_knowns(Verdict::Secondary, cell!("A8"), knowns!("4 6 9"));
+            action.clue_cell_for_knowns(Verdict::Secondary, cell!("B8"), knowns!("4 9"));
+            action.clue_cell_for_knowns(Verdict::Secondary, cell!("D8"), knowns!("4 6"));
+            action.clue_cell_for_knowns(Verdict::Secondary, cell!("F8"), knowns!("6 9"));
+            assert_eq!(format!("{:?}", action), format!("{:?}", got.actions()[0]));
+        } else {
+            panic!("not found");
+        }
+    }
+
+    #[test]
+    fn test_type_4() {
+        let parser = Parse::wiki();
+        let (board, effects, failed) = parser.parse(
+            "k0k02109050h81031181110c21g1030k410sgkgs03418111gki8is12g60hh009412181g40981h0h02105030h41g421410h03810911g4jkgkh4034109hgi081l0k8h8810h21h005032i0q810511g141282o",
+        );
+        assert_eq!(None, failed);
+        assert!(!effects.has_errors());
+
+        if let Some(got) = find_unique_rectangles(&board, true) {
+            let mut action = Action::new(Strategy::UniqueRectangle);
+            action.erase_cells(cells!("H1 H2"), known!("9"));
+            action.clue_cells_for_knowns(Verdict::Primary, cells!("A1 A2"), knowns!("7 9"));
+            action.clue_cells_for_known(Verdict::Secondary, cells!("H1 H2"), known!("7"));
+            assert_eq!(format!("{:?}", action), format!("{:?}", got.actions()[0]));
+        } else {
+            panic!("not found");
+        }
+    }
+
+    #[test]
+    fn test_type_5() {
+        let parser = Parse::grid().stop_on_error();
+        let (board, effects, failed) = parser.parse(
+            "
+                +----------------+----------------+-----------------+
+                | 7   589  3589  | 4   259  6     | 28    238  1    |
+                | 49  2    369   | 8   179  17    | 467   367  5    |
+                | 1   4568 568   | 3   257  27    | 24678 9    2467 |
+                +----------------+----------------+-----------------+
+                | 3   169  4     | 279 127  5     | 2678  2678 267  |
+                | 289 7    56    | 29  3    28    | 456   1    46   |
+                | 28  15   125   | 6   1247 12478 | 3     257  9    |
+                +----------------+----------------+-----------------+
+                | 249 3    1279  | 5   2467 247   | 19    267  8    |
+                | 5   189  12789 | 27  2678 3     | 19    4    267  |
+                | 6   48   278   | 1   2478 9     | 257   257  3    |
+                +----------------+----------------+-----------------+
+            ",
+        );
+        assert_eq!(None, failed);
+        assert!(!effects.has_errors());
+
+        if let Some(got) = find_unique_rectangles(&board, true) {
+            let mut action =
+                Action::new_erase_cells(Strategy::UniqueRectangle, cells!("E6 F1"), known!("2"));
+            action.clue_cells_for_known(Verdict::Primary, cells!("E1 F6"), known!("2"));
+            action.clue_cells_for_known(Verdict::Primary, cells!("E1 E6 F1 F6"), known!("8"));
+            assert_eq!(format!("{:?}", action), format!("{:?}", got.actions()[0]));
+        } else {
+            panic!("not found");
+        }
+    }
+}
