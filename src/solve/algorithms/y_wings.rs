@@ -16,7 +16,7 @@ impl Solver for YWingSolver {
 }
 
 // Finds Y-Wing patterns and returns the corresponding effects
-pub fn find_y_wings(board: &Boiard, single: bool) -> Option<Effects> {
+pub fn find_y_wings(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
     // Bi-value cells are potential pivots
@@ -27,7 +27,8 @@ pub fn find_y_wings(board: &Boiard, single: bool) -> Option<Effects> {
         let peers = pivot.peers() & bi_values;
 
         if peers.len() < 2 {
-            continue; // Need at least two pivot peers to form a Y-Wing
+// Need at least two pivot peers to form a Y-Wing
+            continue; 
         }
 
         let k1_peers = peers & board.candidate_cells(k1);
@@ -39,7 +40,7 @@ pub fn find_y_wings(board: &Boiard, single: bool) -> Option<Effects> {
             for c2 in k2_peers {
                 let k2_other = board.candidates(c2) - k2;
 
-                // Skip if c1 and c2 see each other or the other candidates don't match
+// Skip if c1 and c2 see each other or the other candidates don't match
                 if k1_other != k2_other || c1.sees(c2) {
                     continue;
                 }
@@ -51,14 +52,14 @@ pub fn find_y_wings(board: &Boiard, single: bool) -> Option<Effects> {
                     continue;
                 }
 
-                // Construct the action for this Y-Wing
+// Construct the action for this Y-Wing
                 let mut action = Action::new(Strategy::YWing);
                 action.erase_cells(erase, k);
-                action.clue_cell_for_known(Verdict::Secondary, pivaot, k1);
+                action.clue_cell_for_known(Verdict::Secondary, pivot, k1);
                 action.clue_cell_for_known(Verdict::Tertiary, pivot, k2);
                 action.clue_cell_for_known(Verdict::Tertiary, c1, k1);
                 action.clue_cell_for_known(Verdict::Secondary, c1, k);
-                action.clue_cell_for_known(Verdict::Secondar, c2, k2);
+                action.clue_cell_for_known(Verdict::Secondary, c2, k2);
                 action.clue_cell_for_known(Verdict::Tertiary, c2, k);
 
                 if effects.add_action(action) && single {
