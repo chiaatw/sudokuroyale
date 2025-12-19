@@ -24,7 +24,16 @@ impl Solver for BruteForceSolver {
 
     #[inline(always)]
     fn apply(&self, board: &Board, single: bool) -> Option<Effects> {
-        self.find_brute_force(board, single)
+       match self.find_brute_force(board, single) {
+        BruteForceResult::Solved(_) | BruteForceResult::AlreadySolved => {
+            None
+        }
+        BruteForceResult::MultipleSolutions(_) => None,
+        BruteForceResult::TooFewKnowns => None,
+        BruteForceResult::UnsolvableCells(_) => None,
+        BruteForceResult::Canceled => None,
+        BruteForceResult::Unsolvable => None,
+       }
     }
 }
 
@@ -43,33 +52,31 @@ impl BruteForceSolver {
         }
     }
 
-    fn find_brute_force(&self, board: &Board, single: bool) -> Option<Effects> {
+    fn find_brute_force(&self, board: &Board, single: bool) -> BruteForceResult {
         if board.is_fully_solved() {
 // Already solved, nothing to do
-            return None;
+            return BruteForceResult::AlreadySolved;
         }
         if board.known_count() < MINIMUM_KNOWNS_TO_BE_UNIQUELY_SOLVABLE {
 // Too few clues
-            return None;
+            return BruteForceResult::TooFewKnowns;
         }
 
         let empty = board.unknowns() & board.cells_with_n_candidates(0);
         if !empty.is_empty() {
 //Unsolvable cells exist
-            return None;
+            return BruteForceResult::UnsolvableCells(empty);
         }
 
         let cancelable = Cancelable::new();
         let changer = Changer::new(Options::errors());
-        let mut soltions = Vec::new();
+        let mut solutions = Vec::new();
         let mut stack = Vec::with_capacity(81);
         stack.push(Entry::new(*board));
 
-        let mut effects = Effects::new();
-
         while let Some(entry) = stack.last_mut() {
             if cancelable.is_canceled() {
-                return None;
+                return BruteForceResult::Canceled;
             }
 
             if self.log {
@@ -78,7 +85,7 @@ impl BruteForceSolver {
 
             if entry.candidates.is_empty() {
                 if self.log {
-                    println!("backtrack\n")
+                    println!("backtrack\n");
                 }
                 stack.pop();
                 continue;
@@ -90,7 +97,7 @@ impl BruteForceSolver {
             }
 
             let known = entry.candidates.pop().unwrap();
-            let action = Action::new_Set(Strategy::BruteForce, entry.cell, known);
+            let action = Action::new_set(Strategy::BruteForce, entry.cell, known);
 
             if self.log {
                 println!("try {}\n", action);
@@ -108,21 +115,21 @@ impl BruteForceSolver {
 
                     if after.is_fully_solved() {
                         solutions.push(*after);
-                        effects.add_action(action);
 
                         if self.log {
                             println!("found solution {}\n", solutions.len());
                         }
 
-                        if solutions.len() >= self.max_solutions || single {
-                            return Some(effects);
-                        } else {
-                            if self.log {
-                                println!("backtrack\n");
-                            }
+                        if single {
+                            return BruteForceResult::Solved(Box::new(solutions.remove(0)));
+                        }
+
+                        if solutions.len() >= self.max_solutions {
+                            return BruteForceResult::MultipleSolutions(solutions);
+                        }
+
                             stack.pop();
                             continue;
-                        }
                     } else {
                         stack.push(Entry::new(after));
                     }
@@ -136,12 +143,22 @@ impl BruteForceSolver {
             }
         }
 
-        if effects.has_actions() {
-            Some(effects)
-        } else {
-            None
+        match solutions.len() {
+            0 => BruteForceResult::Unsolvable,
+            1 => BruteForceResult::Solved(Box::new(solutions.remove(0))),
+            _ => BruteForceResult::MultipleSolutions(solutions),
         }
     }
+}
+
+pub enum BruteForceResult {
+    AlreadySolved,
+    TooFewKnowns,
+    UnsolvableCells(CellSet),
+    Canceled,
+    Unsolvable,
+    Solved(Box<Board>),
+    MultipleSolutions(Vec<Board>),
 }
 
 // Internal stack entry for DFS
