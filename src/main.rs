@@ -1,4 +1,6 @@
 mod user;
+mod game_match;
+
 
 #[macro_use]
 extern crate rocket;
@@ -98,3 +100,44 @@ fn rocket() -> _ {
         .manage(Mutex::new(ResetTokenRepository::new()))
         .mount("/", routes![health, register])
 }
+
+use user::repository::UserRepository;
+use user::session_repository::SessionRepository;
+use user::services::{register_user, login_user};
+use game_match::repository::MatchRepository;
+use user::services::get_user_from_session;
+use game_match::services::{create_match, join_match};
+
+fn main() {
+    let mut users = UserRepository::new();
+    let mut sessions = SessionRepository::new();
+
+    // Test: Registrierung
+    register_user(&mut users, "alice", "alice@test.de", "SecurePass1!")
+        .expect("register failed");
+
+    // Test: Login
+    let session_id = login_user(&users, &mut sessions, "alice", "SecurePass1!")
+        .expect("login failed");
+
+    println!("Logged in! Session-ID: {}", session_id);
+
+    let mut match_repo = MatchRepository::new();
+
+    let match_id = create_match(&users, &sessions, &mut match_repo, &session_id)
+        .expect("create match failed");
+    println!("Match created: {}", match_id);
+    
+    register_user(&mut users, "bob", "bob@test.de", "SecurePass1!")
+    .expect("register bob failed");
+
+    let session_id_bob = login_user(&users, &mut sessions, "bob", "SecurePass1!")
+    .expect("login bob failed");
+
+    let ok = join_match(&users, &sessions, &mut match_repo, &session_id_bob, &match_id);
+    println!("Join ok? {}", ok);
+    
+    let m = match_repo.find_by_id(&match_id).unwrap();
+    println!("After join: status={:?}, p1={:?}, p2={:?}", m.status, m.player1_id, m.player2_id);
+}
+
