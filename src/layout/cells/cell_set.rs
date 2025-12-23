@@ -354,6 +354,7 @@ impl CellSet {
             self.bits().reverse_bits() >> (128 - 81)
         )
     }
+}
 
 
 impl From<House> for CellSet {
