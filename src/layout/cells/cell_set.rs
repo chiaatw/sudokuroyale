@@ -136,7 +136,7 @@ impl CellSet {
     pub fn remove(&mut self, cell: Cell) {
         *self = self.without(cell);
     }
-}
+
 
 
     /// Returns true if at least one of the members of `set` is a member of this set.
