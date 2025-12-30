@@ -1,7 +1,8 @@
 use super::*;
-use std::collections::{HashSet, HashMap};
 
-// Trait-based solver for Empty Rectangle strategy
+/// Solver for the Empty Rectangle strategy
+/// 
+/// Detects Empty Rectangles on the board and produces candidate eliminations
 pub struct EmptyRectangleSolver;
 
 impl Solver for EmptyRectangleSolver {
@@ -16,29 +17,33 @@ impl Solver for EmptyRectangleSolver {
     }
 }
 
-// Core Empty Rectangle detection logic
+/// Finds all Empty Rectangles on the board and returns their effects
 pub fn find_empty_rectangles(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
+// Iterate over all possible candidates
     for known in Known::iter() {
+// Iterate over all blocks
         for block in House::blocks_iter() {
             if let Some((cells, row, column)) = fit_row_column(board, block, known) {
                 let mut erased = CellSet::empty();
 
-// Iterate over both orientations: (row, column) and (column, row)
+// Consider both orientations: (row, column) and (column, row)
                 for (top, left) in [(row, column), (column, row)] {
+// Candidates in the left house not part of the rectangle
                     let candidates = board.house_candidate_cells(left, known) - cells;
 
-// Iterate over possible start cells in the top house
                     for start in (board.house_candidate_cells(top, known) - cells).iter() {
                         if erased.has(start) {
                             continue;
                         }
 
                         let right = start.house(left.shape());
-                        if let Some(pivot) = (board.house_candidate_cells(right, known) - start).as_single() {
+
+                        if let Some(pivot) = (board.house_candidate_cells(right, known) - start).as_single()
+                        {
+// Cannot remove candidates in the starting block
                             if start.block() == pivot.block() {
-// Skip if pivot is in the same block as start
                                 continue;
                             }
 
@@ -49,6 +54,13 @@ pub fn find_empty_rectangles(board: &Board, single: bool) -> Option<Effects> {
                                 erased += end;
 
                                 let mut action = Action::new_erase(Strategy::EmptyRectangle, end, known);
+
+// Determine clues or direct erase based on context
+                                if ends.len() == 1 {
+                                    action.erase(start, known);
+                                } else {
+                                    action.clue_cell_for_known(Verdict::Secondary, start, known);
+                                }
 
                                 action.clue_cells_for_known(Verdict::Primary, cells, known);
                                 action.clue_cell_for_known(Verdict::Secondary, pivot, known);
@@ -71,12 +83,12 @@ pub fn find_empty_rectangles(board: &Board, single: bool) -> Option<Effects> {
     }
 }
 
-/// Helper function: checks if all candidate cells for a known in a block
-/// fit entirely within a single row or column, returning that orientation
+/// Checks if all candidate cells in a block can fit in a single row or column
 fn fit_row_column(board: &Board, block: House, known: Known) -> Option<(CellSet, House, House)> {
     let cells = board.house_candidate_cells(block, known);
+
     if cells.len() < 3 {
-// Not enough candidates to form a rectangle
+// Degenerate cases (1-2 candidates) are ignored
         return None;
     }
 
@@ -101,21 +113,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_empty_rectangle() {
+    fn test_empty_rectangle_solver() {
         let parser = Parse::wiki().stop_on_error();
         let (board, ..) = parser.parse(
             "441181i402i4k4080h0g20g10884418411024c0c03o4100gs421g4p4o4410h09q403o030o6om0911a4o42go040p0og20o040031g0508g2g214a40ha409403020411403g108140g8188880g412411i402g4",
         );
 
-        if let Some(got) = find_empty_rectangles(&board, true) {
-            let mut action = Action::new(Strategy::EmptyRectangle);
-            action.erase(cell!("J5"), known!("2"));
-            action.clue_cells_for_known(Verdict::Primary, cells!("H7 J7 J9"), known!("2"));
-            action.clue_cells_for_known(Verdict::Secondary, cells!("B5 B7"), known!("2"));
+        let solver = EmptyRectangleSolver;
 
-            assert_eq!(format!("{:?}", action), format!("{:?}", got.actions()[0]));
+        if let Some(got) = solver.apply(&board, true) {
+            let mut expected = Action::new(Strategy::EmptyRectangle);
+
+            expected.erase(cell!("J5"), known!("2"));
+            expected.clue_cells_for_known(Verdict::Primary, cells!("H7 J7 J9"), known!("2"));
+            expected.clue_cells_for_known(Verdict::Secondary, cells!("B5 B7"), known!("2"));
+
+            assert_eq!(format!("{:?}", expected), format!("{:?}", got.actions()[0]));
         } else {
-            panic!("No effects found");
+            panic!("Empty Rectangle solver found no effects");
         }
     }
 }
