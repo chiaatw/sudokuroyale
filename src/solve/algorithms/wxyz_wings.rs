@@ -1,11 +1,23 @@
 use std::collections::HashMap;
+use itertools::Itertools;
+
 use super::*;
 
+/// Solver interface implemented by all strategies
 pub trait Solver {
+/// Returns the strategy identifier
     fn strategy(&self) -> Strategy;
+
+/// Applies the strategy to the board
+/// 
+/// If single is true, the solver stops after the first successful action
     fn apply(&self, board: &Board, single: bool) -> Option<Effects>;
 }
 
+/// WXYZ-Wing strategy solver
+/// 
+/// This solver detects WXYZ-Wing patters consisting of combinations of bi-value, tri-value and quad-value cells
+/// and produces candidate eliminations based on restricted and non-restricted candidates
 pub struct WXYZWingSolver;
 
 impl Solver for WXYZWingSolver {
@@ -20,158 +32,242 @@ impl Solver for WXYZWingSolver {
     }
 }
 
+/// Finds all WXYZ-Wing patterns on the board and returns their effects
 pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
-    // Group cells by number of candidates
-    let pairs = group_cells_by_candidate_count(board, 2);
-    let triples = group_cells_by_candidate_count(board, 3);
-    let quads = group_cells_by_candidate_count(board, 4);
+/// Group cells by exact candidate sets
+    let pairs_by_candidates = board.cell_candidates_with_n_candidates(2).fold(
+        HashMap::new(),
+        |mut map: HashMap<KnownSet, CellSet>, (cell, candidates)| {
+            *map.entry(candidates).or_default() += cell;
+            map
+        },
+    );
 
-    // Track bi-value cells that see each other
-    let seen_bi_values = seen_bi_value_cells(&pairs_by_candidates);
+    let triples_by_candidates = board.cell_candidates_with_n_candidates(3).fold(
+        HashMap::new(),
+        |mut map: HashMap<KnownSet, CellSet>, (cell, candidates)| {
+            *map.entry(candidates).or_default() += cell;
+            map
+        },
+    );
+
+    let quads_by_candidates = board.cell_candidates_with_n_candidates(4).fold(
+        HashMap::new(),
+        |mut map: HashMap<KnownSet, CellSet>, (cell, candidates)| {
+            *map.entry(candidates).or_default() += cell;
+            map
+        },
+    );
+
+/// Quad-based WXYZ-Wing candidate sets
+    let quad_sets = quads_by_candidates
+        .iter()
+        .map(|(candidates, cells)| {
+            (
+                *candidates,
+                *cells,
+                triples_by_candidates
+                    .iter()
+                    .filter(|(c, _)| c.is_subset_of(*candidates))
+                    .map(|(_, cells)| *cells)
+                    .union_cells()
+                    | pairs_by_candidates
+                        .iter()
+                        .filter(|(c, _)| c.is_subset_of(*candidates))
+                        .map(|(_, cells)| *cells)
+                        .union_cells(),
+            )
+        })
+        .collect_vec();
+
+/// Triple based WXYZ-Wing candidate sets with disjoint grouping
+    let triple_sets = triples_by_candidates
+        .iter()
+        .map(|(candidates, cells)| {
+            let triples_with_two_common_candidates = 
+                triples_by_candidates
+                    .iter()
+                    .fold(HashMap::new(), |mut acc, (ks, cs)| {
+                        let diff = *ks - *candidates;
+                        if let Some(single) = diff.as_single() {
+                            *acc.entry(single).or_insert_with(CellSet::empty) |= *cs;
+                        }
+                        acc
+                    });
+
+                (
+                    *candidates,
+                    *cells,
+                    pairs_by_candidates.iter().fold(
+                        triples_with_two_common_candidates,
+                        |mut acc, (ks, cs)| {
+                            let diff = *ks - *candidates;
+                            if let Some(single) = diff.as_single() {
+                                *acc.entry(single).or_insert_with(CellSet::empty) |= *cs;
+                            }
+                            acc
+                        },
+                    ),
+                    pairs_by_candidates
+                        .iter()
+                        .filter(|(ks, _)| ks.is_subset_of(*candidates))
+                        .map(|(_, cells)| *cells)
+                        .union_cells(),
+                )
+        })
+        .collect_vec();
+
+/// Tracks bi-value cells that see each other
+    let seen_bi_values: HashMap<Cell, CellSet> = 
+        pairs_by_candidates
+            .iter()
+            .fold(HashMap::new(), |mut map, (_, cells)| {
+                cells.iter().combinations(2).for_each(|combo| {
+                    let (c1, c2) = (combo[0], combo[1]);
+                    if c1.sees(c2) {
+                        if c1 < c2 {
+                            *map.entry(c1).or_default() += c2;
+                        } else {
+                            *map.entry(c2).or_default() += c1;
+                        }
+                    }
+                });
+                map
+            });
+
     let bi_values = board.cells_with_n_candidates(2);
 
-    // Closure to check a potential WXYZ wing
+/// Validates a WXYZ-wIng and applies its action if found
     let mut check_wing = |wing: CellSet| -> bool {
-        if !is_valid_wing(board, wing, &seen_bi_values, bi_values) {
+/// Ignore XY chains
+        if (wing & bi_values) == wing {
             return false;
         }
-        apply_wing_action(board, wing, &mut effects)
+
+/// Ignore naked quads
+        if wing.share_any_house() {
+            return false;
+        }
+
+/// Ignore naked pairs
+        if (wing & bi_values).iter().any(|cell| {
+            seen_bi_values
+                .get(&cell)
+                .map_or(false, |seen| !(*seen & wing).is_empty())
+        }) {
+            return false;
+        }
+
+        let wing_knowns = wing.iter().fold(KnownSet::empty(), |set, cell| set | board.candidates(cell));
+
+        if wing_knowns.len() != 4 {
+            return false;
+        }
+
+        if wing_knowns
+            .iter()
+            .any(|known| (wing & board.candidate_cells(known)).len() < 2)
+            {
+                return false;
+            }
+
+            let mut restricted: HashMap<Known, CellSet> = HashMap::new();
+            let mut non_restricted: HashMap<Known, CellSet> = HashMap::new();
+
+            for known in wing_knowns {
+                let candidates = wing & board.candidate_cells(known);
+                let is_restricted = candidates.iter().combinations(2).all(|c| c[0].sees(c[1]));
+
+                if is_restricted {
+                    restricted.insert(known, candidates);
+                } else {
+                    if !non_restricted.is_empty() {
+                        return false;
+                    }
+                    non_restricted.insert(known, candidates);
+                }
+            }
+
+            if non_restricted.is_empty() {
+                return false;
+            }
+
+            let (candidate, cells) = non_restricted.into_iter().next().unwrap();
+            let erase = cells.iter().fold(board.candidate_cells(candidate), |set, cell| {
+                set & cell.peers()
+            });
+
+            if erase.is_empty() {
+                return false;
+            }
+
+            let mut action = Action::new_erase_cells(Strategy::WXYZWing, erase, candidate);
+            action.clue_cells_for_known(Verdict::Secondary, cells, candidate);
+
+            for (known, cells) in restricted {
+                action.clue_cells_for_known(Verdict::Primary, cells, known);
+            }
+
+            effects.add_action(action)
     };
 
-    // Process quads
-    for (_, quad_cells) in &quads {
-        process_quads(quad_cells, &pairs, &triples, &mut check_wing, single, &mut effects);
+/// Quad-driven WXYZ-Wings
+    for (_, quads, subsets) in quad_sets {
+        for quad_combo in quads.iter().combinations(4) {
+            if check_wing(quad_combo.iter().copied().union_cells()) && single {
+                return Some(effects);
+            }
+        }
+
+        for n in (2..4).rev() {
+            for quad_combo in quads.iter().combinations(n) {
+                let base = quad_combo.iter().copied().union_cells();
+                for others in subsets.iter().combinations(4 - n) {
+                    if check_wing(base | others.iter().copied().union_cells()) && single {
+                        return Some(effects);
+                    }
+                }
+            }
+        }
+
+        for quad in quads {
+            for others in subsets.iter().combinations(3) {
+                if check_wing(others.iter().copied().union_cells() + quad) && single {
+                    return Some(effects);
+                }
+            }
+        }
     }
 
-    // Process triples
-    for (candidates, triple_cells) in &triples {
-        process_triples(*candidates, triple_cells, &pairs, &triples, &mut check_wing, single, &mut effects);
+/// Triple-driven WXYZ-Wings
+    for (candidates, triples, disjoints, subsets) in triple_sets {
+        for triple_combo in triples.iter().combinations(4) {
+            if check_wing(triple_combo.iter().copied().union_cells()) && single {
+                return Some(effects);
+            }
+        }
+
+        for n in (1..4).rev() {
+            for triple_combo in triples.iter().combinations(n) {
+                let base = triple_combo.iter().copied().union_cells();
+                for k in (!candidates).iter() {
+                    if let Some(disjoint) = disjoints.get(&k) {
+                        for others in (*disjoint | subsets).iter().combinations(4 - n) {
+                            if check_wing(base | others.iter().copied().union_cells()) && single {
+                                return Some(effects);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if effects.has_actions() {
         Some(effects)
     } else {
         None
-    }
-}
-
-// Groups cells by their candidate set size
-fn group_cells_by_candidate_count(board: &Board, n: usize) -> HashMap<KnownSet, CellSet> {
-    board.cell_candidates_with_n_candidates(n).fold(HashMap::new(), |mut map, (cell, candidates)| {
-        *map.entry(candidates).or_default() += cell;
-        map
-    })
-}
-
-// Returns a map of bi-value cells that see each other
-fn seen_bi_value_cells(pairs: &HashMap<KnownSet, CellSet>) -> HashMap<Cell, CellSet> {
-    let mut seen: HashMap<Cell, CellSet> = HashMap::new();
-    for cells in pairs.values() {
-        for combo in cells.iter().combinations(2) {
-            let (c1, c2) = (combo[0], combo[1]);
-            if c1.sees(c2) {
-                if c1 < c2 {
-                    *seen.entry(c1).or_default() += c2;
-                } else {
-                    *seen.entry(c2).or_default() += c1;
-                }
-            }
-        }
-    }
-    seen
-}
-
-// Determines if a cell set is a valid WXYZ wing
-fn is_valid_wing(board: &Board, wing: CellSet, seen_bi_value_cells: &HashMap<Cell, CellSet>) -> bool {
-    let bi_values = board.cells_with_n_candidates(2);
-    if (wing & bi_values) == wing {
-        return false;
-    }
-    if wing.share_any_house() {
-        return false;
-    }
-
-    if (wing & bi_values).iter().any(|cell| {
-        seen_bi_values.get(cell).map_or(false, |seen| !(*seen & wing).is_empty())
-    }) {
-        return false;
-    }
-
-    let wing_knowns = wing.iter().fold(KnownSet::empty(), |acc, cell| acc| board.candidates(cell));
-    if wing_knowns.len() != 4 {
-        return false;
-    }
-    if wing_knowns.iter().any(|k| (wing & board.candidate_cells(*k)).len() < 2) {
-        return false;
-    }
-
-    true
-}
-
-// Applies a WXYZ wing action for a given cell set
-fn apply_wing_action(board: &Board, wing: CellSet, effects: &mut Effects) -> bool {
-    let wing_knowns = wing.iter().fold(KnownSet::empty(), |acc, cell| acc | board.candidates(cell));
-    let mut restricted: HashMap<Known, CellSet> = HashMap::new();
-    let mut non_restricted: HashMap<Known, CellSet> = HashMap::new();
-
-    for k in wing_knowns {
-        let candidates = wing & board.candidate_cells(k);
-        let is_restricted = candidates.iter().combinations(2).all(|combo| combo[0].sees(combo[1]));
-        if is_restricted {
-            restricted.insert(k, candidates);
-        } else {
-            if !non_restricted.is_empty() {
-                return false;
-            }
-            non_restricted.insert(k, candidates);
-        }
-    }
-    if non_restricted.is_empty() {
-        return false;
-    }
-
-    let (candidate, cells) = non_restricted.into_iter().next().unwrap();
-    let erase = cells.iter().fold(board.candidate_cells(candidate), |set, cell| set & cell.peers());
-    if erase.is_empty() {
-        return false;
-    }
-
-    let mut action = Action::new_erase_cells(Strategy::WXYZWing, erase, candidate);
-    action.clue_cells_for_known(Verdict::Secondary, cells, candidate);
-    for (k, cells) in restricted {
-        action.clue_cells_for_known(Verdict::Primary, cells, k);
-    }
-
-    effects.add_action(action)
-}
-
-// Process quad combinations for WXYZ wings
-fn process_quads(
-    quads: &CellSet,
-    pairs: &HashMap<KnownSet, CellSet>,
-    triples: &HashMap<KnownSet, CellSet>,
-    check_wing: &mut impl FnMut(CellSet) -> bool,
-    single: bool,
-    effects: &mut Effects,
-) {
-    for quad_combo in quads.iter().combinations(4) {
-        if check_wing(quad_combo.iter().copied().union_cells()) && single {
-            return;
-        }
-    }
-
-    // Processes triple combinations for WXYZ wings
-    fn process_triples(
-        _candidates: KnownSet,
-        _triples: &CellSet,
-        _pairs: &HashMap<KnownSet, CellSet>,
-        _triples_by_candidates: &HashMap<KnownSet, CellSet>,
-        _check_wing: &mut impl FnMut(CellSet) -> bool,
-        _single: bool,
-        _effects: &mut Effects,
-    ) {
-        
     }
 }
