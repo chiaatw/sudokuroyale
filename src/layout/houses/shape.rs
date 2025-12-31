@@ -1,4 +1,4 @@
-use std::fmt
+use std::fmt;
 use once_cell::sync::Lazy;
 use std::array;
 
