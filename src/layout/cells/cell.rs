@@ -297,3 +297,133 @@ const PEERS: [CellSet; 81] = {
     sets
 };
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cell_index_and_new() {
+        let c = Cell::new(0);
+        assert_eq!(c.index(), 0);
+        assert_eq!(c.usize(), 0);
+
+        let c2 = Cell::from_coords(Coord::new(0), Coord::new(0));
+        assert_eq!(c2.index(), 0);
+
+        let c3 = Cell::from_row_column(House::row(Coord::new(0)), House::column(Coord::new(0)));
+        assert_eq!(c3.index(), 0);
+
+        let c_last = Cell::new(80);
+        assert_eq!(c_last.index(), 80);
+    }
+
+    #[test]
+    fn test_from_str_and_label() {
+        let c = Cell::from_str("A1");
+        assert_eq!(c.label(), "A1");
+
+        let c2: Cell = "B3".try_into().unwrap();
+        assert_eq!(c2.label(), "B3");
+
+        let result: Result<Cell, _> = "Z9".try_into();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_peers() {
+        let cell = Cell::new(0); // A1
+        let peers = cell.peers();
+        assert!(!peers.has(cell));
+        assert!(peers.has(Cell::new(1)));  // A2
+        assert!(peers.has(Cell::new(9)));  // B1
+        assert!(peers.has(Cell::new(10))); // B2
+        assert_eq!(peers.len(), 20);       // 20 Peers für A1
+    }
+
+    #[test]
+    fn test_add_and_neg_operator() {
+        let c1 = Cell::new(0);
+        let c2 = Cell::new(1);
+        let set = c1 + c2;
+        assert!(set.has(c1));
+        assert!(set.has(c2));
+        assert_eq!(set.len(), 2);
+
+        let inv = -c1;
+        assert!(!inv.has(c1));
+        assert!(inv.has(c2));
+        assert_eq!(inv.len(), 80);
+    }
+
+    #[test]
+    fn test_iter() {
+        let mut iter = Cell::iter();
+        for i in 0..Cell::COUNT {
+            let c = iter.next().unwrap();
+            assert_eq!(c.index(), i);
+        }
+        assert!(iter.next().is_none());
+    }
+
+    #[test]
+    fn test_exact_size_iterator_len() {
+        let iter = Cell::iter();
+        assert_eq!(iter.len(), 81);
+        let mut iter2 = Cell::iter();
+        iter2.next();
+        assert_eq!(iter2.len(), 80);
+    }
+
+    #[test]
+    fn test_common_houses() {
+        let c1 = Cell::from_str("A1");
+        let c2 = Cell::from_str("A2");
+        let houses = c1.common_houses(c2);
+        assert!(houses.iter().any(|h| h == c1.row()));
+        assert!(houses.iter().any(|h| h == c1.block()));
+        assert_eq!(houses.len(), 2);
+
+        let c3 = Cell::from_str("B1");
+        let houses2 = c1.common_houses(c3);
+        assert_eq!(houses2.len(), 2); // gleiche Spalte + Block
+    }
+
+    #[test]
+    fn test_houses_and_coords() {
+        let c = Cell::from_str("C3");
+        let houses = c.houses();
+        assert_eq!(houses[Shape::Row.usize()], c.row());
+        assert_eq!(houses[Shape::Column.usize()], c.column());
+        assert_eq!(houses[Shape::Block.usize()], c.block());
+
+        assert_eq!(c.row_coord(), Coord::new(0));
+        assert_eq!(c.column_coord(), Coord::new(2));
+        assert_eq!(c.block_coord(), Coord::new(0));
+
+        assert_eq!(c.coord_in_row(), Coord::new(2));
+        assert_eq!(c.coord_in_column(), Coord::new(0));
+        assert_eq!(c.coord_in_block(), Coord::new(2));
+    }
+
+    #[test]
+    fn test_labels_formatting() {
+        let cells = vec![Cell::from_str("A1"), Cell::from_str("B2"), Cell::from_str("C3")];
+        let s = Cell::labels(&cells);
+        assert_eq!(s, "( A1 B2 C3 )");
+    }
+
+    #[test]
+    fn test_display_trait() {
+        let c = Cell::from_str("A1");
+        let s = format!("{}", c);
+        assert_eq!(s, "A1");
+    }
+
+    #[test]
+    fn test_cell_macro() {
+        let c = cell!("A1");
+        assert_eq!(c.index(), 0);
+        let c2 = cell!("C3");
+        assert_eq!(c2.label(), "C3");
+    }
+}
