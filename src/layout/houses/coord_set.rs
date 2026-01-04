@@ -447,8 +447,149 @@ impl Iterator for Iter {
 
 impl FusedIterator for Iter {}
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Coord;
 
-    
-  
+    #[test]
+    fn test_empty_and_full() {
+        let empty = CoordSet::empty();
+        assert!(empty.is_empty());
+        assert!(!empty.is_full());
+        assert_eq!(empty.len(), 0);
 
+        let full = CoordSet::full();
+        assert!(!full.is_empty());
+        assert!(full.is_full());
+        assert_eq!(full.len(), 9);
+    }
 
+    #[test]
+    fn test_from_coord_and_bits() {
+        let c = Coord::C3;
+        let set = CoordSet::from_coord(c);
+        assert!(set.has(c));
+        assert_eq!(set.len(), 1);
+        assert_eq!(set.bits(), c.bit());
+    }
+
+    #[test]
+    fn test_from_coords_and_labels() {
+        let set = CoordSet::from_coords(123);
+        assert!(set.has(Coord::C0));
+        assert!(set.has(Coord::C1));
+        assert!(set.has(Coord::C2));
+        assert_eq!(set.len(), 3);
+
+        let set2 = CoordSet::from_labels("1 2 3");
+        assert_eq!(set, set2);
+    }
+
+    #[test]
+    fn test_union_intersect_minus_invert() {
+        let set1 = CoordSet::from_labels("1 2 3");
+        let set2 = CoordSet::from_labels("3 4 5");
+
+        let union = set1.union(set2);
+        for c in &[Coord::C0, Coord::C1, Coord::C2, Coord::C3, Coord::C4] {
+            assert!(union.has(*c));
+        }
+        assert_eq!(union.len(), 5);
+
+        let intersect = set1.intersect(set2);
+        assert!(intersect.has(Coord::C2));
+        assert_eq!(intersect.len(), 1);
+
+        let minus = set1.minus(set2);
+        assert!(minus.has(Coord::C0));
+        assert!(minus.has(Coord::C1));
+        assert!(!minus.has(Coord::C2));
+        assert_eq!(minus.len(), 2);
+
+        let inverted = set1.inverted();
+        for c in &[Coord::C0, Coord::C1, Coord::C2] {
+            assert!(!inverted.has(*c));
+        }
+        assert_eq!(inverted.len(), 6);
+    }
+
+    #[test]
+    fn test_as_single_pair_triple() {
+        let single = CoordSet::from_coord(Coord::C5);
+        assert_eq!(single.as_single(), Some(Coord::C5));
+        assert_eq!(single.as_pair(), None);
+        assert_eq!(single.as_triple(), None);
+
+        let pair = CoordSet::from_labels("2 4");
+        assert_eq!(pair.as_single(), None);
+        assert_eq!(pair.as_pair(), Some((Coord::C1, Coord::C3)));
+        assert_eq!(pair.as_triple(), None);
+
+        let triple = CoordSet::from_labels("1 3 5");
+        assert_eq!(triple.as_single(), None);
+        assert_eq!(triple.as_pair(), None);
+        assert_eq!(triple.as_triple(), Some((Coord::C0, Coord::C2, Coord::C4)));
+    }
+
+    #[test]
+    fn test_iteration_and_pop() {
+        let mut set = CoordSet::from_labels("1 2 3");
+        let mut collected = vec![];
+        while let Some(c) = set.pop() {
+            collected.push(c);
+        }
+        collected.sort_by_key(|c| c.index());
+        assert_eq!(collected, vec![Coord::C0, Coord::C1, Coord::C2]);
+        assert!(set.is_empty());
+    }
+
+    #[test]
+    fn test_operator_traits() {
+        let mut set = CoordSet::empty();
+        set += Coord::C0;
+        set += Coord::C2;
+        assert!(set.has(Coord::C0));
+        assert!(set.has(Coord::C2));
+        assert_eq!(set.len(), 2);
+
+        let set2 = CoordSet::from_labels("2 3");
+        let union = set | set2;
+        for c in &[Coord::C0, Coord::C1, Coord::C2] {
+            assert!(union.has(*c));
+        }
+
+        let intersect = set & set2;
+        assert!(intersect.has(Coord::C2));
+        assert_eq!(intersect.len(), 1);
+
+        let minus = union - set;
+        assert!(minus.has(Coord::C1));
+        assert!(!minus.has(Coord::C0));
+        assert!(!minus.has(Coord::C2));
+
+        let inverted = !set;
+        assert!(!inverted.has(Coord::C0));
+        assert!(inverted.has(Coord::C1));
+    }
+
+    #[test]
+    fn test_index_trait() {
+        let set = CoordSet::from_labels("1 3 5");
+        assert!(set[Coord::C0]);
+        assert!(!set[Coord::C1]);
+        assert!(set[Coord::C2]);
+    }
+
+    #[test]
+    fn test_display_debug() {
+        let empty = CoordSet::empty();
+        assert_eq!(format!("{}", empty), EMPTY_SET.to_string());
+
+        let set = CoordSet::from_labels("1 3 5");
+        let display = format!("{}", set);
+        assert!(display.contains('1'));
+        assert!(display.contains('3'));
+        assert!(display.contains('5'));
+    }
+}
