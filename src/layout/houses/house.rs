@@ -767,3 +767,172 @@ mod tests {
         assert_eq!(houses!("R3 R6"), got);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::houses::coord::coord;
+    use crate::layout::cells::cell_set::cells;
+    use crate::layout::houses::house_set::houses;
+
+    #[test]
+    fn house_creation_and_properties() {
+        let r = House::row(coord!(0));
+        let c = House::column(coord!(1));
+        let b = House::block(coord!(2));
+
+        // Shape & Coord
+        assert!(r.is_row());
+        assert!(!r.is_column());
+        assert!(!r.is_block());
+        assert_eq!(r.coord(), coord!(0));
+
+        assert!(c.is_column());
+        assert_eq!(c.coord(), coord!(1));
+
+        assert!(b.is_block());
+        assert_eq!(b.coord(), coord!(2));
+
+        // Label & console_label
+        assert_eq!(r.label(), "Row A");
+        assert_eq!(r.console_label(), 'A');
+        assert_eq!(c.label(), "Col 2");
+        assert_eq!(c.console_label(), '2');
+        assert_eq!(b.label(), "Box 3");
+        assert_eq!(b.console_label(), '❸');
+    }
+
+    #[test]
+    fn house_from_str() {
+        let r: House = "R1".into();
+        assert_eq!(r, House::row(coord!(0)));
+
+        let c: House = "C5".into();
+        assert_eq!(c, House::column(coord!(4)));
+
+        let b: House = "B9".into();
+        assert_eq!(b, House::block(coord!(8)));
+    }
+
+    #[test]
+    #[should_panic]
+    fn house_from_str_invalid_shape() {
+        let _ : House = "X1".into();
+    }
+
+    #[test]
+    #[should_panic]
+    fn house_from_str_invalid_coord() {
+        let _ : House = "R0".into();
+    }
+
+    #[test]
+    fn cells_and_cell_access() {
+        let r = House::row(coord!(1));
+        let expected = cells!("B1 B2 B3 B4 B5 B6 B7 B8 B9");
+        assert_eq!(r.cells(), expected);
+        assert_eq!(r.cell(coord!(0)), Cell::from_row(coord!(1), coord!(0)));
+
+        let c = House::column(coord!(2));
+        let expected_c = cells!("A3 B3 C3 D3 E3 F3 G3 H3 I3");
+        assert_eq!(c.cells(), expected_c);
+        assert_eq!(c.cell(coord!(1)), Cell::from_column(coord!(2), coord!(1)));
+
+        let b = House::block(coord!(3));
+        let expected_b = cells!("D1 D2 D3 E1 E2 E3 F1 F2 F3");
+        assert_eq!(b.cells(), expected_b);
+        assert_eq!(b.cell(coord!(0)), Cell::from_block(coord!(3), coord!(0)));
+    }
+
+    #[test]
+    fn house_intersections() {
+        let row = House::row(coord!(0));
+        let block = House::block(coord!(0));
+        let expected = cells!("A1 A2 A3");
+        assert_eq!(row.intersect(block), expected);
+
+        let col = House::column(coord!(0));
+        assert_eq!(col.intersect(block), cells!("A1 D1 G1"));
+    }
+
+    #[test]
+    fn crossing_houses_test() {
+        let row = House::row(coord!(1));
+        let selected_cells = cells!("B1 B2");
+        let crossing = row.crossing_houses(selected_cells);
+        assert_eq!(crossing, houses!("C1 C2"));
+
+        let col = House::column(coord!(5));
+        let selected_cells = cells!("C6 F6");
+        let crossing_col = col.crossing_houses(selected_cells);
+        assert_eq!(crossing_col, houses!("R3 R6"));
+    }
+
+    #[test]
+    fn house_iterators() {
+        let mut iter = HouseIter::new(Shape::Row);
+        for i in 0..9 {
+            let house = iter.next().unwrap();
+            assert_eq!(house.coord(), Coord::new(i));
+            assert!(house.is_row());
+        }
+        assert!(iter.next().is_none());
+
+        let mut all_iter = HousesIter::new();
+        let mut count = 0;
+        while let Some(h) = all_iter.next() {
+            count += 1;
+            assert!(matches!(h.shape(), Shape::Row | Shape::Column | Shape::Block));
+        }
+        assert_eq!(count, 27);
+    }
+
+    #[test]
+    fn add_and_neg_operators() {
+        let r1 = House::row(coord!(0));
+        let r2 = House::row(coord!(1));
+        let hs = r1 + r2; // HouseSet
+        assert_eq!(hs.len(), 2);
+        assert!(hs.contains(r1));
+        assert!(hs.contains(r2));
+
+        let hs_neg = -r1; // HouseSet without r1
+        assert_eq!(hs_neg.len(), 8);
+        assert!(!hs_neg.contains(r1));
+    }
+
+    #[test]
+    fn house_boundaries() {
+        let top_row = House::row(coord!(0));
+        let bottom_row = House::row(coord!(8));
+        let left_col = House::column(coord!(0));
+        let right_col = House::column(coord!(8));
+
+        assert!(top_row.is_top());
+        assert!(!bottom_row.is_top());
+        assert!(bottom_row.is_bottom());
+        assert!(left_col.is_left());
+        assert!(right_col.is_right());
+
+        // Block boundaries
+        let block_row_top = House::row(coord!(0));
+        let block_row_bottom = House::row(coord!(2));
+        let block_col_left = House::column(coord!(0));
+        let block_col_right = House::column(coord!(2));
+
+        assert!(block_row_top.is_block_top());
+        assert!(block_row_bottom.is_block_bottom());
+        assert!(block_col_left.is_block_left());
+        assert!(block_col_right.is_block_right());
+    }
+
+    #[test]
+    fn partial_ord_house() {
+        let h1 = House::row(coord!(0));
+        let h2 = House::row(coord!(1));
+        let h3 = House::column(coord!(0));
+        assert!(h1 < h2);
+        assert!(h2 > h1);
+        assert!(h1 < h3); // Rows < Columns
+    }
+}
