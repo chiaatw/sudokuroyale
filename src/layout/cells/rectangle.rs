@@ -294,3 +294,127 @@ const CELL_COORDS: [[(CoordPair, CoordPair); 27]; 2] = {
     }
     out
 };
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Cell;
+    use crate::CellSet;
+
+    #[test]
+    fn test_rectangle_new_basic() {
+        let tl = Cell::from_str("A1");
+        let br = Cell::from_str("B2");
+        let rect = Rectangle::new(tl, br);
+
+        assert_eq!(rect.tl_br().0, tl);
+        assert_eq!(rect.tl_br().1, br);
+
+        if let Rectangle::Data { block_count, .. } = rect {
+            assert_eq!(block_count, 1); // A1-B2 liegt innerhalb eines Blocks
+        }
+    }
+
+    #[test]
+    fn test_rectangle_new_block_count() {
+        // Rechteck innerhalb eines Blocks
+        let rect1 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("B2"));
+        assert_eq!(matches!(rect1, Rectangle::Data { block_count: 1, .. }), true);
+
+        // Rechteck über 2 Blöcke horizontal
+        let rect2 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("A5"));
+        if let Rectangle::Data { block_count, .. } = rect2 {
+            assert_eq!(block_count, 2);
+        }
+
+        // Rechteck über 4 Blöcke
+        let rect3 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("E5"));
+        if let Rectangle::Data { block_count, .. } = rect3 {
+            assert_eq!(block_count, 4);
+        }
+    }
+
+    #[test]
+    fn test_rectangle_from_cells() {
+        let c1 = Cell::from_str("A1");
+        let c2 = Cell::from_str("A2");
+        let c3 = Cell::from_str("B1");
+        let c4 = Cell::from_str("B2");
+
+        let rect = Rectangle::from(c1, c2, c3, c4);
+        let (tl, br) = rect.tl_br();
+        assert_eq!(tl, Cell::from_str("A1"));
+        assert_eq!(br, Cell::from_str("B2"));
+    }
+
+    #[test]
+    fn test_rectangle_with_origin() {
+        let rect = Rectangle::new(Cell::from_str("A1"), Cell::from_str("B2"));
+        let r1 = rect.with_origin(Cell::from_str("B2"));
+        let r2 = rect.with_origin(Cell::from_str("A1"));
+
+        assert_eq!(r2.tl_br(), rect.tl_br());
+        assert_ne!(r1.tl_br(), rect.tl_br());
+    }
+
+    #[test]
+    fn test_rectangle_try_from_vec_and_cells() {
+        let cells = vec![
+            Cell::from_str("A1"),
+            Cell::from_str("A2"),
+            Cell::from_str("B1"),
+            Cell::from_str("B2"),
+        ];
+
+        let rect_from_vec = Rectangle::try_from(cells.clone()).unwrap();
+        let rect_from_set = Rectangle::try_from(CellSet::from_iter(cells.clone())).unwrap();
+
+        assert_eq!(rect_from_vec.tl_br(), rect_from_set.tl_br());
+
+        // Fehlerfälle
+        let too_few = vec![Cell::from_str("A1")];
+        assert!(Rectangle::try_from(too_few).is_err());
+
+        let too_many = vec![
+            Cell::from_str("A1"),
+            Cell::from_str("A2"),
+            Cell::from_str("B1"),
+            Cell::from_str("B2"),
+            Cell::from_str("C3"),
+        ];
+        assert!(Rectangle::try_from(too_many).is_err());
+    }
+
+    #[test]
+    fn test_rectangle_display_and_debug() {
+        let rect = Rectangle::new(Cell::from_str("A1"), Cell::from_str("B2"));
+        let debug_str = format!("{:?}", rect);
+        let display_str = format!("{}", rect);
+
+        assert!(debug_str.contains("Rectangle(A1 B2)"));
+        assert!(display_str.starts_with("R"));
+        assert!(display_str.contains("C"));
+    }
+
+    #[test]
+    fn test_rectangle_iter() {
+        let mut iter = Rectangle::iter();
+        let mut count = 0;
+        while let Some(rect) = iter.next() {
+            let (tl, br) = rect.tl_br();
+            // Alle Rechtecke müssen tl <= br sein
+            assert!(tl.index() <= br.index());
+            count += 1;
+        }
+        assert!(count > 0); // Iterator liefert Rechtecke
+    }
+
+    #[test]
+    fn test_rectangle_iter_fused() {
+        let mut iter = Rectangle::iter();
+        while iter.next().is_some() {}
+        // FusedIterator: nach Ende liefert None
+        assert!(iter.next().is_none());
+        assert!(iter.next().is_none());
+    }
+}
