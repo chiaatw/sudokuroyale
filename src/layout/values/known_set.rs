@@ -458,3 +458,135 @@ impl<I> KnownSetIteratorIntersection for I
             self.fold(KnownSet::full(), |acc, h| acc & h)
         }
     }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn known_new_and_index() {
+        let k = Known::new(1);
+        assert_eq!(k.index(), 0);
+        let k = Known::new(9);
+        assert_eq!(k.index(), 8);
+    }
+
+    #[test]
+    fn known_from_index() {
+        let k = Known::from_index(0);
+        assert_eq!(k.value().value(), 1);
+        let k = Known::from_index(8);
+        assert_eq!(k.value().value(), 9);
+    }
+
+    #[test]
+    fn known_bit() {
+        let k = Known::new(3);
+        assert_eq!(k.bit(), 1 << 2);
+    }
+
+    #[test]
+    fn known_iter_yields_all() {
+        let labels: Vec<_> = Known::iter().map(|k| k.label()).collect();
+        assert_eq!(labels, ['1','2','3','4','5','6','7','8','9']);
+    }
+
+    #[test]
+    fn knownset_empty_and_full() {
+        let empty = KnownSet::empty();
+        assert!(empty.is_empty());
+        let full = KnownSet::full();
+        assert!(full.is_full());
+        assert_eq!(full.len(), 9);
+    }
+
+    #[test]
+    fn knownset_add_remove() {
+        let mut set = KnownSet::empty();
+        let k = Known::new(4);
+        set.add(k);
+        assert!(set.has(k));
+        set.remove(k);
+        assert!(!set.has(k));
+    }
+
+    #[test]
+    fn knownset_with_without_union_intersect() {
+        let a = Known::new(2);
+        let b = Known::new(5);
+        let mut set = KnownSet::empty();
+        set = set.with(a);
+        set = set.with(b);
+        assert!(set.has(a) && set.has(b));
+
+        let set2 = set.without(a);
+        assert!(!set2.has(a) && set2.has(b));
+
+        let union = set.union(set2);
+        assert!(union.has(a) && union.has(b));
+
+        let intersect = set.intersect(set2);
+        assert!(!intersect.has(a) && intersect.has(b));
+    }
+
+    #[test]
+    fn knownset_inverted() {
+        let mut set = KnownSet::empty();
+        set.add(Known::new(1));
+        let inv = !set;
+        assert!(!inv.has(Known::new(1)));
+        assert!(inv.has(Known::new(2)));
+    }
+
+    #[test]
+    fn knownset_as_single_pair_triple() {
+        let set = KnownSet::empty().with(Known::new(1));
+        assert_eq!(set.as_single().unwrap().index(), 0);
+
+        let set2 = KnownSet::empty().with(Known::new(1)).with(Known::new(2));
+        assert_eq!(set2.as_pair().unwrap(), (Known::new(1), Known::new(2)));
+
+        let set3 = KnownSet::empty().with(Known::new(1)).with(Known::new(2)).with(Known::new(3));
+        assert_eq!(set3.as_triple().unwrap(), (Known::new(1), Known::new(2), Known::new(3)));
+    }
+
+    #[test]
+    fn knownset_iter() {
+        let set = KnownSet::empty().with(Known::new(1)).with(Known::new(3));
+        let labels: Vec<_> = set.iter().map(|k| k.label()).collect();
+        assert_eq!(labels, ['1', '3']);
+    }
+
+    #[test]
+    fn operators_add_sub_bitwise() {
+        let a = KnownSet::empty();
+        let b = a + Known::new(2);
+        assert!(b.has(Known::new(2)));
+        let mut c = KnownSet::empty();
+        c += Known::new(2);
+        assert!(c.has(Known::new(2)));
+
+        let d = KnownSet::full() - Known::new(2);
+        assert!(!d.has(Known::new(2)));
+        let mut e = KnownSet::full();
+        e -= Known::new(2);
+        assert!(!e.has(Known::new(2)));
+
+        let f = KnownSet::empty() | KnownSet::empty();
+        assert!(f.is_empty());
+        let g = KnownSet::full() & KnownSet::full();
+        assert!(g.is_full());
+    }
+
+    #[test]
+    fn from_iterator_known() {
+        let ks: KnownSet = vec![Known::new(1), Known::new(3)].into_iter().collect();
+        assert!(ks.has(Known::new(1)));
+        assert!(ks.has(Known::new(3)));
+    }
+
+    #[test]
+    fn from_iterator_knownset() {
+        let sets: KnownSet = vec![KnownSet::empty().with(Known::new(1)), KnownSet::empty().with(Known::new(2))].into_iter().collect();
+        assert!(sets.has(Known::new(1)));
+        assert!(sets.has(Known::new(2)));
+    }
+}
