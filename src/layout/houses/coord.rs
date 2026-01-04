@@ -122,5 +122,103 @@ impl Coord {
 
     pub(crate) use coord;
     
+#[cfg(test)]
+mod tests {
+    use super::*;
 
+    #[test]
+    fn test_index_and_bit() {
+        let c = Coord::C0;
+        assert_eq!(c.index(), 0);
+        assert_eq!(c.u8(), 0);
+        assert_eq!(c.usize(), 0);
+        assert_eq!(c.bit(), 1);
 
+        let c = Coord::C3;
+        assert_eq!(c.index(), 3);
+        assert_eq!(c.bit(), 1 << 3);
+
+        let c = Coord::C8;
+        assert_eq!(c.index(), 8);
+        assert_eq!(c.bit(), 1 << 8);
+    }
+
+    #[test]
+    fn test_new_and_from_index() {
+        for i in 0..9 {
+            let c = Coord::new(i);
+            assert_eq!(c.index(), i);
+            assert_eq!(Coord::from_index(i as u32), c);
+        }
+    }
+
+    #[test]
+    fn test_from_digit() {
+        for d in 1..=9 {
+            let c = Coord::from_digit(d);
+            assert_eq!(c.index(), d - 1);
+        }
+    }
+
+    #[test]
+    fn test_from_traits() {
+        // i32
+        assert_eq!(Coord::from(0i32), Coord::C0);
+        assert_eq!(Coord::from(8i32), Coord::C8);
+
+        // u8
+        assert_eq!(Coord::from(1u8), Coord::C1);
+        assert_eq!(Coord::from(5u8), Coord::C5);
+
+        // usize
+        assert_eq!(Coord::from(2usize), Coord::C2);
+        assert_eq!(Coord::from(7usize), Coord::C7);
+
+        // char
+        assert_eq!(Coord::from('1'), Coord::C0);
+        assert_eq!(Coord::from('9'), Coord::C8);
+
+        // &str
+        assert_eq!(Coord::from("3"), Coord::C2);
+        assert_eq!(Coord::from("8"), Coord::C7);
+    }
+
+    #[test]
+    fn test_label() {
+        for i in 0..9 {
+            let c = Coord::new(i);
+            assert_eq!(c.label(), (b'1' + i) as char);
+        }
+    }
+
+    #[test]
+    fn test_min_max() {
+        let a = Coord::C1;
+        let b = Coord::C4;
+        assert_eq!(a.min(b), a);
+        assert_eq!(a.max(b), b);
+
+        let a = Coord::C8;
+        let b = Coord::C0;
+        assert_eq!(a.min(b), b);
+        assert_eq!(a.max(b), a);
+    }
+
+    #[test]
+    fn test_display() {
+        let c = Coord::C5;
+        assert_eq!(format!("{}", c), "6");
+
+        let c = Coord::C0;
+        assert_eq!(format!("{}", c), "1");
+    }
+
+    #[test]
+    fn test_macro_coord() {
+        let c = coord!(1);
+        assert_eq!(c, Coord::C0);
+
+        let c = coord!(9);
+        assert_eq!(c, Coord::C8);
+    }
+}
