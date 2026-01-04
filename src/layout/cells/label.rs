@@ -92,3 +92,96 @@ const CELL_LABELS: [&str; 81] = [
     "J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9",
 ];
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_label_valid() {
+        // Erste Reihe
+        let c = CellIndex::from_label("A1").unwrap();
+        assert_eq!(c.index(), 0);
+        assert_eq!(c.label(), "A1");
+
+        let c = CellIndex::from_label("A9").unwrap();
+        assert_eq!(c.index(), 8);
+        assert_eq!(c.label(), "A9");
+
+        // Mittlere Reihe
+        let c = CellIndex::from_label("E5").unwrap();
+        assert_eq!(c.index(), 4 * 9 + 4);
+        assert_eq!(c.label(), "E5");
+
+        // Letzte Reihe (J-Reihe)
+        let c = CellIndex::from_label("J9").unwrap();
+        assert_eq!(c.index(), 8 * 9 + 8); // J ist 8. Reihe (0-basiert)
+        assert_eq!(c.label(), "J9");
+    }
+
+    #[test]
+    fn test_from_label_invalid() {
+        // Ungültige Buchstaben
+        assert!(CellIndex::from_label("I1").is_err());
+        assert!(CellIndex::from_label("K2").is_err());
+        assert!(CellIndex::from_label("Z9").is_err());
+
+        // Ungültige Zahlen
+        assert!(CellIndex::from_label("A0").is_err());
+        assert!(CellIndex::from_label("B10").is_err());
+
+        // Falsche Länge
+        assert!(CellIndex::from_label("").is_err());
+        assert!(CellIndex::from_label("A12").is_err());
+    }
+
+    #[test]
+    fn test_from_index_valid_and_invalid() {
+        // Gültige Indizes
+        for i in 0..81 {
+            let c = CellIndex::from_index(i).unwrap();
+            assert_eq!(c.index(), i);
+        }
+
+        // Ungültiger Index
+        assert!(CellIndex::from_index(81).is_none());
+        assert!(CellIndex::from_index(100).is_none());
+    }
+
+    #[test]
+    fn test_label_from_index() {
+        for i in 0..81 {
+            let label = label_from_index(i);
+            let index = index_from_label(label);
+            assert_eq!(index, i);
+        }
+    }
+
+    #[test]
+    fn test_index_from_label_and_try_index_from_label() {
+        let labels = ["A1", "B2", "C3", "H9", "J1", "J9"];
+        for &label in &labels {
+            let index1 = index_from_label(label);
+            let index2 = try_index_from_label(label).unwrap();
+            assert_eq!(index1, index2);
+
+            let cell = CellIndex::from_index(index1).unwrap();
+            assert_eq!(cell.label(), label);
+        }
+
+        // Ungültige Labels paniken oder geben Fehler zurück
+        assert!(try_index_from_label("I1").is_err());
+        // index_from_label panikt bei ungültigem Label
+        let result = std::panic::catch_unwind(|| {
+            index_from_label("I1");
+        });
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_case_insensitive_labels() {
+        let c1 = CellIndex::from_label("a1").unwrap();
+        let c2 = CellIndex::from_label("A1").unwrap();
+        assert_eq!(c1.index(), c2.index());
+        assert_eq!(c1.label(), c2.label());
+    }
+}
