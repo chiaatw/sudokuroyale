@@ -166,3 +166,80 @@ pub(crate) use known;
 
 const HIGHLIGHT_LABELS: [char; 9] = 
     ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn new_maps_value_to_index() {
+        let k = Known::new(1);
+        assert_eq!(k.index(), 0);
+
+        let k = Known::new(9);
+        assert_eq!(k.index(), 8);
+    }
+
+    #[test]
+    fn from_index_maps_back_to_value() {
+        let k = Known::from_index(0);
+        assert_eq!(k.value().value(), 1);
+
+        let k = Known::from_index(8);
+        assert_eq!(k.value().value(), 9);
+    }
+
+    #[test]
+    fn known_like_consistency() {
+        let k = Known::new(5);
+        assert_eq!(k.index(), 4);
+        assert_eq!(k.bit(), 1 << 4);
+        assert_eq!(k.label(), '5');
+    }
+
+    #[test]
+    fn try_from_char_valid() {
+        let k = Known::try_from('7').unwrap();
+        assert_eq!(k.index(), 6);
+    }
+
+    #[test]
+    fn try_from_char_invalid() {
+        assert!(Known::try_from('0').is_err());
+        assert!(Known::try_from('x').is_err());
+    }
+
+    #[test]
+    fn try_from_str() {
+        assert!(Known::try_from("9").is_ok());
+        assert!(Known::try_from("").is_err());
+    }
+
+    #[test]
+    fn iter_yields_all_knowns() {
+        let values: Vec<_> = Known::iter().map(|k| k.label()).collect();
+        assert_eq!(values, ['1','2','3','4','5','6','7','8','9']);
+    }
+
+    #[test]
+    fn iter_len_is_exact() {
+        let mut iter = Known::iter();
+        assert_eq!(iter.len(), 9);
+        iter.next();
+        assert_eq!(iter.len(), 8);
+    }
+
+    #[test]
+    fn add_produces_knownset() {
+        let a = Known::new(3);
+        let b = Known::new(5);
+        let set = a + b;
+        assert!(set.contains(a));
+        assert!(set.contains(b));
+    }
+
+    #[test]
+    fn negation_excludes_value() {
+        let k = Known::new(4);
+        let set = -k;
+        assert!(!set.contains(k));
+    }
+}
