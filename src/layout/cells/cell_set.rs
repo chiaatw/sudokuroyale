@@ -721,5 +721,161 @@ mod tests {
             cells!("B8 C4 F5 H2").pattern_string()
         );
     }
+    #[test]
+    fn test_add_and_remove() {
+        let mut set = CellSet::empty();
+        let c1 = Cell::new(0);
+        let c2 = Cell::new(10);
+
+        set.add(c1);
+        assert!(set.has(c1));
+        set.add(c2);
+        assert!(set.has(c2));
+        assert_eq!(set.len(), 2);
+
+        set.remove(c1);
+        assert!(!set.has(c1));
+        assert_eq!(set.len(), 1);
+    }
+
+    #[test]
+    fn test_with_and_without() {
+        let set = CellSet::empty();
+        let c = Cell::new(5);
+        let set2 = set.with(c);
+        assert!(set2.has(c));
+        let set3 = set2.without(c);
+        assert!(!set3.has(c));
+    }
+
+    #[test]
+    fn test_union_intersect_minus_invert() {
+        let c1 = Cell::new(1);
+        let c2 = Cell::new(2);
+        let c3 = Cell::new(3);
+
+        let set1 = CellSet::empty().with(c1).with(c2);
+        let set2 = CellSet::empty().with(c2).with(c3);
+
+        let union = set1.union(set2);
+        assert!(union.has(c1));
+        assert!(union.has(c2));
+        assert!(union.has(c3));
+
+        let intersect = set1.intersect(set2);
+        assert!(intersect.has(c2));
+        assert_eq!(intersect.len(), 1);
+
+        let minus = set1.minus(set2);
+        assert!(minus.has(c1));
+        assert!(!minus.has(c2));
+
+        let inverted = set1.inverted();
+        assert!(!inverted.has(c1));
+        assert!(!inverted.has(c2));
+        assert!(inverted.has(c3));
+    }
+
+    #[test]
+    fn test_operator_traits() {
+        let mut set = CellSet::empty();
+        set += Cell::new(0);
+        set += Cell::new(1);
+        assert!(set.has(Cell::new(0)));
+        assert!(set.has(Cell::new(1)));
+
+        let set2 = CellSet::empty() + Cell::new(1) + Cell::new(2);
+        let union = set | set2;
+        assert!(union.has(Cell::new(0)));
+        assert!(union.has(Cell::new(1)));
+        assert!(union.has(Cell::new(2)));
+
+        let intersect = set & set2;
+        assert!(intersect.has(Cell::new(1)));
+        assert_eq!(intersect.len(), 1);
+
+        let diff = set2 - set;
+        assert!(diff.has(Cell::new(2)));
+        assert!(!diff.has(Cell::new(1)));
+
+        let inverted = !set;
+        assert!(!inverted.has(Cell::new(0)));
+        assert!(inverted.has(Cell::new(2)));
+    }
+
+    #[test]
+    fn test_as_single_pair_triple_first_pop() {
+        let single = CellSet::empty().with(Cell::new(5));
+        assert_eq!(single.as_single(), Some(Cell::new(5)));
+        assert_eq!(single.as_pair(), None);
+        assert_eq!(single.as_triple(), None);
+
+        let pair = CellSet::empty().with(Cell::new(1)).with(Cell::new(3));
+        assert_eq!(pair.as_single(), None);
+        assert_eq!(pair.as_pair(), Some((Cell::new(1), Cell::new(3))));
+        assert_eq!(pair.as_triple(), None);
+
+        let triple = CellSet::empty()
+            .with(Cell::new(0))
+            .with(Cell::new(2))
+            .with(Cell::new(4));
+        assert_eq!(triple.as_triple(), Some((Cell::new(0), Cell::new(2), Cell::new(4))));
+
+        let mut pop_set = triple;
+        let popped = pop_set.pop();
+        assert_eq!(popped, Some(Cell::new(0)));
+        assert_eq!(pop_set.len(), 2);
+    }
+
+    #[test]
+    fn test_iter_and_bit_iter() {
+        let set = CellSet::empty()
+            .with(Cell::new(1))
+            .with(Cell::new(3))
+            .with(Cell::new(5));
+
+        let cells: Vec<_> = set.iter().collect();
+        assert_eq!(cells, vec![Cell::new(1), Cell::new(3), Cell::new(5)]);
+
+        let bits: Vec<_> = set.bit_iter().map(|b| b.cell()).collect();
+        assert_eq!(bits, cells);
+    }
+
+    #[test]
+    fn test_share_house_and_rows_columns_blocks() {
+        let set = CellSet::empty().with(Cell::new(0)).with(Cell::new(1));
+        assert!(set.share_row());
+        assert!(!set.share_column());
+        assert!(!set.share_block());
+        assert!(set.share_house(Shape::Row));
+        assert!(!set.share_house(Shape::Column));
+
+        let rows = set.rows();
+        assert_eq!(rows.len(), 1);
+        let columns = set.columns();
+        assert_eq!(columns.len(), 2);
+    }
+
+    #[test]
+    fn test_peers() {
+        let cell = Cell::new(0);
+        let set = CellSet::empty().with(cell);
+        let peers = set.peers();
+        assert!(!peers.has(cell));
+        assert_eq!(peers.len(), Cell::COUNT as usize - 1);
+    }
+
+    #[test]
+    fn test_pattern_string_display_debug() {
+        let set = CellSet::empty().with(Cell::new(0)).with(Cell::new(80));
+        let pattern = set.pattern_string();
+        assert_eq!(pattern.chars().nth(0), Some('1'));
+        assert_eq!(pattern.chars().nth(80), Some('1'));
+
+        let display = format!("{}", set);
+        assert!(display.contains("A1"));
+        let debug = set.debug();
+        assert!(debug.contains("81"));
+    }
 }
 
