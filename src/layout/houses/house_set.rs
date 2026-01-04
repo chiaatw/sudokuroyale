@@ -469,3 +469,105 @@ macro_rules! blocks {
 
 #[allow(unused_imports)]
 pub(crate) use {blocks, cols, houses, rows};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::houses::coord::coord;
+
+    #[test]
+    fn empty_and_full_sets() {
+        let empty = HouseSet::empty(Shape::Row);
+        assert!(empty.is_empty());
+        assert!(!empty.is_full());
+        assert_eq!(empty.len(), 0);
+
+        let full = HouseSet::full(Shape::Row);
+        assert!(!full.is_empty());
+        assert!(full.is_full());
+        assert_eq!(full.len(), 9);
+    }
+
+    #[test]
+    fn add_and_remove_houses() {
+        let r1 = House::row(coord!(0));
+        let r2 = House::row(coord!(1));
+
+        let mut set = HouseSet::empty(Shape::Row);
+        set.add(r1);
+        assert!(set.has(r1));
+        assert_eq!(set.len(), 1);
+
+        set.add(r2);
+        assert!(set.has(r2));
+        assert_eq!(set.len(), 2);
+
+        set.remove(r1);
+        assert!(!set.has(r1));
+        assert_eq!(set.len(), 1);
+    }
+
+    #[test]
+    fn union_and_intersect() {
+        let r1 = House::row(coord!(0));
+        let r2 = House::row(coord!(1));
+
+        let set1 = HouseSet::empty(Shape::Row).with(r1);
+        let set2 = HouseSet::empty(Shape::Row).with(r2);
+
+        let union = set1.union(set2);
+        assert!(union.has(r1) && union.has(r2));
+        assert_eq!(union.len(), 2);
+
+        let intersect = union.intersect(set1);
+        assert!(intersect.has(r1));
+        assert!(!intersect.has(r2));
+        assert_eq!(intersect.len(), 1);
+    }
+
+    #[test]
+    fn minus_and_inverted() {
+        let r1 = House::row(coord!(0));
+        let r2 = House::row(coord!(1));
+
+        let full = HouseSet::full(Shape::Row);
+        let minus_set = full.minus(HouseSet::empty(Shape::Row).with(r1));
+        assert!(!minus_set.has(r1));
+        assert!(minus_set.has(r2));
+
+        let inv = minus_set.inverted();
+        assert!(inv.has(r1));
+        assert!(!inv.has(r2));
+    }
+
+    #[test]
+    #[should_panic]
+    fn add_wrong_shape_panics() {
+        let r1 = House::row(coord!(0));
+        let c1 = House::column(coord!(0));
+        let _ = HouseSet::empty(Shape::Row).with(c1);
+    }
+
+    #[test]
+    fn iter_and_from_iter() {
+        let r1 = House::row(coord!(0));
+        let r2 = House::row(coord!(1));
+        let set: HouseSet = vec![r1, r2].into_iter().collect();
+
+        let mut iterated = vec![];
+        for h in set {
+            iterated.push(h);
+        }
+        assert_eq!(iterated.len(), 2);
+        assert!(iterated.contains(&r1) && iterated.contains(&r2));
+    }
+
+    #[test]
+    fn from_labels() {
+        let set = HouseSet::from_labels("R1 R2");
+        assert!(set.has(House::row(coord!(0))));
+        assert!(set.has(House::row(coord!(1))));
+        assert_eq!(set.len(), 2);
+    }
+}
+
