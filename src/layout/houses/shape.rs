@@ -264,6 +264,149 @@ pub static CELL_SETS: Lazy<[[CellSet; 9]; 3]> = Lazy::new(|| [
     Shape::Block.cell_sets(),
 ]);
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn shape_label_and_index() {
+        assert_eq!(Shape::Row.label(), "Row");
+        assert_eq!(Shape::Column.label(), "Col");
+        assert_eq!(Shape::Block.label(), "Box");
+
+        assert_eq!(Shape::Row.index(), 0);
+        assert_eq!(Shape::Column.index(), 1);
+        assert_eq!(Shape::Block.index(), 2);
+    }
+
+    #[test]
+    fn shape_from_char() {
+        assert_eq!(Shape::from('R'), Shape::Row);
+        assert_eq!(Shape::from('C'), Shape::Column);
+        assert_eq!(Shape::from('B'), Shape::Block);
+    }
+
+    #[test]
+    #[should_panic]
+    fn shape_from_char_invalid() {
+        let _ = Shape::from('X');
+    }
+
+    #[test]
+    fn shape_new_index() {
+        assert_eq!(Shape::new(0), Shape::Row);
+        assert_eq!(Shape::new(1), Shape::Column);
+        assert_eq!(Shape::new(2), Shape::Block);
+    }
+
+    #[test]
+    #[should_panic]
+    fn shape_new_index_invalid() {
+        let _ = Shape::new(3);
+    }
+
+    #[test]
+    fn cells_row_column_block() {
+        let row_cells = Shape::Row.cells();
+        let col_cells = Shape::Column.cells();
+        let block_cells = Shape::Block.cells();
+
+        // Row: first row should be 0..8
+        for i in 0..9 {
+            assert_eq!(row_cells[0][i].0, i as u8);
+        }
+        // Column: first column should be multiples of 9
+        for i in 0..9 {
+            assert_eq!(col_cells[0][i].0, (i * 9) as u8);
+        }
+        // Block: first block first row
+        assert_eq!(block_cells[0][0].0, 0);
+        assert_eq!(block_cells[0][1].0, 1);
+        assert_eq!(block_cells[0][2].0, 2);
+    }
+
+    #[test]
+    fn cell_sets_length() {
+        let row_sets = Shape::Row.cell_sets();
+        assert_eq!(row_sets.len(), 9);
+        let col_sets = Shape::Column.cell_sets();
+        assert_eq!(col_sets.len(), 9);
+        let block_sets = Shape::Block.cell_sets();
+        assert_eq!(block_sets.len(), 9);
+    }
+
+    #[test]
+    fn house_and_house_iter() {
+        let house = Shape::Row.house(Coord::new(3));
+        assert_eq!(house.coord.0, 3);
+        assert!(house.shape.is_row());
+
+        let mut iter = Shape::Row.house_iter();
+        for i in 0..9 {
+            let h = iter.next().unwrap();
+            assert_eq!(h.coord.0, i);
+            assert!(h.shape.is_row());
+        }
+        assert!(iter.next().is_none());
+    }
+
+    #[test]
+    fn shape_iter() {
+        let mut iter = Shape::iter();
+        assert_eq!(iter.next(), Some(Shape::Row));
+        assert_eq!(iter.next(), Some(Shape::Column));
+        assert_eq!(iter.next(), Some(Shape::Block));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn cell_at_correct() {
+        // Row 1, index 5 → Cell should be 9*1 + 5 = 14
+        let c = Shape::Row.cell_at(Coord::new(1), 5);
+        assert_eq!(c.0, 14);
+        // Column 2, index 3 → Cell should be 2 + 9*3 = 29
+        let c = Shape::Column.cell_at(Coord::new(2), 3);
+        assert_eq!(c.0, 29);
+    }
+
+    #[test]
+    fn house_type_checks() {
+        let row = Shape::Row;
+        let col = Shape::Column;
+        let block = Shape::Block;
+
+        assert!(row.is_row());
+        assert!(!row.is_column());
+        assert!(!row.is_block());
+
+        assert!(col.is_column());
+        assert!(!col.is_row());
+        assert!(!col.is_block());
+
+        assert!(block.is_block());
+        assert!(!block.is_row());
+        assert!(!block.is_column());
+    }
+
+    #[test]
+    fn display_debug() {
+        let s = format!("{}", Shape::Row);
+        assert_eq!(s, "Row");
+        let d = format!("{:?}", Shape::Block);
+        assert_eq!(d, "Shape::Box");
+    }
+
+    #[test]
+    fn coord_and_cell_debug() {
+        let coord = Coord::new(7);
+        let c = Cell::new(42);
+        let coord_dbg = format!("{:?}", coord);
+        let cell_dbg = format!("{:?}", c);
+        assert!(coord_dbg.contains("7"));
+        assert!(cell_dbg.contains("42"));
+    }
+}
+
 
 
 
