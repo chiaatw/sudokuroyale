@@ -121,3 +121,63 @@ macro_rules! value {
 
 #[allow(unused_imports)]
 pub(crate) use value;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unknown_is_zero() {
+        let v = Value::unknown();
+        assert!(v.is_unknown());
+        assert_eq!(v.raw(), 0);
+    }
+
+    #[test]
+    fn new_out_of_range_is_unknown() {
+        assert!(Value::new(10).is_unknown());
+        assert!(Value::new(255).is_unknown());
+    }
+
+    #[test]
+    fn from_u8() {
+        for i in 1..=9 {
+            let v = Value::from(i);
+            assert!(v.is_known());
+            assert_eq!(v.raw(), i);
+        }
+    }
+
+    #[test]
+    fn from_char() {
+        assert_eq!(Value::from('5').raw(), 5);
+        assert!(Value::from('.').is_unknown());
+        assert!(Value::from('0').is_unknown());
+    }
+
+    #[test]
+    fn from_str() {
+        assert_eq!(Value::from("9").raw(), 9);
+        assert!(Value::from("").is_unknown());
+    }
+
+    #[test]
+    fn label_known_and_unknown() {
+        assert_eq!(Value::from(3).label(), '3');
+        assert_eq!(Value::unknown().label(), MISSING);
+    }
+
+    #[test]
+    fn not_operator() {
+        assert!(!Value::unknown());
+        assert!(!(!Value::from(4)));
+    }
+
+    #[test]
+    fn display_and_debug_match_label() {
+        let v = Value::from(7);
+        assert_eq!(format!("{}", v), "7");
+        assert_eq!(format!("{:?}", v), "7");
+    }
+
+}
