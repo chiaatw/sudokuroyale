@@ -262,3 +262,183 @@ impl fmt::Display for Effects {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::{Cell, Known};
+    use crate::puzzle::{Action, Board, Strategy, Change, Error, KnownSet, CellSet};
+
+    fn cell(i: usize) -> Cell {
+        Cell::new(i)
+    }
+
+    fn known(n: u8) -> Known {
+        Known::from(n)
+    }
+
+    fn action_set(cell: Cell, known: Known) -> Action {
+        Action::new_set(Strategy::NakedSingle, cell, known)
+    }
+
+    fn action_erase(cell: Cell, known: Known) -> Action {
+        Action::new_erase(Strategy::LockedCandidates, cell, known)
+    }
+
+    #[test]
+    fn new_effects_empty() {
+        let effects = Effects::new();
+        assert!(effects.is_empty());
+        assert!(!effects.has_errors());
+        assert!(!effects.has_actions());
+    }
+
+    #[test]
+    fn add_action_nonempty() {
+        let mut effects = Effects::new();
+        let action = action_set(cell(0), known(1));
+
+        let added = effects.add_action(action.clone());
+        assert!(added);
+        assert!(effects.has_actions());
+        assert_eq!(effects.actions().len(), 1);
+        assert_eq!(effects.actions()[0], action);
+    }
+
+    #[test]
+    fn add_action_empty_returns_false() {
+        let mut effects = Effects::new();
+        let empty_action = Action::new(Strategy::NakedSingle);
+
+        let added = effects.add_action(empty_action);
+        assert!(!added);
+        assert!(!effects.has_actions());
+    }
+
+    #[test]
+    fn add_error_and_clear() {
+        let mut effects = Effects::new();
+        let error = Error::UnsolvableCell(cell(0));
+        effects.add_error(error.clone());
+
+        assert!(effects.has_errors());
+        assert_eq!(effects.error_count(), 1);
+        assert_eq!(effects.errors()[0], error);
+
+        effects.clear_errors();
+        assert!(!effects.has_errors());
+        assert_eq!(effects.error_count(), 0);
+    }
+
+    #[test]
+    fn add_set_and_erase_shortcuts() {
+        let mut effects = Effects::new();
+        effects.add_set(Strategy::NakedSingle, cell(0), known(1));
+        effects.add_erase(Strategy::LockedCandidates, cell(1), known(2));
+
+        assert_eq!(effects.actions().len(), 2);
+        assert!(effects.actions()[0].sets(cell(0), known(1)));
+        assert!(effects.actions()[1].erases(cell(1), known(2)));
+    }
+
+    #[test]
+    fn affecting_cell_and_known_filters_actions() {
+        let mut effects = Effects::new();
+        effects.add_set(Strategy::NakedSingle, cell(0), known(1));
+        effects.add_erase(Strategy::LockedCandidates, cell(1), known(2));
+
+        let cell_effects = effects.affecting_cell(cell(0));
+        assert_eq!(cell_effects.actions().len(), 1);
+        assert!(cell_effects.actions()[0].sets(cell(0), known(1)));
+
+        let known_effects = effects.affecting_known(known(2));
+        assert_eq!(known_effects.actions().len(), 1);
+        assert!(known_effects.actions()[0].erases(cell(1), known(2)));
+    }
+
+    #[test]
+    fn without_action_removes_action_by_index() {
+        let mut effects = Effects::new();
+        effects.add_set(Strategy::NakedSingle, cell(0), known(1));
+        effects.add_erase(Strategy::LockedCandidates, cell(1), known(2));
+
+        let new_effects = effects.without_action(0);
+        assert_eq!(new_effects.actions().len(), 1);
+        assert!(new_effects.actions()[0].erases(cell(1), known(2)));
+    }
+
+    #[test]
+    fn take_actions_appends_from_other_effects() {
+        let mut effects1 = Effects::new();
+        effects1.add_set(Strategy::NakedSingle, cell(0), known(1));
+
+        let mut effects2 = Effects::new();
+        effects2.add_erase(Strategy::LockedCandidates, cell(1), known(2));
+
+        effects1.take_actions(effects2);
+        assert_eq!(effects1.actions().len(), 2);
+    }
+
+    #[test]
+    fn apply_actions_returns_valid() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+        let mut applied_effects = Effects::new();
+
+        effects.add_set(Strategy::NakedSingle, cell(0), known(1));
+
+        let change = effects.apply(&mut board, &mut applied_effects);
+        assert_eq!(change, Change::Valid);
+        assert!(board.is_known(cell(0)));
+        assert_eq!(board.value(cell(0)).known(), Some(known(1)));
+    }
+
+    #[test]
+    fn apply_strategy_applies_only_matching_strategy() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+        effects.add_set(Strategy::NakedSingle, cell(0), known(1));
+        effects.add_set(Strategy::HiddenSingle, cell(1), known(2));
+
+        let mut applied = Effects::new();
+        let change = effects.apply_strategy(&mut board, Strategy::NakedSingle, &mut applied);
+
+        assert_eq!(change, Change::Valid);
+        assert!(board.is_known(cell(0)));
+        assert!(!board.is_known(cell(1)));
+    }
+
+    #[test]
+    fn apply_all_returns_some_if_errors() {
+        let mut effects = Effects::new();
+        effects.add_error(Error::UnsolvableCell(cell(0)));
+        let mut board = Board::new();
+
+        let result = effects.apply_all(&mut board);
+        assert!(result.is_some());
+        assert!(result.unwrap().has_errors());
+    }
+
+    #[test]
+    fn apply_all_strategy_loops_and_applies_correctly() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+        effects.add_set(Strategy::NakedSingle, cell(0), known(1));
+
+        let result = effects.apply_all_strategy(&mut board, Strategy::NakedSingle);
+        assert!(result.is_none());
+        assert!(board.is_known(cell(0)));
+    }
+
+    #[test]
+    fn display_outputs_actions_and_errors() {
+        let mut effects = Effects::new();
+        effects.add_error(Error::UnsolvableCell(cell(0)));
+        effects.add_set(Strategy::NakedSingle, cell(1), known(2));
+
+        let output = format!("{}", effects);
+        assert!(output.contains("Errors:"));
+        assert!(output.contains("Actions:"));
+        assert!(output.contains(&cell(1).to_string()));
+    }
+}
