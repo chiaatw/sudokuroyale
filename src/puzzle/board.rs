@@ -408,3 +408,201 @@ impl fmt::Display for Board {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::{Cell, Known, KnownSet, CellSet, House};
+    use crate::puzzle::{Effects, Strategy};
+
+    fn cell(i: usize) -> Cell {
+        Cell::new(i)
+    }
+
+    fn known(n: u8) -> Known {
+        Known::from(n)
+    }
+
+    /* ---------------- Change ---------------- */
+
+    #[test]
+    fn change_and_logic() {
+        assert_eq!(Change::None & Change::Valid, Change::Valid);
+        assert_eq!(Change::Valid & Change::None, Change::Valid);
+        assert_eq!(Change::Valid & Change::Valid, Change::Valid);
+        assert_eq!(Change::Valid & Change::Invalid, Change::Invalid);
+        assert_eq!(Change::Invalid & Change::Valid, Change::Invalid);
+    }
+
+    #[test]
+    fn change_changed_flag() {
+        assert!(!Change::None.changed());
+        assert!(Change::Valid.changed());
+        assert!(Change::Invalid.changed());
+    }
+
+    /* ---------------- Board init ---------------- */
+
+    #[test]
+    fn new_board_is_empty() {
+        let board = Board::new();
+
+        assert_eq!(board.known_count(), 0);
+        assert_eq!(board.given_count(), 0);
+        assert_eq!(board.unknown_count(), 81);
+        assert!(board.unknowns().is_full());
+        assert!(!board.is_fully_solved());
+    }
+
+    #[test]
+    fn new_board_has_all_candidates() {
+        let board = Board::new();
+
+        for cell in Cell::iter() {
+            assert_eq!(board.candidates(cell), KnownSet::full());
+            assert!(board.cells_with_n_candidates(9).has(cell));
+        }
+    }
+
+    /* ---------------- set_known / set_given ---------------- */
+
+    #[test]
+    fn set_known_sets_value() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        let c = cell(0);
+        let k = known(1);
+
+        let change = board.set_known(c, k, &mut effects);
+
+        assert_eq!(change, Change::Valid);
+        assert!(board.is_known(c));
+        assert_eq!(board.value(c).known(), Some(k));
+        assert_eq!(board.candidates(c), KnownSet::empty());
+        assert!(board.cells_with_n_candidates(0).has(c));
+    }
+
+    #[test]
+    fn set_given_marks_given() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        let c = cell(1);
+        let k = known(2);
+
+        board.set_given(c, k, &mut effects);
+
+        assert!(board.is_given(c));
+        assert!(board.is_known(c));
+        assert_eq!(board.given_count(), 1);
+    }
+
+    #[test]
+    fn set_known_same_value_is_noop() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        let c = cell(2);
+        let k = known(3);
+
+        assert_eq!(board.set_known(c, k, &mut effects), Change::Valid);
+        assert_eq!(board.set_known(c, k, &mut effects), Change::None);
+    }
+
+    #[test]
+    fn set_known_conflict_is_invalid() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        let c = cell(3);
+
+        board.set_known(c, known(4), &mut effects);
+        let change = board.set_known(c, known(5), &mut effects);
+
+        assert_eq!(change, Change::Invalid);
+        assert!(!effects.errors().is_empty());
+    }
+
+    /* ---------------- Candidate removal ---------------- */
+
+    #[test]
+    fn remove_candidate_removes_known() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        let c = cell(4);
+        let k = known(6);
+
+        let change = board.remove_candidate(c, k, &mut effects);
+
+        assert_eq!(change, Change::Valid);
+        assert!(!board.is_candidate(c, k));
+        assert_eq!(board.candidates(c).len(), 8);
+    }
+
+    #[test]
+    fn remove_last_candidate_is_invalid() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+        let c = cell(5);
+
+        for k in KnownSet::full() {
+            board.remove_candidate(c, k, &mut effects);
+        }
+
+        assert!(!effects.errors().is_empty());
+    }
+
+    #[test]
+    fn remove_candidates_triggers_naked_single() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+        let c = cell(6);
+
+        let mut knowns = KnownSet::full();
+        let last = known(9);
+        knowns -= last;
+
+        board.remove_candidates(c, knowns, &mut effects);
+
+        assert!(effects
+            .sets()
+            .iter()
+            .any(|s| s.strategy == Strategy::NakedSingle));
+    }
+
+    /* ---------------- Iterators & helpers ---------------- */
+
+    #[test]
+    fn unknown_and_known_iterators() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        board.set_known(cell(0), known(1), &mut effects);
+        board.set_known(cell(1), known(2), &mut effects);
+
+        assert_eq!(board.known_iter().count(), 2);
+        assert_eq!(board.unknown_iter().count(), 79);
+    }
+
+    #[test]
+    fn packed_string_representation() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        board.set_known(cell(0), known(1), &mut effects);
+        board.set_known(cell(80), known(9), &mut effects);
+
+        let s = board.packed_string();
+
+        assert_eq!(s.len(), 81);
+        assert_eq!(s.chars().next().unwrap(), '1');
+        assert_eq!(s.chars().last().unwrap(), '9');
+    }
+
+    #[test]
+    fn display_does_not_panic() {
+        let board = Board::new();
+        let _ = format!("{}", board);
+    }
+}
