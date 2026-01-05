@@ -172,3 +172,68 @@ pub enum Difficulty {
     Diabolical,
     Extreme,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_strategy_difficulty() {
+        // Trivial
+        assert_eq!(Strategy::Given.difficulty(), Difficulty::Trivial);
+        assert_eq!(Strategy::NakedSingle.difficulty(), Difficulty::Trivial);
+
+        // Basic
+        assert_eq!(Strategy::NakedPair.difficulty(), Difficulty::Basic);
+        assert_eq!(Strategy::BoxLineReduction.difficulty(), Difficulty::Basic);
+
+        // Tough
+        assert_eq!(Strategy::XWing.difficulty(), Difficulty::Tough);
+        assert_eq!(Strategy::Bug.difficulty(), Difficulty::Tough);
+
+        // Diabolical
+        assert_eq!(Strategy::Jellyfish.difficulty(), Difficulty::Diabolical);
+        assert_eq!(Strategy::Skyscraper.difficulty(), Difficulty::Diabolical);
+
+        // Extreme
+        assert_eq!(Strategy::BruteForce.difficulty(), Difficulty::Extreme);
+    }
+
+    #[test]
+    fn test_strategy_label() {
+        assert_eq!(Strategy::Given.label(), "Given");
+        assert_eq!(Strategy::NakedSingle.label(), "Naked Single");
+        assert_eq!(Strategy::BoxLineReduction.label(), "Box/Line Reduction");
+        assert_eq!(Strategy::XYChain.label(), "XY-Chain");
+        assert_eq!(Strategy::BruteForce.label(), "Brute Force");
+    }
+
+    #[test]
+    fn test_strategy_display() {
+        let s = Strategy::HiddenSingle;
+        assert_eq!(s.to_string(), "Hidden Single");
+
+        let s = Strategy::Fireworks;
+        assert_eq!(s.to_string(), "Fireworks");
+    }
+
+    #[test]
+    fn test_difficulty_enum_variants() {
+        let difficulties = [
+            Difficulty::Trivial,
+            Difficulty::Basic,
+            Difficulty::Tough,
+            Difficulty::Diabolical,
+            Difficulty::Extreme,
+        ];
+        for &d in &difficulties {
+            match d {
+                Difficulty::Trivial => {},
+                Difficulty::Basic => {},
+                Difficulty::Tough => {},
+                Difficulty::Diabolical => {},
+                Difficulty::Extreme => {},
+            }
+        }
+    }
+}
