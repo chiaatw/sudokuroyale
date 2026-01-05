@@ -63,3 +63,93 @@ impl fmt::Display for Error {
 }
 
 impl std::error::Error for Error{}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::{Cell, House, Rectangle, Known};
+
+    fn cell(i: usize) -> Cell {
+        Cell::new(i)
+    }
+
+    fn known(n: u8) -> Known {
+        Known::from(n)
+    }
+
+    fn house(idx: usize) -> House {
+        House::new(idx)
+    }
+
+    fn rectangle(idx: usize) -> Rectangle {
+        Rectangle::new(idx)
+    }
+
+    #[test]
+    fn cell_returns_some_for_cell_errors() {
+        let e1 = Error::NotCandidate(cell(0), known(1));
+        let e2 = Error::AlreadySolved(cell(1), known(2), known(3));
+        let e3 = Error::UnsolvableCell(cell(2));
+
+        assert_eq!(e1.cell(), Some(cell(0)));
+        assert_eq!(e2.cell(), Some(cell(1)));
+        assert_eq!(e3.cell(), Some(cell(2)));
+    }
+
+    #[test]
+    fn cell_returns_none_for_non_cell_errors() {
+        let e1 = Error::UnsolvableHouse(house(0), known(1));
+        let e2 = Error::DeadlyRectangle(rectangle(0));
+
+        assert_eq!(e1.cell(), None);
+        assert_eq!(e2.cell(), None);
+    }
+
+    #[test]
+    fn is_invalid_returns_true_for_invalid_errors() {
+        let e1 = Error::NotCandidate(cell(0), known(1));
+        let e2 = Error::AlreadySolved(cell(1), known(2), known(3));
+        let e3 = Error::UnsolvableCell(cell(2));
+        let e4 = Error::UnsolvableHouse(house(0), known(1));
+
+        assert!(e1.is_invalid());
+        assert!(e2.is_invalid());
+        assert!(e3.is_invalid());
+        assert!(e4.is_invalid());
+    }
+
+    #[test]
+    fn is_invalid_returns_false_for_non_invalid_error() {
+        let e = Error::DeadlyRectangle(rectangle(0));
+        assert!(!e.is_invalid());
+    }
+
+    #[test]
+    fn display_formats_correctly() {
+        let e1 = Error::NotCandidate(cell(0), known(1));
+        let e2 = Error::AlreadySolved(cell(1), known(2), known(3));
+        let e3 = Error::UnsolvableCell(cell(2));
+        let e4 = Error::UnsolvableHouse(house(0), known(1));
+        let e5 = Error::DeadlyRectangle(rectangle(0));
+
+        let s1 = format!("{}", e1);
+        let s2 = format!("{}", e2);
+        let s3 = format!("{}", e3);
+        let s4 = format!("{}", e4);
+        let s5 = format!("{}", e5);
+
+        assert!(s1.contains(&cell(0).to_string()));
+        assert!(s1.contains(&known(1).to_string()));
+
+        assert!(s2.contains(&cell(1).to_string()));
+        assert!(s2.contains(&known(2).to_string()));
+        assert!(s2.contains(&known(3).to_string()));
+
+        assert!(s3.contains(&cell(2).to_string()));
+
+        assert!(s4.contains(&house(0).to_string()));
+        assert!(s4.contains(&known(1).to_string()));
+
+        assert!(s5.contains(&rectangle(0).to_string()));
+    }
+}
