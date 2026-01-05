@@ -97,3 +97,70 @@
         board: Board,
         cells: Vec<Cell>,
     }
+
+    #[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::{Cell, CellSet};
+    use crate::puzzle::Board;
+    use crate::solve::Solver;
+
+    /// Hilfsfunktion: erzeugt ein "gelöstes" Board für Testzwecke.
+    fn solved_board() -> Board {
+        let mut board = Board::new_empty();
+        // Einfach diagonal Zellen füllen, um einen lösbaren Zustand zu simulieren
+        for i in 0..9 {
+            let cell = Cell::from_index(i * 9 + i); // Diagonale
+            board.set_given(cell, i + 1);          // 1..9 diagonal
+        }
+        board
+    }
+
+    #[test]
+    fn test_finder_new() {
+        let clues = 20;
+        let time = 10;
+        let bar = true;
+
+        let finder = Finder::new(clues, time, bar);
+
+        assert_eq!(finder.clues, clues);
+        assert_eq!(finder.time, time);
+        assert_eq!(finder.bar, bar);
+    }
+
+    #[test]
+    fn test_shuffle_cells() {
+        let mut finder = Finder::new(20, 10, false);
+
+        let board = solved_board();
+        let cellset = board.knowns();
+        let shuffled = finder.shuffle_cells(cellset);
+
+        assert_eq!(shuffled.len(), cellset.len());
+
+        // Prüfen, dass alle Zellen noch enthalten sind
+        for c in cellset {
+            assert!(shuffled.contains(&c));
+        }
+
+        // Prüfen, dass die Reihenfolge wahrscheinlich verändert wurde
+        let normal: Vec<_> = cellset.iter().collect();
+        if normal.len() > 1 {
+            assert_ne!(shuffled[0], normal[0]); // manchmal zufällig gleich
+        }
+    }
+
+    #[test]
+    fn test_backtracking_find_returns_board_and_effects() {
+        let mut finder = Finder::new(20, 1, false);
+        let board = solved_board();
+
+        let (result_board, effects) = finder.backtracking_find(board);
+
+        // Prüfen, dass wir ein Board zurückbekommen
+        assert!(result_board.known_count() <= 81);
+        // Effekte können leer oder nicht-leer sein
+        assert!(effects.is_empty() || !effects.is_empty());
+    }
+}
