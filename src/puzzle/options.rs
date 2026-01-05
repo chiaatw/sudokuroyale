@@ -157,4 +157,62 @@ mod test {
         assert_eq!(true, options.should_apply(Strategy::PointingTriple));
         assert_eq!(true, options.should_apply(Strategy::BoxLineReduction));
     }
+    #[test]
+    fn test_predefined_options() {
+        let none = Options::none();
+        assert!(!none.stop_on_error());
+        assert!(!none.solve_naked_singles());
+        assert!(!none.solve_hidden_singles());
+        assert!(!none.solve_intersection_removals());
+
+        let errors = Options::errors();
+        assert!(errors.stop_on_error());
+        assert!(!errors.solve_naked_singles());
+
+        let all = Options::all();
+        assert!(all.stop_on_error());
+        assert!(all.solve_naked_singles());
+        assert!(all.solve_hidden_singles());
+        assert!(all.solve_intersection_removals());
+    }
+
+    #[test]
+    fn test_setters_toggle_flags() {
+        let mut options = Options::none();
+
+        options = options.set_stop_on_error(true);
+        assert!(options.stop_on_error());
+        options = options.set_stop_on_error(false);
+        assert!(!options.stop_on_error());
+
+        options = options.set_solve_naked_singles(true);
+        assert!(options.solve_naked_singles());
+        options = options.set_solve_naked_singles(false);
+        assert!(!options.solve_naked_singles());
+
+        options = options.set_solve_hidden_singles(true);
+        assert!(options.solve_hidden_singles());
+        options = options.set_solve_hidden_singles(false);
+        assert!(!options.solve_hidden_singles());
+
+        options = options.set_solve_intersection_removals(true);
+        assert!(options.solve_intersection_removals());
+        options = options.set_solve_intersection_removals(false);
+        assert!(!options.solve_intersection_removals());
+    }
+
+    #[test]
+    fn test_chaining_methods() {
+        let options = Options::none()
+            .set_stop_on_error(true)
+            .set_solve_naked_singles(true)
+            .set_solve_hidden_singles(true)
+            .set_solve_intersection_removals(true);
+
+        assert!(options.stop_on_error());
+        assert!(options.solve_naked_singles());
+        assert!(options.solve_hidden_singles());
+        assert!(options.solve_intersection_removals());
+    }
+
 }
