@@ -259,3 +259,156 @@ impl fmt::Display for Action {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::{Cell, CellSet, Known, KnownSet};
+    use crate::puzzle::{Board, Strategy, Verdict};
+
+    fn cell(i: usize) -> Cell {
+        Cell::new(i)
+    }
+
+    #[test]
+    fn new_action_is_empty() {
+        let action = Action::new(Strategy::NakedSingle);
+        assert!(action.is_empty());
+        assert!(!action.has_clues());
+    }
+
+    #[test]
+    fn new_set_creates_set_entry() {
+        let c = cell(0);
+        let k = Known::from(1);
+
+        let action = Action::new_set(Strategy::NakedSingle, c, k);
+
+        assert!(action.sets(c, k));
+        assert!(!action.is_empty());
+        assert!(action.affects_cell(c));
+        assert!(action.affects_known(k));
+    }
+
+    #[test]
+    fn new_erase_creates_erase_entry() {
+        let c = cell(10);
+        let k = Known::from(5);
+
+        let action = Action::new_erase(Strategy::HiddenSingle, c, k);
+
+        assert!(action.erases(c, k));
+        assert!(!action.is_empty());
+        assert!(action.affects_cell(c));
+        assert!(action.affects_known(k));
+    }
+
+    #[test]
+    fn erase_cells_erases_all_cells() {
+        let mut action = Action::new(Strategy::LockedCandidates);
+        let cells: CellSet = [cell(0), cell(1), cell(2)].into();
+        let k = Known::from(3);
+
+        action.erase_cells(cells, k);
+
+        for c in cells {
+            assert!(action.erases(c, k));
+        }
+    }
+
+    #[test]
+    fn erase_knowns_erases_all_knowns() {
+        let mut action = Action::new(Strategy::LockedCandidates);
+        let c = cell(4);
+        let knowns = KnownSet::from_iter([Known::from(1), Known::from(2)]);
+
+        action.erase_knowns(c, knowns);
+
+        for k in knowns {
+            assert!(action.erases(c, k));
+        }
+    }
+
+    #[test]
+    fn collect_sets_is_sorted() {
+        let mut action = Action::new(Strategy::NakedSingle);
+        action.set(cell(5), Known::from(2));
+        action.set(cell(1), Known::from(1));
+        action.set(cell(1), Known::from(3));
+
+        let collected = action.collect_sets();
+
+        assert_eq!(
+            collected,
+            vec![
+                (cell(1), Known::from(1)),
+                (cell(1), Known::from(3)),
+                (cell(5), Known::from(2)),
+            ]
+        );
+    }
+
+    #[test]
+    fn collect_erases_is_sorted() {
+        let mut action = Action::new(Strategy::LockedCandidates);
+        action.erase(cell(2), Known::from(3));
+        action.erase(cell(0), Known::from(1));
+
+        let collected = action.collect_erases();
+
+        assert_eq!(collected[0].0, cell(0));
+        assert_eq!(collected[1].0, cell(2));
+    }
+
+    #[test]
+    fn affects_known_works_for_set_and_erase() {
+        let mut action = Action::new(Strategy::NakedSingle);
+        let k1 = Known::from(4);
+        let k2 = Known::from(7);
+
+        action.set(cell(0), k1);
+        action.erase(cell(1), k2);
+
+        assert!(action.affects_known(k1));
+        assert!(action.affects_known(k2));
+        assert!(!action.affects_known(Known::from(9)));
+    }
+
+    #[test]
+    fn clues_are_recorded() {
+        let mut action = Action::new(Strategy::XWing);
+        let c = cell(8);
+        let k = Known::from(6);
+
+        action.clue_cell_for_known(Verdict::Good, c, k);
+
+        assert!(action.has_clues());
+        assert!(!action.clues().is_empty());
+    }
+
+    #[test]
+    fn display_and_debug_do_not_panic() {
+        let mut action = Action::new(Strategy::NakedSingle);
+        action.set(cell(0), Known::from(1));
+        action.erase(cell(1), Known::from(2));
+
+        let _ = format!("{}", action);
+        let _ = format!("{:?}", action);
+    }
+
+    #[test]
+    fn apply_sets_and_erases_on_board() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        let c = cell(0);
+        let k = Known::from(1);
+
+        let action = Action::new_set(Strategy::NakedSingle, c, k);
+        let change = action.apply(&mut board, &mut effects);
+
+        assert!(change.is_some());
+        assert!(board.is_known(c));
+        assert_eq!(board.known(c), Some(k));
+    }
+}
