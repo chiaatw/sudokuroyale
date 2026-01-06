@@ -366,4 +366,122 @@ mod tests {
             format_for_wiki(&board)
         );
     }
+    #[test]
+    fn test_format_for_fancy_console() {
+        let board = Parse::packed_with_options(Options::errors()).parse_simple(
+            "
+            .8.1.3.7.
+            .9.5.6...
+            ..14.8.2.
+            578241639
+            143659782
+            926837451
+            .379.52..
+            ...3.4.97
+            419782.6.
+            ",
+        );
+
+        let formatted = format_for_fancy_console(&board);
+        assert!(formatted.contains(crate::symbols::MISSING));
+        assert!(formatted.contains('8'));
+    }
+
+    #[test]
+    fn test_format_for_url() {
+        let board = Parse::packed_with_options(Options::errors()).parse_simple(
+            "
+            .8.1.3.7.
+            .9.5.6...
+            ..14.8.2.
+            578241639
+            143659782
+            926837451
+            .379.52..
+            ...3.4.97
+            419782.6.
+            ",
+        );
+
+        let formatted = format_for_url(&board);
+        assert!(formatted.contains('0')); // unsolved cells
+        assert!(formatted.contains('8')); // solved cells
+    }
+
+    #[test]
+    fn test_format_packed_with_spaces_and_custom_unknown() {
+        let board = Parse::packed_with_options(Options::errors()).parse_simple(
+            "
+            .8.1.3.7.
+            .9.5.6...
+            ..14.8.2.
+            578241639
+            143659782
+            926837451
+            .379.52..
+            ...3.4.97
+            419782.6.
+            ",
+        );
+
+        let formatted = format_packed(&board, '*', true);
+        assert!(formatted.contains('*'));
+        assert!(formatted.contains('8'));
+    }
+
+    #[test]
+    fn test_format_packed_empty_board() {
+        let board = Parse::packed_with_options(Options::errors()).parse_simple(
+            "
+            .........
+            .........
+            .........
+            .........
+            .........
+            .........
+            .........
+            .........
+            .........
+            ",
+        );
+
+        let formatted = format_for_console(&board);
+        assert!(formatted.chars().all(|c| c == '.' || c == ' '));
+    }
+
+    #[test]
+    fn test_format_wiki_empty_and_full_board() {
+        let empty_board = Parse::packed_with_options(Options::errors()).parse_simple(
+            "
+            .........
+            .........
+            .........
+            .........
+            .........
+            .........
+            .........
+            .........
+            .........
+            ",
+        );
+        let full_board = Parse::packed_with_options(Options::errors()).parse_simple(
+            "
+            123456789
+            234567891
+            345678912
+            456789123
+            567891234
+            678912345
+            789123456
+            891234567
+            912345678
+            ",
+        );
+
+        let empty_formatted = FormatWiki::new().format(&empty_board);
+        let full_formatted = FormatWiki::new().format(&full_board);
+
+        assert!(empty_formatted.chars().all(|c| c.is_ascii_alphanumeric()));
+        assert!(full_formatted.chars().any(|c| c.is_digit(10)));
+    }
 }
