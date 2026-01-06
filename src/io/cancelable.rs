@@ -28,3 +28,45 @@ pub fn create_signal() -> Cancelable {
 }
 
 static SIGNAL: AtomicBool = AtomicBool::new(false);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cancel_sets_signal() {
+        let c = Cancelable::new();
+        c.clear(); // sicherstellen, dass Signal false ist
+        assert!(!c.is_canceled());
+
+        c.cancel();
+        assert!(c.is_canceled());
+    }
+
+    #[test]
+    fn test_clear_resets_signal() {
+        let c = Cancelable::new();
+        c.cancel();
+        assert!(c.is_canceled());
+
+        c.clear();
+        assert!(!c.is_canceled());
+    }
+
+    #[test]
+    fn test_multiple_cancel_clear() {
+        let c = Cancelable::new();
+
+        c.clear();
+        assert!(!c.is_canceled());
+
+        c.cancel();
+        assert!(c.is_canceled());
+
+        c.cancel();
+        assert!(c.is_canceled());
+
+        c.clear();
+        assert!(!c.is_canceled());
+    }
+}
