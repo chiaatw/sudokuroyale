@@ -441,3 +441,98 @@ fn actually_print_all_and_single_candidates(
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::layout::{Board, Known, Cell};
+    use crate::puzzle::{Action, Verdict};
+    use std::collections::HashMap;
+
+    fn empty_board() -> Board {
+        Board::new()
+    }
+
+    #[test]
+    fn test_write_givens_empty_board() {
+        let board = empty_board();
+        let lines = write_givens(&board);
+        assert!(lines.iter().all(|line| !line.is_empty()));
+    }
+
+    #[test]
+    fn test_write_known_values_empty_board() {
+        let board = empty_board();
+        let lines = write_known_values(&board);
+        assert!(lines.iter().all(|line| !line.is_empty()));
+    }
+
+    #[test]
+    fn test_write_candidate_empty_board() {
+        let board = empty_board();
+        let candidate = Known::from_value(1);
+        let lines = write_candidate(&board, candidate);
+        assert!(lines.iter().all(|line| !line.is_empty()));
+    }
+
+    #[test]
+    fn test_write_candidate_with_highlight_empty_board() {
+        let board = empty_board();
+        let candidate = Known::from_value(1);
+        let verdicts: HashMap<Cell, Verdict> = HashMap::new();
+        let mut map = HashMap::new();
+        map.insert(Cell::new(0), verdicts);
+        let lines = write_candidate_with_highlight(&board, candidate, map);
+        assert!(lines.iter().all(|line| !line.is_empty()));
+    }
+
+    #[test]
+    fn test_write_single_value_fn_called() {
+        let board = empty_board();
+        let mut called = false;
+        let lines = write_single_value(|_cell, _line| {
+            called = true;
+        });
+        assert!(called);
+        assert!(lines.len() > 0);
+    }
+
+    #[test]
+    fn test_add_single_value_labels_basic() {
+        let board = empty_board();
+        let lines = add_single_value_labels(write_givens(&board));
+        assert!(lines.first().unwrap().contains('1'));
+        assert!(lines.last().unwrap().contains('9'));
+    }
+
+    #[test]
+    fn test_add_all_candidates_labels_basic() {
+        let board = empty_board();
+        let grid = write_candidates(&board);
+        let labeled = add_all_candidates_labels(grid);
+        assert!(labeled.first().unwrap().contains('1'));
+        assert!(labeled.last().unwrap().contains('9'));
+    }
+
+    #[test]
+    fn test_write_candidates_and_highlight_do_not_panic() {
+        let board = empty_board();
+        let lines = write_candidates(&board);
+        assert!(lines.len() > 0);
+
+        let verdicts: HashMap<Cell, HashMap<Known, Verdict>> = HashMap::new();
+        let lines2 = write_candidates_with_highlight(&board, verdicts);
+        assert!(lines2.len() > 0);
+    }
+
+    #[test]
+    fn test_actually_print_all_and_single_candidates_runs() {
+        let board = empty_board();
+        let grid = write_candidates(&board);
+        let candidate_grids = Known::iter()
+            .map(|k| write_candidate(&board, k))
+            .collect::<Vec<_>>();
+        actually_print_all_and_single_candidates(grid, candidate_grids);
+        // Keine Panik -> Test besteht
+    }
+}
