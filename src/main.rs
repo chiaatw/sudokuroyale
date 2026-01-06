@@ -252,7 +252,7 @@ fn change_password_endpoint(
     auth: AuthUser,
     req: Json<ChangePasswordRequest>,
     users: &State<Mutex<UserRepository>>,
-    sessions: &State<Mutex<SessionRepository>>, // ← NEU
+    sessions: &State<Mutex<SessionRepository>>, 
 )
  -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
 
@@ -260,7 +260,7 @@ fn change_password_endpoint(
         let mut users_guard = users.lock().unwrap();
 
         match change_password(
-            &sessions_guard,          // ← FEHLENDES ARGUMENT
+            &sessions_guard,          
             &mut users_guard,
             &auth.user_id,
             &req.new_password,
