@@ -11,6 +11,8 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use rocket::http::{Cookie, CookieJar};
 use crate::user::services::login_user;
+use rocket::request::{FromRequest, Outcome};
+
 
 // nur EINMAL, und zwar mit crate::
 use crate::user::repository::UserRepository;
@@ -19,6 +21,8 @@ use crate::user::reset_token_repository::ResetTokenRepository;
 use crate::user::error::AuthError;
 use crate::user::services::register_user;
 use crate::user::services::get_user_from_session;
+use crate::user::services::change_password;
+
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -44,6 +48,12 @@ struct RegisterRequest {
     email: String,
     password: String,
 }
+#[derive(Deserialize)]
+struct ChangePasswordRequest {
+    old_password: String,
+    new_password: String,
+}
+
 
 #[derive(Serialize)]
 struct RegisterResponse {
@@ -110,6 +120,37 @@ struct MeResponse {
     email: String,
 }
 
+struct AuthUser {
+    user_id: uuid::Uuid,
+}
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for AuthUser {
+    type Error = ();
+
+    async fn from_request(req: &'r rocket::Request<'_>) -> Outcome<Self, Self::Error> {
+        let cookies = match req.cookies().get("session_id") {
+            Some(c) => c,
+            None => return Outcome::Error((Status::Unauthorized, ())),
+        };
+
+        let session_id = match uuid::Uuid::parse_str(cookies.value()) {
+            Ok(id) => id,
+            Err(_) => return Outcome::Error((Status::Unauthorized, ())),
+        };
+
+        let sessions = match req.rocket().state::<Mutex<SessionRepository>>() {
+            Some(s) => s,
+            None => return Outcome::Error((Status::InternalServerError, ())),
+        };
+
+        let sessions_guard = sessions.lock().unwrap();
+        match sessions_guard.find_by_session_id(&session_id) {
+            Some(session) => Outcome::Success(AuthUser { user_id: session.user_id }),
+
+            None => Outcome::Error((Status::Unauthorized, ())),
+        }
+    }
+}
 
 #[get("/me")]
 fn me(
@@ -193,6 +234,33 @@ fn logout(
 }
 
 
+#[post("/change-password", data = "<req>")]
+fn change_password_endpoint(
+    auth: AuthUser,
+    req: Json<ChangePasswordRequest>,
+    users: &State<Mutex<UserRepository>>,
+    sessions: &State<Mutex<SessionRepository>>, // ← NEU
+)
+ -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+
+        let sessions_guard = sessions.lock().unwrap();
+        let mut users_guard = users.lock().unwrap();
+
+        match change_password(
+            &sessions_guard,          // ← FEHLENDES ARGUMENT
+            &mut users_guard,
+            &auth.user_id,
+            &req.new_password,
+            &req.old_password,
+        ) {
+        Ok(_) => Ok(Json(RegisterResponse {
+            message: "password changed successfully",
+        })),
+        Err(err) => Err(err.into()),
+    }
+}
+
+
 
 
 impl From<AuthError> for (Status, Json<ErrorResponse>) {
@@ -213,5 +281,5 @@ fn rocket() -> _ {
         .manage(Mutex::new(UserRepository::new()))
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
-        .mount("/", routes![health, register, login, me, logout])
+        .mount("/", routes![health, register, login, me, logout, change_password_endpoint])
 }
