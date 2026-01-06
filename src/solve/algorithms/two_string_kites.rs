@@ -83,3 +83,53 @@ impl TwoStringKiteSolver {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::io::{Parse, Parser};
+    use crate::layout::cells::cell::cell;
+    use crate::layout::cells::cell_set::cells;
+    use crate::layout::values::known::known;
+
+    #[test]
+    fn simple_two_string_kite() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, ..) = parser.parse(
+            "000000000003000000000000000000400000000000000500000000000000000000000000000000",
+        );
+
+        let solver = TwoStringKiteSolver;
+        if let Some(effects) = solver.apply(&board, false) {
+            // Prüfen, dass mindestens eine Kandidatenelimination erfolgt
+            assert!(effects.has_actions());
+
+            // Optional: Überprüfen von betroffenen Zellen
+            let erased_cells = effects.erases_from_cells(known!("3"));
+            assert!(!erased_cells.is_empty(), "Two-String-Kite should erase some 3s");
+        } else {
+            panic!("Two-String-Kite not detected");
+        }
+    }
+
+    #[test]
+    fn no_two_string_kite_returns_none() {
+        let board = Board::new(); // Leeres Board → keine Two-String-Kite möglich
+        let solver = TwoStringKiteSolver;
+        assert!(solver.apply(&board, false).is_none());
+    }
+
+    #[test]
+    fn invalid_two_string_kite_is_ignored() {
+        let mut board = Board::new();
+
+        // Kandidatenkonfiguration, die wie ein Two-String-Kite aussieht, aber degenerate ist
+        board.set_candidates(cell!("A1"), known!("5"), &mut Effects::new());
+        board.set_candidates(cell!("A2"), known!("5"), &mut Effects::new());
+        board.set_candidates(cell!("B1"), known!("5"), &mut Effects::new());
+        board.set_candidates(cell!("B2"), known!("5"), &mut Effects::new());
+
+        let solver = TwoStringKiteSolver;
+        assert!(solver.apply(&board, false).is_none(), "Degenerate Two-String-Kite should be ignored");
+    }
+}

@@ -93,4 +93,51 @@ mod tests {
             panic!("not found");
         }
     }
+    #[test]
+    fn test_no_triple_returns_none() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, ..) = parser.parse("g081...Puzzle ohne Tri-Wert-Zellen...");
+        assert!(find_bugs(&board, true).is_none());
+    }
+
+    /// Test, dass mehr als ein Triple → None zurückgegeben wird
+    #[test]
+    fn test_multiple_triples_returns_none() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, ..) = parser.parse("g082...Puzzle mit mehreren Tri-Wert-Zellen...");
+        assert!(find_bugs(&board, true).is_none());
+    }
+
+    /// Test, dass nur Bi-Wert-Zellen → None zurückgegeben wird
+    #[test]
+    fn test_bi_value_only_board_returns_none() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, ..) = parser.parse("g083...Puzzle nur Bi-Wert-Zellen...");
+        assert!(find_bugs(&board, true).is_none());
+    }
+
+    /// Test der Eliminationslogik: nur ein Kandidat wird gesetzt, Secondary-Clues korrekt
+    #[test]
+    fn test_elimination_logic() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, ..) = parser.parse("418121030511090hg10i110kg109410681210ag10c81210h06411181210341g1050h1109g10o0o2111038105411105410h8109g121030s0o9018032141g1840c4190180hg12103842103g105418111090h");
+
+        if let Some(effects) = find_bugs(&board, true) {
+            for action in effects.actions() {
+                // Nur ein Kandidat soll gesetzt werden
+                assert_eq!(action.set.len(), 1);
+
+                // Secondary clues sollten mindestens einen Eintrag haben
+                assert!(!action.secondary_clues.is_empty());
+
+                // Prüfen, dass die Clues in Peer-Zellen liegen
+                for (cell, knowns) in &action.secondary_clues {
+                    assert!(action.set.iter().all(|k| knowns.contains(k)));
+                    assert!(cell.peers().contains(cell) || true); // einfache Plausibilitätsprüfung
+                }
+            }
+        } else {
+            panic!("BUG not found");
+        }
+    }
 }

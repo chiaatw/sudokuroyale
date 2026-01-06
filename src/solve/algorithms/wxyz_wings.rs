@@ -271,3 +271,80 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::io::Parse;
+
+    #[test]
+    fn test_wxyz_wing_basic() {
+        let parser = Parse::grid().stop_on_error();
+        let (board, _, failed) = parser.parse(
+            "
+            +-------+-------+-------+
+            | 12 34 | 56 78 | 9 . . |
+            | .  .  | 12 34 | 56 78 |
+            | .  .  | .  .  | 12 34 |
+            +-------+-------+-------+
+            "
+        );
+        assert_eq!(None, failed);
+
+        let solver = WXYZWingSolver;
+        let effects = solver.apply(&board, true);
+        assert!(effects.is_some(), "WXYZ-Wing sollte gefunden werden");
+        let effects = effects.unwrap();
+        assert!(effects.has_actions(), "WXYZ-Wing-Effekte sollten Aktionen enthalten");
+    }
+
+    #[test]
+    fn test_wxyz_wing_none() {
+        let board = Board::new(); // komplett leeres Board
+        let solver = WXYZWingSolver;
+        let effects = solver.apply(&board, true);
+        assert!(effects.is_none(), "Kein WXYZ-Wing sollte None zurückgeben");
+    }
+
+    #[test]
+    fn test_wxyz_wing_multiple() {
+        let parser = Parse::grid().stop_on_error();
+        let (board, _, failed) = parser.parse(
+            "
+            +-------+-------+-------+
+            | 12 34 | 56 78 | 9 . . |
+            | 12 34 | 56 78 | 9 . . |
+            | .  .  | 12 34 | 56 78 |
+            +-------+-------+-------+
+            "
+        );
+        assert_eq!(None, failed);
+
+        let solver = WXYZWingSolver;
+        let effects = solver.apply(&board, false);
+        assert!(effects.is_some(), "Mehrere WXYZ-Wings sollten erkannt werden");
+        let effects = effects.unwrap();
+        assert!(effects.actions().len() > 1, "Mehrere Aktionen sollten vorhanden sein");
+    }
+
+    #[test]
+    fn test_wxyz_wing_clues() {
+        let parser = Parse::grid().stop_on_error();
+        let (board, _, failed) = parser.parse(
+            "
+            +-------+-------+-------+
+            | 12 34 | 56 78 | 9 . . |
+            | .  .  | 12 34 | 56 78 |
+            | .  .  | .  .  | 12 34 |
+            +-------+-------+-------+
+            "
+        );
+        assert_eq!(None, failed);
+
+        let solver = WXYZWingSolver;
+        let effects = solver.apply(&board, true).unwrap();
+        let action = &effects.actions()[0];
+        assert!(!action.secondary_clues().is_empty(), "Secondary clues sollten gesetzt sein");
+        assert!(!action.primary_clues().is_empty(), "Primary clues sollten gesetzt sein");
+    }
+}

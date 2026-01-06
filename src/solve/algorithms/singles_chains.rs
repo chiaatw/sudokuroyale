@@ -246,3 +246,52 @@ impl Colors {
         self.0 .1 -= cell;
     }
 }
+
+#[cfg(test)]
+mod singles_chain_tests {
+    use super::*;
+    use crate::layout::cells::cell::cell;
+    use crate::layout::cells::cell_set::cells;
+    use crate::layout::values::known::known;
+
+    #[test]
+    fn simple_singles_chain() {
+        let mut board = Board::new();
+
+        // Beispiel: bekannte Kandidaten für eine einfache X-Chain
+        board.set_candidates(cell!("A1"), known!("5"), &mut Effects::new());
+        board.set_candidates(cell!("A2"), known!("5"), &mut Effects::new());
+        board.set_candidates(cell!("B1"), known!("5"), &mut Effects::new());
+        board.set_candidates(cell!("B2"), known!("5"), &mut Effects::new());
+        board.set_candidates(cell!("C3"), known!("5"), &mut Effects::new()); // Kandidat soll entfernt werden
+
+        // Anwenden der Singles Chain Strategie
+        let effects = find_singles_chains(&board, false).unwrap();
+        effects.apply_all(&mut board);
+
+        // Kandidat C3 sollte entfernt werden, weil er logisch eliminiert wird
+        assert!(!board.candidates(cell!("C3")).has(known!("5")));
+    }
+
+    #[test]
+    fn degenerate_chain_ignored() {
+        let mut board = Board::new();
+
+        // Alle Knoten in einem Block → sollte ignoriert werden
+        board.set_candidates(cell!("A1"), known!("3"), &mut Effects::new());
+        board.set_candidates(cell!("A2"), known!("3"), &mut Effects::new());
+        board.set_candidates(cell!("A3"), known!("3"), &mut Effects::new());
+
+        let effects = find_singles_chains(&board, false);
+        assert!(effects.is_none(), "Degenerate chain should not produce effects");
+    }
+
+    #[test]
+    fn no_chain_returns_none() {
+        let mut board = Board::new();
+
+        // Keine Kandidaten → keine Ketten → None
+        let effects = find_singles_chains(&board, false);
+        assert!(effects.is_none(), "No chain should return None");
+    }
+}

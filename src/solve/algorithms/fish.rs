@@ -236,4 +236,45 @@ mod tests {
             found.erases_from_cells(known!("2"))
         );
     }
+    #[test]
+    fn test_no_fish_returns_none() {
+        let board = Parse::packed_with_options(Options::errors()).parse_simple(
+            "
+                123456789
+                456789123
+                789123456
+                214365897
+                365897214
+                897214365
+                531642978
+                642978531
+                978531642
+            ",
+        );
+        assert!(find_x_wings(&board, true).is_none());
+        assert!(find_swordfish(&board, true).is_none());
+        assert!(find_jellyfish(&board, true).is_none());
+    }
+
+    /// Testet mehrere Fish-Muster auf einem Board (single = false)
+    #[test]
+    fn test_multiple_fish() {
+        let board = Parse::packed_with_options(Options::errors()).parse_simple(
+            "
+                ..17538..
+                .5......7
+                7..89.1..
+                ...6.157.
+                625478931
+                .179.54..
+                ....67..4
+                .7.....1.
+                ..63.97..
+            ",
+        );
+
+        let effects = find_jellyfish(&board, false).unwrap();
+        // Mindestens eine Aktion sollte generiert werden
+        assert!(effects.actions().len() >= 1);
+    }
 }

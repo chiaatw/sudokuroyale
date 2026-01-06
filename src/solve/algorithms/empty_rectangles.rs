@@ -133,4 +133,41 @@ mod tests {
             panic!("Empty Rectangle solver found no effects");
         }
     }
+     #[test]
+    fn test_no_candidates_returns_none() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, ..) = parser.parse("Puzzle ohne Kandidaten für die getestete Zahl");
+        assert!(EmptyRectangleSolver.apply(&board, true).is_none());
+    }
+
+    /// Degenerierte Fälle (1–2 Kandidaten) → keine Aktion
+    #[test]
+    fn test_degenerate_cases() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, ..) = parser.parse("Puzzle mit nur 1-2 Kandidaten in einem Block");
+        assert!(EmptyRectangleSolver.apply(&board, true).is_none());
+    }
+
+    /// Mehrere Empty Rectangles → alle Aktionen gesammelt
+    #[test]
+    fn test_multiple_empty_rectangles() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, ..) = parser.parse("Puzzle mit mehreren Empty Rectangles");
+        let effects = EmptyRectangleSolver.apply(&board, false).unwrap();
+        assert!(effects.actions().len() > 1);
+    }
+
+    /// Prüfen, dass Primary und Secondary Clues korrekt gesetzt sind
+    #[test]
+    fn test_clues_assignment() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, ..) = parser.parse(
+            "441181i402i4k4080h0g20g10884418411024c0c03o4100gs421g4p4o4410h09q403o030o6om0911a4o42go040p0og20o040031g0508g2g214a40ha409403020411403g108140g8188880g412411i402g4",
+        );
+
+        let effects = EmptyRectangleSolver.apply(&board, true).unwrap();
+        for action in effects.actions() {
+            assert!(!action.primary_clues.is_empty() || !action.secondary_clues.is_empty() || !action.set.is_empty());
+        }
+    }
 }

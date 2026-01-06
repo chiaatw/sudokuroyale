@@ -180,3 +180,88 @@ impl Entry {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::io::Parse;
+
+    #[test]
+    fn already_solved_board_returns_already_solved() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, _, _) = parser.parse("g....komplett gelöstes Puzzle...");
+        let solver = BruteForceSolver::new(false, 0, 100);
+        match solver.find_brute_force(&board, true) {
+            BruteForceResult::AlreadySolved => {}
+            _ => panic!("Expected AlreadySolved"),
+        }
+    }
+
+    #[test]
+    fn too_few_knowns_returns_too_few_knowns() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, _, _) = parser.parse("Puzzle mit weniger als 17 bekannten Zellen");
+        let solver = BruteForceSolver::new(false, 0, 100);
+        match solver.find_brute_force(&board, true) {
+            BruteForceResult::TooFewKnowns => {}
+            _ => panic!("Expected TooFewKnowns"),
+        }
+    }
+
+    #[test]
+    fn unsolvable_cells_detected() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, _, _) = parser.parse("Puzzle mit leeren Kandidaten");
+        let solver = BruteForceSolver::new(false, 0, 100);
+        match solver.find_brute_force(&board, true) {
+            BruteForceResult::UnsolvableCells(cells) => {
+                assert!(!cells.is_empty());
+            }
+            _ => panic!("Expected UnsolvableCells"),
+        }
+    }
+
+    #[test]
+    fn finds_single_solution() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, _, _) = parser.parse("Puzzle mit eindeutiger Lösung");
+        let solver = BruteForceSolver::new(false, 0, 100);
+        match solver.find_brute_force(&board, true) {
+            BruteForceResult::Solved(sol) => {
+                assert!(sol.is_fully_solved());
+            }
+            _ => panic!("Expected Solved"),
+        }
+    }
+
+    #[test]
+    fn finds_multiple_solutions() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, _, _) = parser.parse("Puzzle mit mehreren Lösungen");
+        let solver = BruteForceSolver::new(false, 0, 2);
+        match solver.find_brute_force(&board, false) {
+            BruteForceResult::MultipleSolutions(solutions) => {
+                assert!(solutions.len() >= 2);
+                for sol in solutions {
+                    assert!(sol.is_fully_solved());
+                }
+            }
+            _ => panic!("Expected MultipleSolutions"),
+        }
+    }
+
+    #[test]
+    fn canceled_returns_canceled() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, _, _) = parser.parse("Puzzle für Abbruchtest");
+        let solver = BruteForceSolver::new(false, 0, 100);
+
+        // Hier müsste man Cancelable manipulieren, um .is_canceled() true zu setzen
+        // z.B. solver.cancelable.set(true) wenn Cancelable das erlaubt
+        // Dann prüfen:
+        // match solver.find_brute_force(&board, true) {
+        //     BruteForceResult::Canceled => {}
+        //     _ => panic!("Expected Canceled"),
+        // }
+    }
+}

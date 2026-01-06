@@ -206,4 +206,60 @@ mod tests {
         assert_eq!(!knowns, board.candidates(cell!("A6")));
         assert_eq!(!knowns, board.candidates(cell!("A9")));
     }
+    #[test]
+    fn hidden_pair_single_true() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        // Setup: A1-A3 have candidates 1,2
+        board.set_candidates(cell!("A1"), knowns!("1 2"));
+        board.set_candidates(cell!("A2"), knowns!("1 2"));
+        board.set_candidates(cell!("A3"), knowns!("1 2 3"));
+        board.set_candidates(cell!("A4"), knowns!("3"));
+
+        // Only one action should be returned with single = true
+        let found = find_hidden_pairs(&board, true).unwrap();
+        assert_eq!(found.actions().len(), 1);
+
+        // Candidates outside hidden pair cells should be erased
+        let action = &found.actions()[0];
+        assert!(action.erased(cell!("A3")).contains(&knowns!("1")));
+        assert!(action.erased(cell!("A3")).contains(&knowns!("2")));
+    }
+
+    #[test]
+    fn hidden_triple_non_degenerate() {
+        let mut board = Board::new();
+
+        // Setup: Hidden triple in row A
+        board.set_candidates(cell!("A1"), knowns!("1 2 3"));
+        board.set_candidates(cell!("A2"), knowns!("1 2 3"));
+        board.set_candidates(cell!("A3"), knowns!("2 3 4"));
+        board.set_candidates(cell!("A4"), knowns!("4"));
+
+        let found = find_hidden_triples(&board, false).unwrap();
+        // Should generate at least one effect
+        assert!(found.actions().len() >= 1);
+
+        // Cells in triple should only keep tuple knowns
+        for c in [cell!("A1"), cell!("A2"), cell!("A3")] {
+            let ks = board.candidates(c) & knowns!("1 2 3");
+            assert!(!ks.is_empty());
+        }
+    }
+
+    #[test]
+    fn hidden_quad_degenerate_ignored() {
+        let mut board = Board::new();
+
+        // Setup: degenerate quad (subset forms hidden triple)
+        board.set_candidates(cell!("A1"), knowns!("1 2 3"));
+        board.set_candidates(cell!("A2"), knowns!("1 2 3"));
+        board.set_candidates(cell!("A3"), knowns!("1 2 3"));
+        board.set_candidates(cell!("A4"), knowns!("4"));
+
+        // Degenerate quad should be skipped
+        let result = find_hidden_quads(&board, false);
+        assert!(result.is_none());
+    }
 }

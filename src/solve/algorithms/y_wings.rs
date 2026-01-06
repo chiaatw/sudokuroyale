@@ -75,3 +75,67 @@ pub fn find_y_wings(board: &Board, single: bool) -> Option<Effects> {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::io::{Parse, Parser};
+    use crate::layout::cells::cell::cell;
+    use crate::layout::cells::cell_set::cells;
+    use crate::layout::values::known::known;
+    use super::*;
+
+    #[test]
+    fn test_y_wing_basic() {
+        let parser = Parse::wiki().stop_on_error();
+        let (board, _, failed) = parser.parse(
+            "814kg10s2u246c116e110922812m41i42mg42i4k621sg134812m6e05g10h215081030950418128g11c0334240h2803114c4c0h64g181gq4g055g81j0j822jagg1181032k09g441i4ga214a5454h40h81he"
+        );
+        assert_eq!(None, failed);
+
+        let solver = YWingSolver;
+        if let Some(got) = solver.apply(&board, true) {
+            let mut expected = Action::new(Strategy::YWing);
+
+            expected.erase_cells(cells!("C4"), known!("9"));
+            expected.clue_cell_for_known(Verdict::Secondary, cell!("D1"), known!("1"));
+            expected.clue_cell_for_known(Verdict::Tertiary, cell!("D1"), known!("5"));
+            expected.clue_cell_for_known(Verdict::Tertiary, cell!("D9"), known!("2"));
+            expected.clue_cell_for_known(Verdict::Secondary, cell!("D9"), known!("1"));
+            expected.clue_cell_for_known(Verdict::Secondary, cell!("F1"), known!("5"));
+            expected.clue_cell_for_known(Verdict::Tertiary, cell!("F1"), known!("1"));
+
+            assert_eq!(format!("{:?}", expected), format!("{:?}", got.actions()[0]));
+        } else {
+            panic!("Y-Wing solver found no effects");
+        }
+    }
+
+    #[test]
+    fn test_y_wing_none() {
+        let board = crate::layout::Board::new(); // leeres Board
+        let solver = YWingSolver;
+        let effects = solver.apply(&board, true);
+        assert!(effects.is_none(), "Leeres Board sollte keine Y-Wing Effekte liefern");
+    }
+
+    #[test]
+    fn test_y_wing_multiple() {
+        let parser = Parse::grid().stop_on_error();
+        let (board, _, failed) = parser.parse(
+            "
+            +-------+-------+-------+
+            | 12  23  13 | 4  5  6 | 7  8  9 |
+            | 1   2   3  | 4  5  6 | 7  8  9 |
+            | 1   2   3  | 4  5  6 | 7  8  9 |
+            +-------+-------+-------+
+            "
+        );
+        assert_eq!(None, failed);
+
+        let solver = YWingSolver;
+        let effects = solver.apply(&board, false);
+        assert!(effects.is_some(), "Y-Wing solver sollte Effekte finden");
+        let effects = effects.unwrap();
+        assert!(effects.actions().len() >= 1, "Es sollten mindestens eine Aktion erzeugt werden");
+    }
+}

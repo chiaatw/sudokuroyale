@@ -180,4 +180,57 @@ mod tests {
         assert_eq!(KnownSet::full(), board.candidates(cell!("B3")));
         assert_eq!(KnownSet::full(), board.candidates(cell!("C2")));
     }
+    #[test]
+    fn naked_pair_detection() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        // Set up a naked pair in a row: A1 and A2 with only candidates 1 and 2
+        board.set_candidates(cell!("A1"), knowns!("1 2"), &mut effects);
+        board.set_candidates(cell!("A2"), knowns!("1 2"), &mut effects);
+        board.set_candidates(cell!("A3"), knowns!("1 2 3"), &mut effects);
+
+        let found = find_naked_tuples(&board, false, 2, Strategy::NakedPair).unwrap();
+        found.apply_all(&mut board);
+
+        // Only A1 and A2 form the naked pair, so 1 and 2 should be removed from A3
+        assert_eq!(knowns!("3"), board.candidates(cell!("A3")));
+    }
+
+    #[test]
+    fn naked_triple_detection() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        // Set up a naked triple: B1, B2, B3 with candidates 4,5,6
+        board.set_candidates(cell!("B1"), knowns!("4 5"), &mut effects);
+        board.set_candidates(cell!("B2"), knowns!("4 6"), &mut effects);
+        board.set_candidates(cell!("B3"), knowns!("5 6"), &mut effects);
+        board.set_candidates(cell!("B4"), knowns!("4 5 6 7"), &mut effects);
+
+        let found = find_naked_tuples(&board, false, 3, Strategy::NakedTriple).unwrap();
+        found.apply_all(&mut board);
+
+        // The naked triple should remove 4,5,6 from B4
+        assert_eq!(knowns!("7"), board.candidates(cell!("B4")));
+    }
+
+    #[test]
+    fn naked_quad_detection() {
+        let mut board = Board::new();
+        let mut effects = Effects::new();
+
+        // Set up a naked quad in column C
+        board.set_candidates(cell!("C1"), knowns!("1 2"), &mut effects);
+        board.set_candidates(cell!("C2"), knowns!("1 3"), &mut effects);
+        board.set_candidates(cell!("C3"), knowns!("2 4"), &mut effects);
+        board.set_candidates(cell!("C4"), knowns!("3 4"), &mut effects);
+        board.set_candidates(cell!("C5"), knowns!("1 2 3 4 5"), &mut effects);
+
+        let found = find_naked_tuples(&board, false, 4, Strategy::NakedQuad).unwrap();
+        found.apply_all(&mut board);
+
+        // The naked quad should remove 1,2,3,4 from C5
+        assert_eq!(knowns!("5"), board.candidates(cell!("C5")));
+    }
 }

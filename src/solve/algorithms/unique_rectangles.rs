@@ -665,4 +665,9 @@ mod tests {
             panic!("not found");
         }
     }
+    #[test]
+    fn no_unique_rectangle_returns_none() {
+        let board = Board::new();
+        assert!(find_unique_rectangles(&board, false).is_none());
+    }
 }
