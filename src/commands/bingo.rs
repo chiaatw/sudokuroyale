@@ -118,3 +118,24 @@ fn max_solutions_in_range(s: &str) -> Result<usize, String> {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_max_solutions_valid() {
+        assert_eq!(max_solutions_in_range("1"), Ok(1));
+        assert_eq!(max_solutions_in_range("100"), Ok(100));
+        assert_eq!(max_solutions_in_range("1,000"), Ok(1000));
+        assert_eq!(max_solutions_in_range("1_000_000"), Ok(1_000_000));
+    }
+
+    #[test]
+    fn test_max_solutions_invalid() {
+        assert!(max_solutions_in_range("0").is_err());
+        assert!(max_solutions_in_range("1000001").is_err());
+        assert!(max_solutions_in_range("-1").is_err());
+        assert!(max_solutions_in_range("abc").is_err());
+    }
+}
