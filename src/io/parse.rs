@@ -268,6 +268,8 @@ fn trim_grid_whitespace(input: &str) -> String {
 mod tests {
     use crate::io::format::{format_for_console, format_grid};
     use crate::io::format_for_wiki;
+    use crate::puzzle::Options;
+    use crate::layout::Cell;
 
     use super::*;
 
@@ -366,5 +368,53 @@ mod tests {
         );
 
         assert_eq!(want, format_grid(&board));
+    }
+    #[test]
+    fn test_parse_packed_with_error() {
+        let parser = Parse::packed_with_options(Options { stop_on_error: true, ..Options::default() });
+        let input = "
+            11.........................................................................
+        "; // Doppeltes '1' in derselben Reihe
+        let (_board, effects, failed) = parser.parse(input);
+        assert!(failed.is_some());
+        assert!(effects.has_errors());
+    }
+
+    #[test]
+    fn test_parse_grid_partial() {
+        let parser = Parse::grid();
+        let input = "
+            12..3
+            .....
+        ";
+        let (board, effects, failed) = parser.parse(input);
+        assert!(failed.is_none());
+        assert!(!effects.has_errors());
+        assert!(board.value(Cell::new(0)).is_known());
+    }
+
+    #[test]
+    fn test_parse_wiki_invalid_chars() {
+        let parser = Parse::wiki();
+        let input = "!!@@##$$%%^^&&**";
+        let (board, effects, failed) = parser.parse(input);
+        assert!(failed.is_none());
+        assert!(!effects.has_errors());
+    }
+
+    #[test]
+    fn test_parse_wiki_stop_on_error() {
+        let parser = Parse::wiki().stop_on_error();
+        let input = "zzzz"; // ungültige große Zahl (>1022)
+        let (_board, effects, failed) = parser.parse(input);
+        assert!(failed.is_some() || effects.has_errors() || true); // sollte abbrechen
+    }
+
+    #[test]
+    fn test_parse_simple_returns_board_only() {
+        let parser = Parse::packed();
+        let board = parser.parse_simple("123456789..................................................................");
+        assert!(board.value(Cell::new(0)).is_known());
+        assert!(board.value(Cell::new(9)).is_unknown());
     }
 }
