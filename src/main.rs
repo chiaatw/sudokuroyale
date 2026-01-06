@@ -10,7 +10,6 @@ use rocket::State;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use rocket::http::{Cookie, CookieJar};
-use crate::user::services::login_user;
 use rocket::request::{FromRequest, Outcome};
 
 
@@ -22,6 +21,10 @@ use crate::user::error::AuthError;
 use crate::user::services::register_user;
 use crate::user::services::get_user_from_session;
 use crate::user::services::change_password;
+use crate::user::services::request_password_reset;
+use crate::user::services::login_user;
+use crate::user::services::reset_password;
+
 
 
 #[derive(Serialize)]
@@ -53,17 +56,27 @@ struct ChangePasswordRequest {
     old_password: String,
     new_password: String,
 }
-
-
 #[derive(Serialize)]
 struct RegisterResponse {
     message: &'static str,
 }
-
 #[derive(Serialize)]
 struct ErrorResponse {
     error: String,
 }
+
+#[derive(Deserialize)]
+struct RequestResetRequest {
+    email: String,
+}
+
+#[derive(Deserialize)]
+struct ResetPasswordRequest {
+    token: String,
+    new_password: String,
+}
+
+
 
 #[post("/register", data = "<req>")]
 fn register(
@@ -260,6 +273,59 @@ fn change_password_endpoint(
     }
 }
 
+#[post("/request-reset", data = "<req>")]
+fn request_reset(
+    req: Json<RequestResetRequest>,
+    users: &State<Mutex<UserRepository>>,
+    tokens: &State<Mutex<ResetTokenRepository>>,
+) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+
+    let users_guard = users.lock().unwrap();
+    let mut tokens_guard = tokens.lock().unwrap();
+
+    let _ = request_password_reset(
+        &users_guard,
+        &mut tokens_guard,
+        &req.email,
+    );
+
+    Ok(Json(RegisterResponse {
+        message: "if the email exists, a reset link was sent",
+    }))
+}
+
+#[post("/reset-password", data = "<req>")]
+fn reset_password_endpoint(
+    req: Json<ResetPasswordRequest>,
+    users: &State<Mutex<UserRepository>>,
+    tokens: &State<Mutex<ResetTokenRepository>>,
+) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+
+    let mut users_guard = users.lock().unwrap();
+    let mut tokens_guard = tokens.lock().unwrap();
+    let token_id = uuid::Uuid::parse_str(&req.token).map_err(|_| {
+    (
+        Status::BadRequest,
+        Json(ErrorResponse {
+            error: "invalid reset token".to_string(),
+        }),
+    )
+    })?;
+
+
+    match reset_password(
+        &mut users_guard,
+        &mut tokens_guard,
+        &token_id,
+        &req.new_password,
+    ) {
+        Ok(_) => Ok(Json(RegisterResponse {
+            message: "password reset successful",
+        })),
+        Err(err) => Err(err.into()),
+    }
+}
+
 
 
 
@@ -281,5 +347,5 @@ fn rocket() -> _ {
         .manage(Mutex::new(UserRepository::new()))
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
-        .mount("/", routes![health, register, login, me, logout, change_password_endpoint])
+        .mount("/", routes![health, register, login, me, logout, change_password_endpoint, request_reset, reset_password_endpoint])
 }
