@@ -1,5 +1,6 @@
 mod user;
 mod game_match;
+mod api;
 
 #[macro_use]
 extern crate rocket;
@@ -347,5 +348,5 @@ fn rocket() -> _ {
         .manage(Mutex::new(UserRepository::new()))
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
-        .mount("/", routes![health, register, login, me, logout, change_password_endpoint, request_reset, reset_password_endpoint])
+        .mount("/", routes![health, register, login, me, logout, change_password_endpoint, request_reset, reset_password_endpoint, api::r#match::create_match_route])
 }
