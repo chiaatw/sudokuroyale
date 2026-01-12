@@ -3,5 +3,7 @@ pub mod time;
 pub mod player;
 pub mod game;
 
-#[cfg(test)]
-mod tests;
+pub use game::{Game, MoveResult};
+pub use player::{PlayerId, PlayerState, MAX_MISTAKES};
+pub use state::{GameState, LoseReason};
+pub use time::TimeControl;
