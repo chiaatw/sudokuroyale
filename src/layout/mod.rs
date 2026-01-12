@@ -1,8 +1,4 @@
-pub mod bit;
-pub mod cell_set;
-pub mod cell;
-pub mod label;
-pub mod rectangle;
+pub mod cells;
 
 pub mod grid;
 
@@ -16,18 +12,7 @@ pub mod known_set;
 pub mod known;
 pub mod value;
 
-pub use cell::{Cell, CellIter};
-pub use bit::Bit;
-pub use cell_set::CellSet;
 
-pub use label::{
-    CellIndex,
-    index_from_label,
-    try_index_from_label,
-    label_from_index,
-};
-
-pub use rectangle::{Rectangle, RectangleIter};
 
 pub use grid::Grid;
 
