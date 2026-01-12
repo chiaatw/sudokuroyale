@@ -1,10 +1,10 @@
-use rand::rngs::ThreadRng;
-use rand::seq::SliceRandom;
+    use rand::rngs::ThreadRng;
+    use rand::seq::SliceRandom;
 
-use crate::io::{show_progress, Cancelable};
-use crate::layout::{Cell, CellSet};
-use crate::puzzle::{Board, Effects};
-use crate::solve::{find_brute_force, Resolution, Solver, Timings};
+    use crate::io::{show_progress, Cancelable};
+    use crate::layout::{Cell, CellSet};
+    use crate::puzzle::{Board, Effects};
+    use crate::solve::{find_brute_force, Resolution, Solver, Timings};
 
     /// Finds a solvable starting puzzle from a full solution.
     pub struct Finder {
