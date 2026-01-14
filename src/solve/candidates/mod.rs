@@ -1,25 +1,13 @@
-//! Candidates module
+//! Candidates handling for the solver.
 //!
-//! This module provides all candidate management functionality for Sudoku:
-//! - Eliminations (peer elimination, apply strategies)
-//! - Intersection strategies (pointing pairs/triples, box-line reductions)
-//! - Singles strategies (naked singles, hidden singles)
-//! - Utility functions (candidate counting, filtering, positions)
+//! This module maintains candidate sets (possible digits) for each cell.
+//! It is designed to work with:
+//! - `layout::Cell` as an index (0..80)
+//! - `layout::{Known, KnownSet}` as digit + digit-set bitset
+//! - `solve::validator::Board` as board state (values + givens)
 
-pub mod eliminations;
-pub mod intersection;
-pub mod singles;
-pub mod utils;
+mod store;
+mod update;
 
-// Re-exports for easy access outside the module
-pub use eliminations::{Cell, eliminate_peers, apply_strategy};
-pub use intersection::box_line_reduction;
-pub use singles::{solve_naked_singles, solve_hidden_singles};
-pub use utils::{
-    count_candidates, 
-    remaining_candidates, 
-    candidate_in_row, 
-    candidate_in_col, 
-    candidate_in_block, 
-    candidate_positions_in_block
-};
+pub use store::Candidates;
+pub use update::{recompute_all_candidates, update_after_set_known};

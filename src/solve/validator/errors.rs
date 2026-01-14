@@ -20,6 +20,13 @@ impl fmt::Display for HouseKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ValidationError {
+
+    /// A given cell was cleared (set to unknown).
+    GivenCellWasCleared { cell: Cell },
+
+    /// A given cell was modified to a different value.
+    GivenCellWasModified { cell: Cell, existing: Value, attempted: Value },
+
     /// Value is unknown (0) or out of range (>9).
     InvalidValue { cell: Cell, value: Value },
 
@@ -74,6 +81,12 @@ impl fmt::Display for ValidationError {
                 "Move would conflict: placing {:?} in {:?} conflicts with peer {:?}",
                 value, cell, peer
             ),
+            ValidationError::GivenCellWasCleared { cell } => {
+                write!(f, "Given cell {:?} was cleared", cell)
+            }
+            ValidationError::GivenCellWasModified { cell, existing, attempted } => {
+                write!(f, "Given cell {:?} has {:?}, cannot set {:?}", cell, existing, attempted)
+            }
         }
     }
 }
