@@ -118,6 +118,18 @@ pub fn is_degenerate(known_sets: &[KnownSet], size: usize, smaller_size: usize) 
         .any(|set| set.len() <= smaller_size)
 }
 
+pub fn find_naked_pairs(board: &Board, single: bool) -> Option<Effects> {
+    find_naked_tuples(board, single, 2, Strategy::NakedPair)
+}
+
+pub fn find_naked_triples(board: &Board, single: bool) -> Option<Effects> {
+    find_naked_tuples(board, single, 3, Strategy::NakedTriple)
+}
+
+pub fn find_naked_quads(board: &Board, single: bool) -> Option<Effects> {
+    find_naked_tuples(board, single, 4, Strategy::NakedQuad)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::layout::cells::cell::cell;

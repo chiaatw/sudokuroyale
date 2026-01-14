@@ -82,6 +82,10 @@ impl TwoStringKiteSolver {
             None
         }
     }
+
+    pub fn find_two_string_kites(board: &Board, single: bool) -> Option<Effects> {
+    TwoStringKiteSolver.apply(board, single)
+}
 }
 
 #[cfg(test)]

@@ -78,6 +78,10 @@ impl XYZWingSolver {
             None
         }
     }
+
+    pub fn find_xyz_wings(board: &Board, single: bool) -> Option<Effects> {
+    XYZWingSolver.apply(board, single)
+}
 }
 
 #[cfg(test)]

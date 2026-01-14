@@ -149,6 +149,11 @@ impl BruteForceSolver {
             _ => BruteForceResult::MultipleSolutions(solutions),
         }
     }
+
+    pub fn find_brute_force(board: &Board, single: bool) -> BruteForceResult {
+    let solver = BruteForceSolver::new(false, 0, DEFAULT_MAXIMUM_SOLUTIONS);
+    solver.find_brute_force(board, single)
+}
 }
 
 pub enum BruteForceResult {

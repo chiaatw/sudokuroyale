@@ -5,8 +5,7 @@ use crate::puzzle::*;
 
 macro_rules! export {
     ($module:ident => $($item:ident),+ $(,)?) => {
-        mod $module;
-        pub use $module::{ $($item),+ };
+        pub use crate::solve::algorithms::$module::{ $($item),+ };
     };
 }
 
