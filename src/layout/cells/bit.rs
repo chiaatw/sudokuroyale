@@ -68,7 +68,7 @@ impl From<Cell> for Bit {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Cell;
+    use crate::layout::Cell;
 
     #[test]
     fn test_bit_new_and_index() {

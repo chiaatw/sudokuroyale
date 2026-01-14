@@ -1,133 +1,62 @@
-use crate::layout::{
-    Cell, CellSet, Known, KnownSet, Value,
-    House, HouseSet, Shape, Coord, CoordSet,
-};
+use crate::layout::{Cell, Value};
 
-/// Represents a 9x9 Sudoku board.
-#[derive(Clone, Debug)]
+/// Simple board representation: 81 values (row-major).
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Board {
-    cells: [Cell; 81],
+    cells: [Value; 81],
 }
 
 impl Board {
-    /// Creates a new empty board (all cells unknown).
+    /// New empty board (all unknown).
     pub fn new() -> Self {
         Self {
-            cells: [Cell::default(); 81],
+            cells: [Value::unknown(); 81],
         }
     }
 
-    /// Returns a copy of the cell at the given index (0..80).
-    pub fn cell(&self, index: usize) -> Cell {
-        self.cells[index]
+    /// Get value at cell.
+    #[inline(always)]
+    pub fn get(&self, cell: Cell) -> Value {
+        self.cells[cell.usize()]
     }
 
-    /// Sets a value in the cell at the given index.
-    pub fn set_cell(&mut self, index: usize, value: Value) {
-        self.cells[index].set(value);
+    /// Set value at cell (no validation here).
+    #[inline(always)]
+    pub fn set(&mut self, cell: Cell, value: Value) {
+        self.cells[cell.usize()] = value;
     }
 
-    /// Checks if the entire board is valid according to Sudoku rules.
-    /// That is, no duplicate known values exist in any row, column, or block.
-    pub fn is_valid(&self) -> bool {
-        for house in HouseSet::all() {
-            if !self.is_house_valid(&house) {
-                return false;
-            }
+    /// Clear a cell (set to unknown).
+    #[inline(always)]
+    pub fn clear(&mut self, cell: Cell) {
+        self.cells[cell.usize()] = Value::unknown();
+    }
+
+    /// Returns internal slice (useful for debugging/serialization).
+    pub fn as_slice(&self) -> &[Value] {
+        &self.cells
+    }
+
+    /// Parse from 81-char string.
+    /// Allowed: '1'..'9', '.' or '0' for unknown. Whitespace is ignored.
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        let chars: Vec<char> = s.chars().filter(|c| !c.is_whitespace()).collect();
+        if chars.len() != 81 {
+            return Err(format!(
+                "Expected 81 cells, got {} chars (after trimming whitespace)",
+                chars.len()
+            ));
         }
-        true
-    }
 
-    /// Checks if a single house (row, column, block) is valid.
-    fn is_house_valid(&self, house: &House) -> bool {
-        let mut seen = KnownSet::empty();
-        for cell in house.cells() {
-            if let Some(value) = cell.known_value() {
-                if seen.contains(value) {
-                    return false; // Duplicate value found
-                }
-                seen.insert(value);
-            }
+        let mut b = Board::new();
+        for (i, ch) in chars.into_iter().enumerate() {
+            let v = match ch {
+                '.' | '0' => Value::unknown(),
+                '1'..='9' => Value::new(ch.to_digit(10).unwrap() as u8),
+                _ => return Err(format!("Invalid char '{}' at index {}", ch, i)),
+            };
+            b.cells[i] = v;
         }
-        true
-    }
-
-    /// Returns a `CellSet` of all cells in a given row (0..8).
-    pub fn row(&self, row: usize) -> CellSet {
-        let mut set = CellSet::empty();
-        for col in 0..9 {
-            set.insert(self.cells[row * 9 + col]);
-        }
-        set
-    }
-
-    /// Returns a `CellSet` of all cells in a given column (0..8).
-    pub fn column(&self, col: usize) -> CellSet {
-        let mut set = CellSet::empty();
-        for row in 0..9 {
-            set.insert(self.cells[row * 9 + col]);
-        }
-        set
-    }
-
-    /// Returns a `CellSet` of all cells in a given block (0..8).
-    pub fn block(&self, block_index: usize) -> CellSet {
-        let mut set = CellSet::empty();
-        let start_row = (block_index / 3) * 3;
-        let start_col = (block_index % 3) * 3;
-        for r in start_row..start_row + 3 {
-            for c in start_col..start_col + 3 {
-                set.insert(self.cells[r * 9 + c]);
-            }
-        }
-        set
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::layout::CellIndex;
-
-    #[test]
-    fn test_new_board_empty() {
-        let board = Board::new();
-        for i in 0..81 {
-            assert!(board.cell(i).is_unknown());
-        }
-    }
-
-    #[test]
-    fn test_set_cell_and_get() {
-        let mut board = Board::new();
-        board.set_cell(0, Value::One);
-        assert_eq!(board.cell(0).value(), Some(Value::One));
-    }
-
-    #[test]
-    fn test_valid_board() {
-        let mut board = Board::new();
-        // Fill first row with unique values
-        for i in 0..9 {
-            board.set_cell(i, Value::from(i as u8 + 1));
-        }
-        assert!(board.is_valid());
-    }
-
-    #[test]
-    fn test_invalid_board() {
-        let mut board = Board::new();
-        // Duplicate in first row
-        board.set_cell(0, Value::One);
-        board.set_cell(1, Value::One);
-        assert!(!board.is_valid());
-    }
-
-    #[test]
-    fn test_row_column_block_sets() {
-        let board = Board::new();
-        assert_eq!(board.row(0).len(), 9);
-        assert_eq!(board.column(0).len(), 9);
-        assert_eq!(board.block(0).len(), 9);
+        Ok(b)
     }
 }
