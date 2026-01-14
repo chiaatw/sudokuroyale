@@ -32,11 +32,11 @@ impl Solver for WXYZWingSolver {
     }
 }
 
-/// Finds all WXYZ-Wing patterns on the board and returns their effects
+// Finds all WXYZ-Wing patterns on the board and returns their effects
 pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
-/// Group cells by exact candidate sets
+// Group cells by exact candidate sets
     let pairs_by_candidates = board.cell_candidates_with_n_candidates(2).fold(
         HashMap::new(),
         |mut map: HashMap<KnownSet, CellSet>, (cell, candidates)| {
@@ -61,7 +61,7 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
         },
     );
 
-/// Quad-based WXYZ-Wing candidate sets
+// Quad-based WXYZ-Wing candidate sets
     let quad_sets = quads_by_candidates
         .iter()
         .map(|(candidates, cells)| {
@@ -82,7 +82,7 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
         })
         .collect_vec();
 
-/// Triple based WXYZ-Wing candidate sets with disjoint grouping
+// Triple based WXYZ-Wing candidate sets with disjoint grouping
     let triple_sets = triples_by_candidates
         .iter()
         .map(|(candidates, cells)| {
@@ -119,7 +119,7 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
         })
         .collect_vec();
 
-/// Tracks bi-value cells that see each other
+// Tracks bi-value cells that see each other
     let seen_bi_values: HashMap<Cell, CellSet> = 
         pairs_by_candidates
             .iter()
@@ -139,19 +139,19 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
 
     let bi_values = board.cells_with_n_candidates(2);
 
-/// Validates a WXYZ-wIng and applies its action if found
+// Validates a WXYZ-wIng and applies its action if found
     let mut check_wing = |wing: CellSet| -> bool {
-/// Ignore XY chains
+// Ignore XY chains
         if (wing & bi_values) == wing {
             return false;
         }
 
-/// Ignore naked quads
+// Ignore naked quads
         if wing.share_any_house() {
             return false;
         }
 
-/// Ignore naked pairs
+// Ignore naked pairs
         if (wing & bi_values).iter().any(|cell| {
             seen_bi_values
                 .get(&cell)
@@ -213,7 +213,7 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
             effects.add_action(action)
     };
 
-/// Quad-driven WXYZ-Wings
+// Quad-driven WXYZ-Wings
     for (_, quads, subsets) in quad_sets {
         for quad_combo in quads.iter().combinations(4) {
             if check_wing(quad_combo.iter().copied().union_cells()) && single {
@@ -241,7 +241,7 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
         }
     }
 
-/// Triple-driven WXYZ-Wings
+// Triple-driven WXYZ-Wings
     for (candidates, triples, disjoints, subsets) in triple_sets {
         for triple_combo in triples.iter().combinations(4) {
             if check_wing(triple_combo.iter().copied().union_cells()) && single {

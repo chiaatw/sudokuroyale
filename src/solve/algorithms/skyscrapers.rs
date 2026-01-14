@@ -99,10 +99,10 @@ impl SkyscraperSolver {
 
         false
     }
-
-    pub fn find_skyscrapers(board: &Board, single: bool) -> Option<Effects> {
-    SkyscraperSolver.apply(board, single)
 }
+
+pub fn find_skyscrapers(board: &Board, single: bool) -> Option<Effects> {
+    SkyscraperSolver.apply(board, single)
 }
 
 #[cfg(test)]
