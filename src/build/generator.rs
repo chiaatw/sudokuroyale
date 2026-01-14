@@ -4,7 +4,7 @@ use rand::seq::SliceRandom;
 use crate::io::{show_progress, Cancelable};
 use crate::layout::{Cell, Known, KnownSet};
 use crate::puzzle::{Board, ChangeResult, Changer, Strategy};
-use crate::solve::find_intersection_removals;
+use crate::solve::strategy_ord::algorithms::find_intersection_removals;
 
 /// Generates a complete puzzle solution.
 pub struct Generator {

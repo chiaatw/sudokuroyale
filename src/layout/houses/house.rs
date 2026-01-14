@@ -5,7 +5,8 @@ use std::ops::{Add, Neg};
 use crate::layout::houses::house_set::{blocks, cols, rows};
 use crate::layout::{Cell, CellSet, Coord};
 
-use super::{HouseSet, Iter, Shape};
+use super::{HouseSet, Shape};
+use super::house_set::Iter;
 
 
 //Trait, describes House-API

@@ -4,7 +4,9 @@
     use crate::io::{show_progress, Cancelable};
     use crate::layout::{Cell, CellSet};
     use crate::puzzle::{Board, Effects};
-    use crate::solve::{find_brute_force, Resolution, Solver, Timings};
+    use crate::solve::strategy_ord::solver::{Resolution, Solver};
+    use crate::solve::strategy_ord::timing::Timings;
+    use crate::solve::strategy_ord::algorithms::find_brute_force;
 
     /// Finds a solvable starting puzzle from a full solution.
     pub struct Finder {

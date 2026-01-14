@@ -11,10 +11,10 @@ use super::{Coord, CoordSet, House, Shape};
 
 pub trait HouseSetLike: Copy + Sized {
 
-    const fn empty(shape: Shape) -> Self;
-    const fn full(shape: Shape) -> Self;
-    const fn from_bits(shape: Shape, bits: u16) -> Self;
-    const fn from_coords(shape: Shape, coords: i32) -> Self;
+    fn empty(shape: Shape) -> Self;
+    fn full(shape: Shape) -> Self;
+    fn from_bits(shape: Shape, bits: u16) -> Self;
+    fn from_coords(shape: Shape, coords: i32) -> Self;
 
     fn shape(&self) -> Shape;
     fn is_empty(&self) -> bool;
@@ -50,28 +50,28 @@ pub struct HouseSet{
 
 impl HouseSetLike for HouseSet {
 
-    const fn empty(shape: Shape) -> Self {
+    fn empty(shape: Shape) -> Self {
         Self {
             shape,
             coords: CoordSet::empty(),
         }
     }
 
-    const fn full(shape: Shape) -> Self {
+    fn full(shape: Shape) -> Self {
         Self {
             shape,
             coords: CoordSet::full(),
         }
     }
 
-    const fn from_bits(shape: Shape, bits: u16) -> Self {
+    fn from_bits(shape: Shape, bits: u16) -> Self {
         Self {
             shape,
             coords: CoordSet::new(bits),
         }
     }
 
-    const fn from_coords(shape: Shape, coords: i32) -> Self {
+    fn from_coords(shape: Shape, coords: i32) -> Self {
         Self {
             shape,
             coords: CoordSet::from_coords(coords),
@@ -202,7 +202,7 @@ impl HouseSet {
         self.iter().fold(CellSet::empty(), | acc, h| acc | h.cells())
     }
 
-    pub const fn iter(&self) -> Iter {
+    pub fn iter(&self) -> Iter {
         Iter {
             shape: self.shape,
             coords: self.coords.bits(),

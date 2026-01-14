@@ -12,13 +12,18 @@ type Bits = u16;
 type Size = u8;
 
 /// A set of coordinates encoded as bit flags.
-#[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum CoordSet {
-    #[default]
     Bits(Bits),
 }
 
 const ALL_SET: Bits = (1 << Coord::COUNT) - 1;
+
+impl Default for CoordSet {
+    fn default() -> Self {
+        CoordSet::Bits(Bits::default())
+    }
+}
 
 impl CoordSet {
     const fn bits_raw(&self) -> Bits {

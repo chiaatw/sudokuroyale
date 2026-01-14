@@ -8,10 +8,15 @@ use super::{Bit, CellSet};
 
 /// Represents a single grid cell identified by a linear index
 /// running left-to-right, top-to-bottom.
-#[derive(Clone, Copy, Debug, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Cell {
-    #[default]
     Index(u8),
+}
+
+impl Default for Cell {
+    fn default() -> Self {
+        Cell::Index(0)
+    }
 }
 
 impl Cell {
