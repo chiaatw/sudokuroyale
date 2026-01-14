@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use rocket::http::{Cookie, CookieJar};
 use rocket::request::{FromRequest, Outcome};
+use::rocket::Request;
+
 
 
 // nur EINMAL, und zwar mit crate::
@@ -327,6 +329,26 @@ fn reset_password_endpoint(
     }
 }
 
+#[catch(401)]
+fn unauthorized(_req: &Request) -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "unauthorized".to_string(),
+    })
+}
+
+#[catch(404)]
+fn not_found(_req: &Request) -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "not found".to_string(),
+    })
+}
+
+#[catch(500)]
+fn internal_error(_req: &Request) -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "internal server error".to_string(),
+    })
+}
 
 
 
@@ -350,4 +372,5 @@ fn rocket() -> _ {
         .manage(Mutex::new(ResetTokenRepository::new()))
         .manage(std::sync::Mutex::new(game_match::repository::MatchRepository::new()))
         .mount("/", routes![health, register, login, me, logout, change_password_endpoint, request_reset, reset_password_endpoint, api::r#match::create_match_route])
+        .register("/", catchers![unauthorized, not_found, internal_error])
 }
