@@ -130,7 +130,6 @@ mod tests {
     use super::*;
     use crate::puzzle::{Board, Changer, KnownSet, Known};
     use crate::layout::Cell;
-    use std::cell::RefCell;
 
     // A dummy Changer that always accepts a value
     struct DummyChanger;

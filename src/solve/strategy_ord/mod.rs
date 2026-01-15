@@ -26,3 +26,4 @@ pub use pseudo_cell::PseudoCell;
 pub use timing::Timings;
 pub use strategy::{Strategy, Difficulty};
 
+pub trait SolverAction {}

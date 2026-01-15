@@ -103,9 +103,8 @@
     #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::{Cell, CellSet};
+    use crate::layout::Cell;
     use crate::puzzle::Board;
-    use crate::solve::Solver;
 
     /// Hilfsfunktion: erzeugt ein "gelöstes" Board für Testzwecke.
     fn solved_board() -> Board {

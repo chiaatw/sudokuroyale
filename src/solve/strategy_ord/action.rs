@@ -7,8 +7,10 @@ use itertools::Itertools;
 
 use crate::layout::{Cell, CellSet, Known, KnownSet};
 use crate::symbols::{EMPTY_SET, REMOVE_CANDIDATE, SET_KNOWN};
+use crate::solve::strategy_ord::clues::ClueCollection;
 
 use super::{Board, Change, Clues, Effects, Strategy, Verdict};
+use super::SolverAction;
 
 // Something that can be applied to a board and produce effects
 pub trait AppliesToBoard {

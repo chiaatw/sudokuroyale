@@ -5,6 +5,10 @@ use crate::io::format_for_fancy_console;
 use crate::layout::{Cell, CellSet, House, Known, KnownSet, Value};
 use crate::solve::creates_deadly_rectangles;
 
+use crate::layout::values::known::KnownLike;
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::Known;
+
 use super::{Effects, Error, PseudoCell, Strategy};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
