@@ -371,6 +371,7 @@ fn rocket() -> _ {
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
         .manage(std::sync::Mutex::new(game_match::repository::MatchRepository::new()))
-        .mount("/", routes![health, register, login, me, logout, change_password_endpoint, request_reset, reset_password_endpoint, api::r#match::create_match_route])
+        .mount("/", routes![health, register, login, me, logout, change_password_endpoint, request_reset, reset_password_endpoint])
+        .mount("/", api::routes())
         .register("/", catchers![unauthorized, not_found, internal_error])
 }
