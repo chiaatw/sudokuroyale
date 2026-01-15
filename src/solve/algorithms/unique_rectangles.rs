@@ -2,11 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use super::naked_tuples;
 use super::*;
-
-pub trait Solver {
-    fn strategy(&self) -> Strategy;
-    fn apply(&self, board: &Board, single: bool) -> Option<Effects>;
-}
+use crate::puzzle::{Action, Cell, CellSet, Known, KnownSet, Board, Effects, Strategy, Verdict};
+use crate::layout::{House, HouseSet, Rectangle, Shape};
 
 pub struct UniqueRectangleSolver;
 

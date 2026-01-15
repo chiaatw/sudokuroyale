@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::puzzle::{Action, CellSet, Known, Board, Effects, Strategy, Verdict};
+use crate::layout::House;
 /// Solver for the Empty Rectangle strategy
 /// 
 /// Detects Empty Rectangles on the board and produces candidate eliminations

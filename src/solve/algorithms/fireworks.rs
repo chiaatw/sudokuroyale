@@ -1,6 +1,7 @@
 use super::hidden_tuples::is_degenerate;
 use super::*;
 
+use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
 // Trait-based solver for the Fireworks strategy
 pub struct FireworksSolver;
 

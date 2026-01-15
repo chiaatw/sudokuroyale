@@ -15,7 +15,6 @@ pub use peers::validate_peers;
 pub use givens::validate_givens;
 pub use deadliness::validate_deadliness;
 
-use crate::solve::{find_intersection_removals, creates_deadly_rectangles};
 
 /// Runs all validator passes
 pub fn validate(board: &Board) -> Result<(), ValidationError> {

@@ -1,8 +1,3 @@
-use itertools::Itertools;
-
-use crate::layout::*;
-use crate::puzzle::*;
-
 macro_rules! export {
     ($module:ident => $($item:ident),+ $(,)?) => {
         pub use crate::solve::algorithms::$module::{ $($item),+ };

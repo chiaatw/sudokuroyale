@@ -1,4 +1,4 @@
-use crate::layout::{Cell, Value, ValueLike};
+use crate::layout::{Cell, ValueLike};
 use crate::solve::validator::{Board, HouseKind, ValidationError};
 
 /// Validates Sudoku "cell rules" for the whole board:

@@ -2,6 +2,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use crate::io::{print_all_and_single_candidates, Cancelable};
+use crate::puzzle::{Action, Cell, CellSet, Changer, ChangeResult, KnownSet, Board, Effects, Options, Strategy};
 
 use super::*;
 

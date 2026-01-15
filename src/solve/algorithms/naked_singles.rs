@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
+
 pub struct NakedSingleSolver;
 
 impl Solver for NakedSingleSolver {

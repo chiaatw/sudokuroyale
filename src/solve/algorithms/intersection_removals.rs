@@ -1,5 +1,9 @@
 use super::*;
 
+use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
+use crate::layout::{House, HouseSet};
+
+
 /// Solver for Intersection Removal strategies:
 /// Pointing Pair/Triple
 /// Box Line Reduction

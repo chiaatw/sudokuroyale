@@ -1,5 +1,6 @@
 use super::*;
 
+use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
 // Solve wrapper for the Y-Wing strategy
 pub struct YWingSolver;
 

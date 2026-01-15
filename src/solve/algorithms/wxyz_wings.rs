@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use itertools::Itertools;
 
-use super::*;
+use crate::puzzle::{Action, Cell, CellSet, Known, KnownSet, Board, Effects, Strategy, Verdict};
 
 /// Solver interface implemented by all strategies
 pub trait Solver {

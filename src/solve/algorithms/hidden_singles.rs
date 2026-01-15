@@ -1,5 +1,6 @@
 use super::*;
 
+use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
 pub struct HiddenSingleSolver;
 
 impl Solver for HiddenSingleSolver {

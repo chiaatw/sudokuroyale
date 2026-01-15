@@ -1,3 +1,10 @@
+use crate::puzzle::{Board, Effects, Strategy};
+
+pub trait Solver {
+    fn strategy(&self) -> Strategy;
+    fn apply(&self, board: &Board, single: bool) -> Option<Effects>;
+}
+
 pub mod avoidable_rectangles;
 pub mod brute_force;
 pub mod bugs;

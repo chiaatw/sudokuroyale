@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
+use crate::layout::Shape;
 // X-Wing solver wrapper for the engine
 pub struct XWingSolver;
 

@@ -1,9 +1,9 @@
 use std::collections::{HashMap, VecDeque};
-use std::fmt;
 use std::rc::Rc;
 use itertools::Itertools;
 
 use super::*;
+use crate::puzzle::{Action, Cell, CellSet, Known, KnownSet, Board, Effects, Strategy, Verdict};
 
 /// Solver for the XY-Chain strategy
 /// 

@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
+use crate::layout::House;
 pub struct TwoStringKiteSolver;
 
 impl Solver for TwoStringKiteSolver {

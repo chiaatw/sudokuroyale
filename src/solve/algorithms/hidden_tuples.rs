@@ -1,6 +1,8 @@
 use itertools::Itertools;
 use super::*;
 
+use crate::puzzle::{Action, CellSet, Known, Board, Effects, Strategy, Verdict};
+use crate::layout::House;
 // Solver wrapper for Hidden Pair strategy
 pub struct HiddenPairSolver;
 

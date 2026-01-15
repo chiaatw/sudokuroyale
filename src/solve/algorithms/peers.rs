@@ -1,5 +1,6 @@
 use super::*;
 
+use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
 // Solver wrapper for the Peer (simple elimination) strategy
 
 pub struct PeerSolver;

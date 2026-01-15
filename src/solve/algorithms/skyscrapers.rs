@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::puzzle::{Action, Cell, Known, Board, Effects, Strategy, Verdict};
+use crate::layout::{House, HouseSet, Shape};
 // Solver wrapper for the Skyscraper strategy
 pub struct SkyscraperSolver;
 

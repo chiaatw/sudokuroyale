@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use itertools::Itertools;
 
 use super::*;
+use crate::puzzle::{Action, Cell, CellSet, Known, Board, Effects, Strategy};
+use crate::layout::House;
 
 /// Solver for Singles Chain (Strong-Weak Link / X-Chain) strategy
 /// 

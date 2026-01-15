@@ -1,5 +1,6 @@
 use super::*;
 
+use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
 // Solver wrapper for the XYZ-Wing strategy
 pub struct XYZWingSolver;
 

@@ -114,13 +114,7 @@ impl Coord {
             write!(f, "{}", self.label())
         }
     }
-    macro_rules! coord {
-        ($c:expr) => {
-            Coord::new($c as u8 -1)
-        };
-    }
 
-    pub(crate) use coord;
     
 #[cfg(test)]
 mod tests {

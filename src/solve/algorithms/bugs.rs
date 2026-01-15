@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
+
 // Solver wrapper for the BUG (Bi-value Universal Grave) strategy
 pub struct BugSolver;
 

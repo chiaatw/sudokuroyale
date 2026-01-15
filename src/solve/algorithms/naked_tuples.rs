@@ -1,6 +1,9 @@
 use itertools::Itertools;
 use super::*;
 
+use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
+use crate::layout::House;
+
 // Solver for Naked Pair strategy
 pub struct NakedPairSolver;
 

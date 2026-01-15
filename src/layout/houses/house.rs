@@ -6,7 +6,7 @@ use crate::layout::houses::house_set::{blocks, cols, rows};
 use crate::layout::{Cell, CellSet, Coord};
 
 use super::{HouseSet, Shape};
-use super::house_set::Iter;
+use crate::layout::houses::house_set::HouseSetLike;
 
 
 //Trait, describes House-API
@@ -555,6 +555,20 @@ pub const INTERSECTIONS: [[[[CellSet; 9]; 3]; 9]; 3] = {
     sets
 };
 
+const ROW_CELLS: [CellSet; 9] = make_house_cells(Shape::Row);
+const COLUMN_CELLS: [CellSet; 9] = make_house_cells(Shape::Column);
+const BLOCK_CELLS: [CellSet; 9] = make_house_cells(Shape::Block);
+
+const fn make_house_cells(shape: Shape) -> [CellSet; 9] {
+    let mut out = [CellSet::empty(); 9];
+    let mut i = 0;
+    while i < 9 {
+        out[i] = House::new(shape, Coord::new(i as u8)).cells();
+        i += 1;
+    }
+    out
+}
+
 const ROW_ROWS: [HouseSet; 9] = [
     rows!(1),
     rows!(2),
@@ -767,14 +781,6 @@ mod tests {
 
         assert_eq!(houses!("R3 R6"), got);
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::layout::houses::coord::coord;
-    use crate::layout::cells::cell_set::cells;
-    use crate::layout::houses::house_set::houses;
 
     #[test]
     fn house_creation_and_properties() {
