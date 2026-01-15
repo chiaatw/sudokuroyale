@@ -73,3 +73,29 @@ pub fn join_match_route(
 
     Ok(Json(JoinMatchResponse { ok }))
 }
+
+#[derive(Serialize)]
+pub struct MatchInfoResponse {
+    pub match_id: String,
+    pub status: String,
+    pub player1_id: String,
+    pub player2_id: Option<String>,
+}
+
+#[get("/match/<match_id>")]
+pub fn get_match_route(
+    match_id: &str,
+    matches: &State<Mutex<MatchRepository>>,
+) -> Result<Json<MatchInfoResponse>, Status> {
+    let match_uuid = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
+    let matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
+
+    let m = matches_guard.find_by_id(&match_uuid).ok_or(Status::NotFound)?;
+
+    Ok(Json(MatchInfoResponse {
+        match_id: m.id.to_string(),
+        status: format!("{:?}", m.status),
+        player1_id: m.player1_id.to_string(),
+        player2_id: m.player2_id.map(|id| id.to_string()),
+    }))
+}
