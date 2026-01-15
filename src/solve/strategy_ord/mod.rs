@@ -13,6 +13,7 @@ pub mod strategy;
 pub mod technique;
 pub mod timing;
 pub mod deadly_rectangles;
+pub mod cancelable;
 
 pub use action::Action;
 pub use board::{Board, Change};

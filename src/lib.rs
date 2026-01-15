@@ -5,6 +5,9 @@ pub mod constants;
 pub mod layout;
 pub mod solve;
 
+// Facades
+pub mod io;
+pub mod puzzle;
 // Domain
 pub mod user;
 pub mod game_match;
