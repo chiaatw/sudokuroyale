@@ -51,38 +51,29 @@ pub fn join_match(
     true
 }
 
-pub fn leave_match(
-    users: &UserRepository,
-    sessions: &SessionRepository,
-    match_repo: &mut MatchRepository,
-    session_id: &Uuid,
+pub fn leave_match_by_user(
+    repo: &mut MatchRepository,
+    user_id: &Uuid,
     match_id: &Uuid,
 ) -> bool {
-    // 1) User aus Session holen (auth)
-    let user = match get_user_from_session(sessions, users, session_id) {
-        Some(u) => u,
-        None => return false,
-    };
-
-    // 2) Match mut holen
-    let m = match match_repo.find_by_id_mut(match_id) {
+    // 1) Match mut holen
+    let m = match repo.find_by_id_mut(match_id) {
         Some(m) => m,
         None => return false,
     };
 
-    // 3) Wenn Player1 geht -> Match löschen
-    if m.player1_id == user.id {
+    // 2) Wenn Player1 geht -> löschen
+    if m.player1_id == *user_id {
         let id = m.id;
-        return match_repo.remove_match(&id);
+        return repo.remove_match(&id);
     }
 
-    // 4) Wenn Player2 geht -> player2 entfernen, zurück auf Waiting
-    if m.player2_id == Some(user.id) {
+    // 3) Wenn Player2 geht -> player2 entfernen + status zurück
+    if m.player2_id == Some(*user_id) {
         m.player2_id = None;
         m.status = MatchStatus::Waiting;
         return true;
     }
 
-    // 5) User gehört nicht zum Match
     false
 }
