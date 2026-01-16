@@ -1,14 +1,14 @@
 // Game Core
 
-pub mod game;         
-pub mod build;
+//pub mod game;         
+//pub mod build;
 pub mod constants;
-pub mod layout;
-pub mod solve;
+//pub mod layout;
+//pub mod solve;
 
 // Facades
-pub mod io;
-pub mod puzzle;
+//pub mod io;
+//pub mod puzzle;
 // Domain
 pub mod user;
 pub mod game_match;
