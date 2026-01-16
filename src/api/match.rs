@@ -4,6 +4,7 @@ use rocket::State;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
+use crate::game_match::services::start_match;
 use crate::game_match::repository::MatchRepository;
 use crate::game_match::services::{create_match, join_match};
 use crate::user::repository::UserRepository;
@@ -127,3 +128,4 @@ pub fn leave_match_route(
 
     Ok(Json(LeaveMatchResponse { ok }))
 }
+
