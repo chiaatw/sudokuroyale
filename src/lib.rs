@@ -1,9 +1,10 @@
 // Game Core
-pub mod game;
-pub mod build;
+
+//pub mod game;         // game, build, layout, solve vorrübergehend auskommentiert zum testen
+//pub mod build;
 pub mod constants;
-pub mod layout;
-pub mod solve;
+//pub mod layout;
+//pub mod solve;
 
 // Facades
 pub mod io;
