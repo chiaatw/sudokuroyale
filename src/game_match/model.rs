@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MatchStatus {
     Waiting,
+    Ready,
     Running,
     Finished,
 }
