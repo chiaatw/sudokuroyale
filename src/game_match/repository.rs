@@ -21,4 +21,8 @@ impl MatchRepository {
     pub fn find_by_id_mut(&mut self, id: &Uuid) -> Option<&mut GameMatch> {
         self.matches.iter_mut().find(|m| &m.id == id)
     }
+
+    pub fn remove_match(&mut self, id: &Uuid) -> bool {
+        self.matches.remove(id).is_some()
+    }
 }
