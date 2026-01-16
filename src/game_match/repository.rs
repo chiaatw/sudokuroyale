@@ -23,6 +23,11 @@ impl MatchRepository {
     }
 
     pub fn remove_match(&mut self, id: &Uuid) -> bool {
-        self.matches.remove(id).is_some()
+        if let Some(pos) = self.matches.iter().position(|m| &m.id == id) {
+            self.matches.swap_remove(pos);
+            true
+        } else {
+            false
+        }
     }
 }
