@@ -46,8 +46,6 @@ pub fn join_match(
     }
 
     m.player2_id = Some(user.id);
-    m.status = MatchStatus::Running;
-    m.started_at = Some(Utc::now());
     true
 }
 
