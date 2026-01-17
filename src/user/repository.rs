@@ -1,38 +1,42 @@
-use crate::user::model::User;
+use sqlx::PgPool;
 use uuid::Uuid;
+use crate::user::model::User;
 
 pub struct UserRepository {
-    users: Vec<User>,
+    pool: PgPool,
 }
 impl UserRepository {
-    pub fn new () -> Self {
-        Self {users: Vec::new()}
+    pub fn new (pool: PgPool) -> Self {
+        Self { pool  }
+    }
+   
+   
+   
+   // platzhalter für spätere änderungen 
+
+
+
+
+    pub fn add_user(&mut self, _user: User) {
+        todo!("add_user wird später mit SQL implementiert");
     }
 
-    pub fn add_user(&mut self, user: User) {
-        self.users.push(user);
+    pub fn find_by_username(&self, _username: &str) -> Option<User> {
+        todo!("find_by_username wird später mit SQL implementiert");
     }
 
-    pub fn find_by_username(&self, username: &str) -> Option<&User> {
-        self.users.iter().find(|u| u.username == username)
+    pub fn find_by_email(&self, _email: &str) -> Option<User> {
+        todo!("find_by_email wird später mit SQL implementiert");
     }
 
-    pub fn find_by_email(&self, email: &str) -> Option<&User> {
-    self.users.iter().find(|u| u.email == email)
+    pub fn find_by_id(&self, _id: &Uuid) -> Option<User> {
+        todo!("find_by_id wird später mit SQL implementiert");
     }
 
-    pub fn find_by_id(&self, id: &Uuid) -> Option<&User> {
-    self.users.iter().find(|u| &u.id == id)
+    pub fn update_password(&mut self, _user_id: &Uuid, _new_hash: String) -> bool {
+        todo!("update_password wird später mit SQL implementiert");
     }
-
-    pub fn update_password(&mut self, user_id: &Uuid, new_hash: String) -> bool {
-        if let Some(user) = self.users.iter_mut().find(|u| &u.id == user_id) {
-            user.password_hash = new_hash;
-            return true;
-        }
-        false
-    }
+}
 
 
-
- }
+ 

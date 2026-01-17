@@ -5,6 +5,7 @@ mod api;
 #[macro_use]
 extern crate rocket;
 
+use sqlx::PgPool;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -365,13 +366,33 @@ impl From<AuthError> for (Status, Json<ErrorResponse>) {
 }
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
+    let database_url = std::env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+
+    let pool = PgPool::connect(&database_url)
+        .await
+        .expect("Failed to create database pool");
+
     rocket::build()
-        .manage(Mutex::new(UserRepository::new()))
+        .manage(pool)
+        .manage(Mutex::new(UserRepository::new(pool.clone())))
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
         .manage(std::sync::Mutex::new(game_match::repository::MatchRepository::new()))
-        .mount("/", routes![health, register, login, me, logout, change_password_endpoint, request_reset, reset_password_endpoint])
+        .mount(
+            "/",
+            routes![
+                health,
+                register,
+                login,
+                me,
+                logout,
+                change_password_endpoint,
+                request_reset,
+                reset_password_endpoint
+            ],
+        )
         .mount("/", api::routes())
         .register("/", catchers![unauthorized, not_found, internal_error])
 }
