@@ -77,41 +77,34 @@ pub fn leave_match_by_user(
     false
 }
 
-pub fn start_match(
-    users: &UserRepository,
-    sessions: &SessionRepository,
+
+pub fn start_match_by_user(
     match_repo: &mut MatchRepository,
-    session_id: &Uuid,
+    user_id: &Uuid,
     match_id: &Uuid,
 ) -> bool {
-    // 1) User aus Session holen
-    let user = match get_user_from_session(sessions, users, session_id) {
-        Some(u) => u,
-        None => return false,
-    };
-
-    // 2) Match mut holen
+    // Match holen
     let m = match match_repo.find_by_id_mut(match_id) {
         Some(m) => m,
         None => return false,
     };
 
-    // 3) Nur Player1 darf starten
-    if m.player1_id != user.id {
+    // Nur Player1 darf starten
+    if m.player1_id != *user_id {
         return false;
     }
 
-    // 4) Player2 muss da sein
+    // Player2 muss da sein
     if m.player2_id.is_none() {
         return false;
     }
 
-    // 5) Darf nur starten, wenn noch nicht Running/Finished
-    if m.status == MatchStatus::Running || m.status == MatchStatus::Finished {
+    // Muss READY sein (das ist sauberer als "nicht running/finished")
+    if m.status != MatchStatus::Ready {
         return false;
     }
 
-    // 6) Start!
+    // Start!
     m.status = MatchStatus::Running;
     m.started_at = Some(Utc::now());
     true

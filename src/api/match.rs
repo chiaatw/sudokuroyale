@@ -4,7 +4,7 @@ use rocket::State;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
-use crate::game_match::services::start_match;
+use crate::game_match::services::start_match_by_user;
 use crate::game_match::repository::MatchRepository;
 use crate::game_match::services::{create_match, join_match};
 use crate::user::repository::UserRepository;
@@ -129,3 +129,28 @@ pub fn leave_match_route(
     Ok(Json(LeaveMatchResponse { ok }))
 }
 
+
+#[derive(Deserialize)]
+pub struct StartMatchRequest {
+    pub match_id: String,
+}
+
+#[derive(Serialize)]
+pub struct StartMatchResponse {
+    pub ok: bool,
+}
+
+#[post("/match/start", data = "<req>")]
+pub fn start_match_route(
+    auth: crate::AuthUser,
+    req: Json<StartMatchRequest>,
+    matches: &State<Mutex<MatchRepository>>,
+) -> Result<Json<StartMatchResponse>, Status> {
+    let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
+
+    let mut matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
+
+    let ok = start_match_by_user(&mut matches_guard, &auth.user_id, &match_id);
+
+    Ok(Json(StartMatchResponse { ok }))
+}
