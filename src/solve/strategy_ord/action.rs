@@ -8,6 +8,8 @@ use itertools::Itertools;
 use crate::layout::{Cell, CellSet, Known, KnownSet};
 use crate::symbols::{EMPTY_SET, REMOVE_CANDIDATE, SET_KNOWN};
 use crate::solve::strategy_ord::clues::ClueCollection;
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::values::known::KnownLike;
 
 use super::{Board, Change, Clues, Effects, Strategy, Verdict};
 use super::SolverAction;
@@ -81,7 +83,7 @@ impl Action {
     }
 
     pub fn erase_knowns(&mut self, cell: Cell, knowns: KnownSet) {
-        for known in knowns {
+        for known in knowns.iter() {
             self.erase(cell, known);
         }
     }
@@ -139,6 +141,10 @@ impl Action {
     pub fn clue_cells_for_knowns(&mut self, color: Verdict, cells: CellSet, knowns: KnownSet) {
         self.clues.clue_cells_for_knowns(color, cells, knowns);
     }
+
+        pub fn strategy(&self) -> Strategy {
+        self.strategy
+    }
 }
 
 impl SolverAction for Action {
@@ -166,7 +172,7 @@ impl AppliesToBoard for Action {
         let mut change = Change::None;
 
         for (cell, knowns) in &self.erase {
-            for known in knowns {
+            for known in knowns.iter() {
                 change &= board.remove_candidate(*cell, known, effects);
             }
         }
@@ -188,7 +194,7 @@ impl AppliesToBoard for Action {
 impl fmt::Debug for Action {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.strategy)?;
-        if self.is_empty() {
+        if self.clues.is_empty() && self.erase.is_empty() && self.set.is_empty() {
             write!(f, " {}", EMPTY_SET)
         } else {
             for (cell, knowns) in self.collect_erases() {
@@ -214,7 +220,7 @@ impl fmt::Debug for Action {
 impl fmt::Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:20}", self.strategy)?;
-        if self.is_empty() {
+        if self.clues.is_empty() && self.erase.is_empty() && self.set.is_empty() {
             f.write_char(EMPTY_SET)
         } else {
             let mut first = true;
@@ -234,7 +240,7 @@ impl fmt::Display for Action {
                 }
                 first = false;
 
-                for known in knowns {
+                for known in knowns.iter() {
                     f.write_char(known.label())?;
                 }
                 write!(f, " {} {}", REMOVE_CANDIDATE, cells)?;

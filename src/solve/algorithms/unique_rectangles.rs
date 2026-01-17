@@ -4,6 +4,13 @@ use super::naked_tuples;
 use super::*;
 use crate::puzzle::{Action, Cell, CellSet, Known, KnownSet, Board, Effects, Strategy, Verdict};
 use crate::layout::{House, HouseSet, Rectangle, Shape};
+use crate::layout::values::known_set::KnownSetLike;
+use itertools::Itertools;
+use crate::layout::houses::shape::ShapeTrait;
+use crate::layout::values::known_set::KnownSetIteratorUnion;
+use crate::layout::cells::cell_set::CellIteratorUnion;
+use crate::layout::houses::house_set::HouseSetLike;
+use crate::layout::houses::house::HouseLike;
 
 pub struct UniqueRectangleSolver;
 
@@ -114,11 +121,11 @@ fn check_type_one(
     found_type_ones: &mut HashSet<Rectangle>,
     effects: &mut Effects,
 ) -> bool {
-    if rectangle.block_count != 2 || found_type_ones.contains(&rectangle) {
+    if rectangle.block_count() != 2 || found_type_ones.contains(&rectangle) {
         return false;
     }
 
-    let fourth = (rectangle.cells - corners).as_single().unwrap();
+    let fourth = (rectangle.cells() - corners).as_single().unwrap();
     let candidates = board.candidates(fourth);
     if !candidates.has_all(pair) {
         return false;
@@ -145,7 +152,7 @@ fn check_neighbors(
 ) -> bool {
     let floor_left_block = floor_left.block();
     let houses = if floor_left_block == floor_right.block() {
-        HouseSet::full(shape) - floor_left_block.houses(shape)
+        HouseSet::full(shape).minus(floor_left_block.houses(shape))
     } else {
     floor_left_block.houses(shape) - floor_left.house(shape)
     };
@@ -253,7 +260,7 @@ impl Candidate {
         let roof_right_extras = board.candidates(roof_right) - pair;
 
         let rectangle = Rectangle::from(floor_left, floor_right, roof_left, roof_right);
-        if rectangle.block_count != 2 {
+        if rectangle.block_count() != 2 {
             return Err(());
         }
 
@@ -293,11 +300,11 @@ impl Candidate {
 
         let floor = CellSet::from_iter([floor1, floor2]);
         let rectangle = Rectangle::try_from(floor)?;
-        if rectangle.block_count != 2 {
+        if rectangle.block_count() != 2 {
             return Err(());
         }
 
-        let roof = rectangle.cells - floor;
+        let roof = rectangle.cells() - floor;
         let roof_pair = roof.as_pair().unwrap();
 
         // the floor and roof are formed by the diagonals;
@@ -369,7 +376,7 @@ impl Candidate {
 
         let mut action = Action::new(Strategy::UniqueRectangle);
         action.erase_cells(cells, extra);
-        action.clue_cells_for_knowns(Verdict::Primary, self.rectangle.cells, self.pair);
+        action.clue_cells_for_knowns(Verdict::Primary, self.rectangle.cells(), self.pair);
         action.clue_cells_for_known(Verdict::Secondary, self.roof, extra);
         // println!("type 2 {} - {}", self.rectangle, action);
 
@@ -382,7 +389,7 @@ impl Candidate {
         }
 
         let mut action = Action::new(Strategy::UniqueRectangle);
-        action.clue_cells_for_knowns(Verdict::Primary, self.rectangle.cells, self.pair);
+        action.clue_cells_for_knowns(Verdict::Primary, self.rectangle.cells(), self.pair);
         action.clue_cell_for_knowns(Verdict::Secondary, self.roof_left, self.roof_left_extras);
         action.clue_cell_for_knowns(Verdict::Secondary, self.roof_right, self.roof_right_extras);
 
@@ -401,7 +408,7 @@ impl Candidate {
 
                 for peer_knowns_combo in peer_knowns
                     .iter()
-                    .filter(|(_, knowns)| (2..=size).contains(&knowns.len()))
+                    .filter(|(_, knowns)| (2..=size).contains(&(*knowns).len()))
                     .combinations(size - 1)
                 {
                     let known_sets: Vec<KnownSet> = peer_knowns_combo
@@ -420,7 +427,7 @@ impl Candidate {
                     let cells = peers - peer_knowns_combo.iter().map(|(c, _)| *c).union_cells();
 
                     let mut found = false;
-                    for known in knowns {
+                    for known in knowns.iter() {
                         let erase = cells & board.candidate_cells(known);
                         if !erase.is_empty() {
                             found = true;

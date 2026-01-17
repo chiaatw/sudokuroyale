@@ -1,7 +1,9 @@
 use super::*;
 
+use crate::layout::values::known_set::KnownSetLike;
 use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
 use crate::layout::{House, HouseSet};
+use crate::layout::houses::house::HouseLike;
 
 
 /// Solver for Intersection Removal strategies:
@@ -71,7 +73,7 @@ fn check_intersection(
             }
 
 // Case 1: Box Line Reduction
-            if box_candidates[known] && !line_candidates[known] {
+            if box_candidates.has(known) && !line_candidates.has(known) {
                 let erase = box_cells & candidate_cells;
                 if !erase.is_empty() {
                     let mut action = Action::new(Strategy::BoxLineReduction);
@@ -94,7 +96,7 @@ fn check_intersection(
             }
 
 // Case 2: Pointing Pair/Triple
-            else if line_candidates[known] {
+            else if line_candidates.has(known) {
                 let erase = line_cells & candidate_cells;
                 if !erase.is_empty() {
                     let strategy = if intersection_candidate_cells_count == 3 {

@@ -2,6 +2,7 @@ use super::*;
 
 use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
 use crate::layout::Shape;
+use crate::layout::houses::shape::ShapeTrait;
 // X-Wing solver wrapper for the engine
 pub struct XWingSolver;
 
@@ -93,7 +94,7 @@ fn check_houses(
 // Iterate over all combinations of houses of the given size
         for candidates in shape
             .house_iter()
-            .map(|house| (house, house.cells() & candidate_cells))
+            .map(|house| (house, house.shape.cells(house.coord) & candidate_cells))
 // Only consider houses that have 2..=size candidates for this known
             .filter(|(_, cells)| 2 <= cells.len() && cells.len() <= size)
             .map(|(house, cells)| (house, cells, house.crossing_houses(cells)))

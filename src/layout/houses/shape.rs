@@ -2,39 +2,15 @@ use std::fmt;
 use once_cell::sync::Lazy;
 use std::array;
 
+use crate::layout::{Cell, CellSet, Coord};
+use crate::layout::houses::house::House;
+
 #[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Shape {
     #[default]
     Row,
     Column,
     Block,
-}
-
-#[derive(Copy, Clone)]
-pub struct Coord(u8);
-
-impl Coord {
-    const fn new(value: u8) -> Self {
-        Coord(value)
-    }
-    const fn u8(self) -> u8 {
-        self.0 
-    }
-    const fn usize(self) -> usize {
-        self.0 as usize
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct House {
-    pub shape: Shape,
-    pub coord: Coord,
-}
-
-impl House {
-    pub const fn new(shape: Shape, coord: Coord) -> Self {
-        House { shape, coord }
-    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -63,27 +39,7 @@ impl Iterator for HouseIter {
         }
     }
 
-#[derive(Copy, Clone)]
-struct Cell(u8);
 
-impl Cell {
-    const fn new(value: u8) -> Self {
-        Cell(value)
-    }
-}
-
-//TODO CellSet stores no data
-#[derive(Copy, Clone)]
-pub struct CellSet;
-
-impl CellSet {
-    pub const fn empty() -> Self {
-        CellSet
-    }
-    pub const fn of <const N: usize>(_: &[Cell; N]) -> Self {
-        CellSet
-    }
-}
 
 pub trait ShapeTrait{
     fn label(&self) -> &str;
@@ -113,15 +69,17 @@ impl ShapeCells for Shape {
     fn cells(&self) -> [[Cell; 9]; 9] {
         let mut cells: [[Cell; 9]; 9] = [[Cell::new(0); 9]; 9];
         for house in 0..9 {
+            let house_u8 = house as u8;
             for coord in 0..9 {
+                let coord_u8 = coord as u8;
                 cells[house][coord] = match self {
-                    Shape::Row => Cell::new(9 * house + coord),
-                    Shape::Column => Cell::new(house + 9 * coord),
+                    Shape::Row => Cell::new(9 * house_u8 + coord_u8),
+                    Shape::Column => Cell::new(house_u8 + 9 * coord_u8),
                     Shape::Block => Cell::new(
-                        (house / 3) * 27
-                        + (house % 3) * 3
-                        + (coord / 3) * 9
-                        + (coord % 3),
+                        (house_u8 / 3) * 27
+                        + (house_u8 % 3) * 3
+                        + (coord_u8 / 3) * 9
+                        + (coord_u8 % 3),
                     ),
                 };
             }
@@ -129,7 +87,7 @@ impl ShapeCells for Shape {
         cells
     }
     fn cell_sets(&self) -> [CellSet; 9] {
-        let cells = self.cells();
+        let cells = ShapeCells::cells(self);
         array::from_fn(|i| CellSet::of::<9>(&cells[i]))
     }
 }
@@ -253,9 +211,9 @@ impl ExactSizeIterator for ShapeIter {
 }
 
 pub static CELLS: Lazy<[[[Cell; 9]; 9]; 3]> = Lazy::new(|| [
-    Shape::Row.cells(),
-    Shape::Column.cells(),
-    Shape::Block.cells(),
+    ShapeCells::cells(&Shape::Row),
+    ShapeCells::cells(&Shape::Column),
+    ShapeCells::cells(&Shape::Block),
 ]);
 
 pub static CELL_SETS: Lazy<[[CellSet; 9]; 3]> = Lazy::new(|| [

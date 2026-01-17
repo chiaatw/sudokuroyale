@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use itertools::Itertools;
 
 use crate::puzzle::{Action, Cell, CellSet, Known, KnownSet, Board, Effects, Strategy, Verdict};
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::cells::cell_set::{CellIteratorUnion, CellSetIteratorUnion};
 
 /// Solver interface implemented by all strategies
 pub trait Solver {
@@ -70,12 +72,12 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
                 *cells,
                 triples_by_candidates
                     .iter()
-                    .filter(|(c, _)| c.is_subset_of(*candidates))
+                    .filter(|(c, _)| (**c).is_subset_of(*candidates))
                     .map(|(_, cells)| *cells)
                     .union_cells()
                     | pairs_by_candidates
                         .iter()
-                        .filter(|(c, _)| c.is_subset_of(*candidates))
+                        .filter(|(c, _)| (**c).is_subset_of(*candidates))
                         .map(|(_, cells)| *cells)
                         .union_cells(),
             )
@@ -176,7 +178,7 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
             let mut restricted: HashMap<Known, CellSet> = HashMap::new();
             let mut non_restricted: HashMap<Known, CellSet> = HashMap::new();
 
-            for known in wing_knowns {
+            for known in wing_knowns.iter() {
                 let candidates = wing & board.candidate_cells(known);
                 let is_restricted = candidates.iter().combinations(2).all(|c| c[0].sees(c[1]));
 

@@ -1,6 +1,7 @@
 use crate::layout::{Cell, Known};
 use crate::puzzle::{Change, Strategy};
 use crate::solve::find_intersection_removals;
+use crate::solve::strategy_ord::action::AppliesToBoard;
 
 use super::{Action, Board, Effects, Options};
 
@@ -63,7 +64,7 @@ impl Changer {
 
         let mut change = action.apply(&mut after, &mut effects);
 
-        if self.options.stop_on_error && effects.has_errors() {
+        if self.options.stop_on_error() && effects.has_errors() {
             ChangeResult::Invalid(*board, after, action.clone(), effects)
         } else {
             self.apply_all_changed(board, &mut after, &mut effects, change)
@@ -95,7 +96,7 @@ impl Changer {
                     let mut maybe = good;
                     change &= action.apply(&mut maybe, &mut next);
 
-                    if self.options.stop_on_error && next.has_errors() {
+                    if self.options.stop_on_error() && next.has_errors() {
                         return ChangeResult::Invalid(*before, maybe, action.clone(), next);
                     }
 
@@ -106,11 +107,11 @@ impl Changer {
 
                     good = maybe;
                 } else {
-                    unapplied.add_action(action.clone())
+                    unapplied.add_action(action.clone());
                 }
             }
 
-            if self.options.solve_intersection_removals && next.is_empty() {
+            if self.options.solve_intersection_removals() && next.is_empty() {
                 if let Some(effects) = find_intersection_removals(&good, false) {
                     next = effects;
                 }

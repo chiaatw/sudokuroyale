@@ -1,6 +1,8 @@
 use super::*;
 
 use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::houses::house::HouseLike;
 
 // Solver wrapper for the BUG (Bi-value Universal Grave) strategy
 pub struct BugSolver;
@@ -42,7 +44,7 @@ pub fn find_bugs(board: &Board, single: bool) -> Option<Effects> {
     let mut eliminated = KnownSet::empty();
 
 // Determine which candidates can be safely removed
-    for known in candidates {
+    for known in candidates.iter() {
         for house in triple.houses() {
             if board.house_candidate_cells(house, known).len() == 2 {
                 eliminated += known;
@@ -61,7 +63,7 @@ pub fn find_bugs(board: &Board, single: bool) -> Option<Effects> {
             solution,
         );
 
-        effects.push(action);
+        effects.add_action(action);
 
         if effects.has_actions() {
             return Some(effects)

@@ -183,7 +183,7 @@ impl House {
         HouseIter::new(Shape::Column)
     }
 
-    pub const fn all_blocks() -> HouseSet {
+    pub fn all_blocks() -> HouseSet {
         HouseSet::full(Shape::Block)
     }
 

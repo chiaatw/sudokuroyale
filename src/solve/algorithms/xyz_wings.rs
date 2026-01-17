@@ -1,6 +1,8 @@
 use super::*;
 
 use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
+use crate::layout::cells::cell_set::CellIteratorUnion;
+use itertools::Itertools;
 // Solver wrapper for the XYZ-Wing strategy
 pub struct XYZWingSolver;
 

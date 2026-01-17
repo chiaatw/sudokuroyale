@@ -3,6 +3,9 @@ use super::*;
 
 use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
 use crate::layout::House;
+use crate::layout::values::known_set::KnownSetIteratorUnion;
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::cells::cell_set::CellIteratorUnion;
 
 // Solver for Naked Pair strategy
 pub struct NakedPairSolver;
@@ -61,7 +64,7 @@ fn find_naked_tuples(board: &Board, single: bool, size: usize, strategy: Strateg
 // Generate all combinations of cells in the house that could form a naked tuple
         for candidates in house_cells
             .iter()
-            .map(|cell| (*cell, board.candidates(cell)))
+            .map(|cell| (cell, board.candidates(cell)))
             .filter(|(_, candidates)| 2 <= candidates.len() && candidates.len() <= size)
             .combinations(size)
         {
@@ -80,11 +83,11 @@ fn find_naked_tuples(board: &Board, single: bool, size: usize, strategy: Strateg
 
 // Erase knowns outside of the naked tuple and mark clues
             tuple_knowns.iter().for_each(|k| {
-                action.erase_cells(erase_cells & board.candidate_cells(k), *k);
+                action.erase_cells(erase_cells & board.candidate_cells(k), k);
                 action.clue_cells_for_known(
                     Verdict::Secondary,
-                    tuple_cells & board.candidate_cells(*k),
-                    *k,
+                    tuple_cells & board.candidate_cells(k),
+                    k,
                 );
             });
 
@@ -92,8 +95,8 @@ fn find_naked_tuples(board: &Board, single: bool, size: usize, strategy: Strateg
             tuple_cells.iter().for_each(|c| {
                 action.clue_cell_for_knowns(
                     Verdict::Related,
-                    *c,
-                    KnownSet::full() - board.candidates(*c),
+                    c,
+                    KnownSet::full() - board.candidates(c),
                 );
             });
 

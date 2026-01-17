@@ -8,6 +8,9 @@ use crate::solve::creates_deadly_rectangles;
 use crate::layout::values::known::KnownLike;
 use crate::layout::values::known_set::KnownSetLike;
 use crate::layout::Known;
+use crate::layout::values::value::ValueLike;
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::values::known::KnownLike;
 
 use super::{Effects, Error, PseudoCell, Strategy};
 
@@ -136,7 +139,7 @@ impl Board {
     pub fn all_knowns(&self, cells: CellSet) -> KnownSet {
         let mut result = KnownSet::empty();
         for cell in cells {
-            if let Some(k) = self.value(cell).known() {
+            if let Some(k) = self.value(cell).is_known() {
                 result += k;
             }
         }

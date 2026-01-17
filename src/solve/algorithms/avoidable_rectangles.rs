@@ -2,6 +2,12 @@ use super::hidden_tuples::is_degenerate;
 use super::*;
 use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
 use crate::layout::Rectangle;
+use crate::layout::values::known_set::KnownSetLike;
+use itertools::Itertools;
+use crate::layout::values::known_set::KnownSetIteratorUnion;
+use crate::layout::cells::cell_set::CellIteratorUnion;
+
+
 
 /// Trait-based solver for the Avoidable Rectangle strategy
 pub struct AvoidableRectanglesSolver;
@@ -30,15 +36,15 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
 
     // --- Type 1 Avoidable Rectangle ---
     for (r, c, k) in Rectangle::iter()
-        .map(|r| (r, r.cells - candidates))
+        .map(|r| (r, r.cells() - candidates))
         .filter_map(|(r, cs)| cs.as_single().map(|c| (r.with_origin(c), c)))
-        .filter(|(r, _)| board.value(r.top_right) == board.value(r.bottom_left))
-        .filter_map(|(r, c)| board.value(r.bottom_right).known().map(|k| (r, c, k)))
+        .filter(|(r, _)| board.value(r.top_right()) == board.value(r.bottom_left()))
+        .filter_map(|(r, c)| board.known(r.bottom_right()).map(|k| (r, c, k)))
         .filter(|(_, c, k)| board.candidates(*c).has(*k))
     {
         let mut action = Action::new_erase(Strategy::AvoidableRectangle, c, k);
         board
-            .knowns_iter(r.cells & candidates)
+            .knowns_iter(r.cells() & candidates)
             .for_each(|(cell, known)| action.clue_cell_for_known(Verdict::Secondary, cell, known));
 
         if effects.add_action(action) && single {
@@ -49,11 +55,11 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
     // --- Type 2 & Type 3 Avoidable Rectangle ---
     for rect in Rectangle::iter() {
         // Skip if any given is in the rectangle
-        if rect.cells.has_any(board.givens()) {
+        if rect.cells().has_any(board.givens()) {
             continue;
         }
 
-        let unsolved = rect.cells - board.knowns();
+        let unsolved = rect.cells() - board.knowns();
         if let Some((c1, c2)) = unsolved.as_pair() {
             let houses = c1.common_houses(c2);
             if houses.is_empty() {
@@ -63,11 +69,11 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
             let mut action = Action::new(Strategy::AvoidableRectangle);
 
             // Identify the solved cells in the rectangle
-            if let Some((c3, c4)) = (rect.cells - unsolved).as_pair() {
+            if let Some((c3, c4)) = (rect.cells() - unsolved).as_pair() {
                 let ks1 = board.candidates(c1);
                 let ks2 = board.candidates(c2);
-                let k3 = board.value(c3).known().unwrap();
-                let k4 = board.value(c4).known().unwrap();
+                let k3 = board.known(c3).unwrap();
+                let k4 = board.known(c4).unwrap();
 
                 // Skip if naked tuple cannot occur
                 if !(ks1.has(k4) && ks2.has(k3)) {
@@ -83,7 +89,7 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
 
             // Construct a pseudo cell for unsolved cells
             let mut pseudo = board.pseudo_cell(unsolved);
-            let solved = board.all_knowns(rect.cells - unsolved);
+            let solved = board.all_knowns(rect.cells() - unsolved);
             pseudo.knowns -= solved;
 
             // Assign clues and secondary effects for each unsolved cell
@@ -104,7 +110,7 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
             } else {
                 // --- Type 3: naked tuple elimination ---
                 for house in houses {
-                    let peers = house.cells() - rect.cells;
+                    let peers = house.cells() - rect.cells();
                     for size in 2..=4 {
                         peers
                             .iter()

@@ -3,6 +3,9 @@ use super::*;
 
 use crate::puzzle::{Action, CellSet, Known, Board, Effects, Strategy, Verdict};
 use crate::layout::House;
+use crate::layout::cells::cell_set::CellSetIteratorUnion;
+use crate::layout::values::known_set::KnownIteratorUnion;
+use crate::layout::cells::cell_set::CellIteratorUnion;
 // Solver wrapper for Hidden Pair strategy
 pub struct HiddenPairSolver;
 
@@ -95,8 +98,8 @@ pub fn find_hidden_tuples(
 
 // Apply candidate erasures outside of hidden tuple
             tuple_cells.iter().for_each(|c| {
-                let to_erase = board.candidates(*c) - tuple_knowns;
-                action.erase_knowns(*c, to_erase);
+                let to_erase = board.candidates(c) - tuple_knowns;
+                action.erase_knowns(c, to_erase);
             });
 
 // Apply clues for knowns in the tuple
@@ -133,7 +136,7 @@ pub fn is_degenerate(cell_sets: &[CellSet], size: usize, smaller_size: usize) ->
     size > smaller_size && cell_sets
         .iter()
         .combinations(smaller_size)
-        .any(|combo| combo.iter().copied().union_cells().len() <= smaller_size)
+        .any(|combo| combo.iter().map(|cs| **cs).union_cells().len() <= smaller_size)
 }
 
 

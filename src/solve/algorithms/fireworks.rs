@@ -2,6 +2,10 @@ use super::hidden_tuples::is_degenerate;
 use super::*;
 
 use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
+use crate::layout::values::known_set::KnownSetLike;
+use itertools::Itertools;
+use crate::layout::values::known_set::KnownIteratorUnion;
+use crate::layout::cells::cell_set::CellSetIteratorUnion;
 // Trait-based solver for the Fireworks strategy
 pub struct FireworksSolver;
 

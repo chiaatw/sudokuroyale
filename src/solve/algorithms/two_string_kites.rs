@@ -2,6 +2,7 @@ use super::*;
 
 use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
 use crate::layout::House;
+use crate::layout::houses::house_set::HouseSetLike;
 pub struct TwoStringKiteSolver;
 
 impl Solver for TwoStringKiteSolver {

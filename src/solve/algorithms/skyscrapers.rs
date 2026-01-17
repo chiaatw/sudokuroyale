@@ -2,6 +2,7 @@ use super::*;
 
 use crate::puzzle::{Action, Cell, Known, Board, Effects, Strategy, Verdict};
 use crate::layout::{House, HouseSet, Shape};
+use itertools::Itertools;
 // Solver wrapper for the Skyscraper strategy
 pub struct SkyscraperSolver;
 

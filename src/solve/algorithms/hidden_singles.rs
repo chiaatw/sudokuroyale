@@ -19,7 +19,7 @@ pub fn find_hidden_singles(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
     for (cell, knowns) in board.unknown_iter() {
-        for known in knowns {
+        for known in knowns.iter() {
             for house in cell.houses() {
                 if board.house_candidate_cells(house, known).len() == 1 {
                     let mut action = Action::new_set(Strategy::HiddenSingle, cell, known);

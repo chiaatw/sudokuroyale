@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use crate::io::{print_all_and_single_candidates, Cancelable};
 use crate::puzzle::{Action, Cell, CellSet, Changer, ChangeResult, KnownSet, Board, Effects, Options, Strategy};
+use crate::layout::values::known_set::KnownSetLike;
 
 use super::*;
 
@@ -115,7 +116,7 @@ impl BruteForceSolver {
                     }
 
                     if after.is_fully_solved() {
-                        solutions.push(*after);
+                        solutions.push(after);
 
                         if self.log {
                             println!("found solution {}\n", solutions.len());

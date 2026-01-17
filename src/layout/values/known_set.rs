@@ -3,27 +3,9 @@ use std::iter::FusedIterator;
 use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Not, Sub, SubAssign};
 use std::iter::FromIterator;
 
+use crate::layout::values::known::{Known, KnownLike};
+
 type Bits = u16;
-
-// Trait for Known-like types
-pub trait KnownLike: Copy + Eq + Ord {
-    fn index(self) -> u8;
-
-    #[inline(always)]
-    fn usize(self) -> usize {
-        self.index() as usize
-    }
-
-    #[inline(always)]
-    fn bit(self) -> Bits {
-        1 << self.index()
-    }
-
-    #[inline(always)]
-    fn label(self) -> char {
-        (b'1' + self.index()) as char
-    }
-}
 
 // Trait for KnownSet-like types
 pub trait KnownSetLike: Copy + Eq + Ord {
@@ -65,37 +47,6 @@ pub trait KnownSetLike: Copy + Eq + Ord {
     fn intersect_with(&mut self, other: Self);
     fn subtract(&mut self, other: Self);
     fn invert(&mut self);
-}
-
-// Known type
-#[derive(Clone, Copy, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Known(u8);
-
-impl Known {
-    pub const COUNT: u8 = 9;
-
-    #[inline(always)]
-    pub const fn new(value: u8) -> Self {
-        debug_assert!(value >= 1 && value <= 9);
-        Self(value - 1)
-    }
-
-    #[inline(always)]
-    pub const fn from_index(index: u8) -> Self {
-        debug_assert!(index < 9);
-        Self(index)
-    }
-
-    pub fn iter() -> KnownIter {
-        KnownIter::new()
-    }
-}
-
-impl KnownLike for Known {
-    #[inline(always)]
-    fn index(self) -> u8 {
-        self.0
-    }
 }
 
 // KnownSet type

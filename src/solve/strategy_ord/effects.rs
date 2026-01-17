@@ -2,6 +2,7 @@ use std::fmt;
 use std::collections::HashMap;
 
 use crate::layout::{Cell, CellSet, Known, KnownSet};
+use crate::solve::strategy_ord::action::AppliesToBoard;
 use super::{Action, Board, Change, Error, Strategy};
 
 // Collects actions and errors encountered while modifying a board

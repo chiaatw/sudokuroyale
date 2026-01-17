@@ -14,8 +14,8 @@ pub fn find_deadly_rectangles(board: &Board) -> Option<Vec<Rectangle>> {
     let found: Vec<Rectangle> = Rectangle::iter()
         .filter(|r| solved.has_all(r.cells))
         .filter(|r| {
-            board.value(r.top_left) == board.value(r.bottom_right)
-                && board.value(r.top_right) == board.value(r.bottom_left)
+            board.value(r.top_left()) == board.value(r.bottom_right())
+                && board.value(r.top_right()) == board.value(r.bottom_left())
         })
         .collect();
 

@@ -5,6 +5,9 @@ use itertools::Itertools;
 use super::*;
 use crate::puzzle::{Action, Cell, CellSet, Known, KnownSet, Board, Effects, Strategy, Verdict};
 
+use crate::layout::values::known::KnownLike;
+use crate::layout::cells::cell_set::CellIteratorUnion;
+
 /// Solver for the XY-Chain strategy
 /// 
 /// Detects XY-Chains on the board and produces candidate eliminations
@@ -257,7 +260,7 @@ impl Chain {
     fn new(start: &Rc<Node>, known: Known) -> Self {
         let link = Rc::new(Link::new(start, known));
         Self {
-            head: link,
+            head: link.clone(),
             len: 1,
             start: start.cell,
             start_known: known,

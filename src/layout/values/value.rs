@@ -1,5 +1,6 @@
 use std::fmt;
 use std::ops::Not;
+use crate::layout::values::known::KnownLike;
 
 use crate::symbols::MISSING;
 use super::Known;
@@ -60,7 +61,7 @@ impl ValueLike for Value {
 impl From<Known> for Value {
     #[inline(always)]
     fn from(known: Known) -> Self {
-        Value::new(known.value())
+        Value::new(known.value().0)
     }
 }
 

@@ -6,6 +6,8 @@ use std::ops::{
 
 use crate::layout::CellSet;
 use crate::symbols::EMPTY_SET;
+use crate::layout::houses::house_set::HouseSetLike;
+use crate::layout::houses::shape::ShapeTrait;
 
 use super::{Coord, CoordSet, House, Shape};
 
@@ -349,7 +351,7 @@ impl BitAndAssign for HouseSet {
 
 impl SubAssign for HouseSet {
     fn sub_assign(&mut self, rhs: Self) {
-        *self = *self - rhs;
+        *self = self.minus(rhs);
     }
 }
 
@@ -395,7 +397,7 @@ impl FromIterator<House> for HouseSet {
         set.add(first);
 
         for h in iter {
-            set.add(h)
+            set.add(h);
         }
 
         set

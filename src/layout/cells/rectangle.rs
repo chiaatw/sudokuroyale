@@ -19,6 +19,19 @@ pub enum Rectangle {
 }
 
 impl Rectangle {
+    #[inline]
+    pub const fn cells(self) -> CellSet {
+        match self {
+            Rectangle::Data { cells, .. } => cells,
+        }
+    }
+
+    #[inline]
+    pub const fn block_count(self) -> usize {
+        match self {
+            Rectangle::Data { block_count, .. } => block_count,
+        }
+    }
     pub fn iter() -> RectangleIter {
         RectangleIter::default()
     }
@@ -104,6 +117,33 @@ impl Rectangle {
                 bottom_right,
                 ..
             } => (top_left, bottom_right),
+        }
+    }
+    #[inline]
+    pub const fn top_right(&self) -> Cell {
+        match *self {
+            Rectangle::Data { top_right, .. } => top_right,
+        }
+    }
+
+    #[inline]
+    pub const fn top_left(&self) -> Cell {
+        match *self {
+            Rectangle::Data { top_left, .. } => top_left,
+        }
+    }
+
+    #[inline]
+    pub const fn bottom_left(&self) -> Cell {
+        match *self {
+            Rectangle::Data { bottom_left, .. } => bottom_left,
+        }
+    }
+
+    #[inline]
+    pub const fn bottom_right(&self) -> Cell {
+        match *self {
+            Rectangle::Data { bottom_right, .. } => bottom_right,
         }
     }
 }
