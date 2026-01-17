@@ -4,10 +4,12 @@ use rocket::State;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
+use crate::game_match::services::start_match_by_user;
 use crate::game_match::repository::MatchRepository;
 use crate::game_match::services::{create_match, join_match};
 use crate::user::repository::UserRepository;
 use crate::user::session_repository::SessionRepository;
+use crate::AuthUser;
 use rocket::http::CookieJar;
 use uuid::Uuid;
 
@@ -98,4 +100,57 @@ pub fn get_match_route(
         player1_id: m.player1_id.to_string(),
         player2_id: m.player2_id.map(|id| id.to_string()),
     }))
+}
+
+
+#[derive(Deserialize)]
+pub struct LeaveMatchRequest {
+    pub match_id: String,
+}
+
+#[derive(Serialize)]
+pub struct LeaveMatchResponse {
+    pub ok: bool,
+}
+
+#[post("/match/leave", data = "<req>")]
+pub fn leave_match_route(
+    auth: AuthUser,
+    req: Json<LeaveMatchRequest>,
+    matches: &State<Mutex<MatchRepository>>,
+) -> Result<Json<LeaveMatchResponse>, Status> {
+
+    let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
+
+    let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
+
+    let ok = crate::game_match::services::leave_match_by_user(&mut repo, &auth.user_id, &match_id);
+
+    Ok(Json(LeaveMatchResponse { ok }))
+}
+
+
+#[derive(Deserialize)]
+pub struct StartMatchRequest {
+    pub match_id: String,
+}
+
+#[derive(Serialize)]
+pub struct StartMatchResponse {
+    pub ok: bool,
+}
+
+#[post("/match/start", data = "<req>")]
+pub fn start_match_route(
+    auth: crate::AuthUser,
+    req: Json<StartMatchRequest>,
+    matches: &State<Mutex<MatchRepository>>,
+) -> Result<Json<StartMatchResponse>, Status> {
+    let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
+
+    let mut matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
+
+    let ok = start_match_by_user(&mut matches_guard, &auth.user_id, &match_id);
+
+    Ok(Json(StartMatchResponse { ok }))
 }

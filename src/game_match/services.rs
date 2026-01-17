@@ -46,6 +46,65 @@ pub fn join_match(
     }
 
     m.player2_id = Some(user.id);
+    m.status = MatchStatus::Ready;
+    true
+}
+
+pub fn leave_match_by_user(
+    repo: &mut MatchRepository,
+    user_id: &Uuid,
+    match_id: &Uuid,
+) -> bool {
+    // 1) Match mut holen
+    let m = match repo.find_by_id_mut(match_id) {
+        Some(m) => m,
+        None => return false,
+    };
+
+    // 2) Wenn Player1 geht -> löschen
+    if m.player1_id == *user_id {
+        let id = m.id;
+        return repo.remove_match(&id);
+    }
+
+    // 3) Wenn Player2 geht -> player2 entfernen + status zurück
+    if m.player2_id == Some(*user_id) {
+        m.player2_id = None;
+        m.status = MatchStatus::Waiting;
+        return true;
+    }
+
+    false
+}
+
+
+pub fn start_match_by_user(
+    match_repo: &mut MatchRepository,
+    user_id: &Uuid,
+    match_id: &Uuid,
+) -> bool {
+    // Match holen
+    let m = match match_repo.find_by_id_mut(match_id) {
+        Some(m) => m,
+        None => return false,
+    };
+
+    // Nur Player1 darf starten
+    if m.player1_id != *user_id {
+        return false;
+    }
+
+    // Player2 muss da sein
+    if m.player2_id.is_none() {
+        return false;
+    }
+
+    // Muss READY sein (das ist sauberer als "nicht running/finished")
+    if m.status != MatchStatus::Ready {
+        return false;
+    }
+
+    // Start!
     m.status = MatchStatus::Running;
     m.started_at = Some(Utc::now());
     true
