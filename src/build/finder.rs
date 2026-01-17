@@ -45,7 +45,7 @@
 
             while !stack.is_empty() {
                 if self.bar {
-                    show_progress(82 - stack.len());
+                   show_progress(82 - stack.len(), 82);
                 }
                 if self.cancelable.is_canceled()
                     || fewest_clues <= self.clues
