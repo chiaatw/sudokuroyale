@@ -148,6 +148,22 @@ impl Action {
     pub fn is_empty(&self) -> bool {
         self.set.is_empty() && self.erase.is_empty()
     }
+    pub fn has_strategy(&self, strategy: Strategy) -> bool {
+    self.strategy == strategy
+}
+
+    /// Gibt alle Zellen zurück, aus denen `known` entfernt wird.
+    pub fn erases_from_cells(&self, known: Known) -> CellSet {
+        self.erase
+            .iter()
+            .filter_map(|(cell, knowns)| if knowns.has(known) { Some(*cell) } else { None })
+            .fold(CellSet::empty(), |acc, cell| acc + cell)
+    }
+
+    /// Gibt alle Kandidaten zurück, die aus `cell` entfernt werden.
+    pub fn erases_knowns_from(&self, cell: Cell) -> KnownSet {
+        self.erase.get(&cell).copied().unwrap_or_else(KnownSet::empty)
+    }
 }
 
 impl SolverAction for Action {}
@@ -327,7 +343,7 @@ mod tests {
 
         action.erase_knowns(c, knowns);
 
-        for k in knowns {
+        for k in knowns.iter() {
             assert!(action.erases(c, k));
         }
     }

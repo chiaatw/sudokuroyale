@@ -5,7 +5,6 @@ use crate::puzzle::{Action, CellSet, Known, Board, Effects, Strategy, Verdict};
 use crate::layout::House;
 use crate::layout::cells::cell_set::CellSetIteratorUnion;
 use crate::layout::values::known_set::KnownIteratorUnion;
-use crate::layout::cells::cell_set::CellIteratorUnion;
 // Solver wrapper for Hidden Pair strategy
 pub struct HiddenPairSolver;
 

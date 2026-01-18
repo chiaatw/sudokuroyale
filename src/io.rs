@@ -1,3 +1,5 @@
+use std::fmt;
+
 // Re-export: nutzt deinen echten Cancelable aus strategy_ord
 pub use crate::solve::strategy_ord::cancelable::{create_signal, Cancelable};
 
@@ -5,7 +7,9 @@ use std::time::Duration;
 
 pub fn show_progress(_current: usize, _total: usize) {}
 
-pub fn format_for_fancy_console(s: impl Into<String>) -> String { s.into() }
+pub fn format_for_fancy_console(s: impl fmt::Display) -> String {
+    format!("{}", s)
+}
 pub fn format_number(n: usize) -> String { n.to_string() }
 pub fn format_runtime(d: Duration) -> String { format!("{:.3}s", d.as_secs_f64()) }
 

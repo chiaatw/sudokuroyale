@@ -1,5 +1,6 @@
 use crate::layout::{Cell, Known, Rectangle};
 use crate::puzzle::Board;
+use crate::layout::values::known::KnownLike;
 
 /// Finds all existing deadly rectangles in the board.
 ///
@@ -12,7 +13,7 @@ pub fn find_deadly_rectangles(board: &Board) -> Option<Vec<Rectangle>> {
     let solved = board.solved();
 
     let found: Vec<Rectangle> = Rectangle::iter()
-        .filter(|r| solved.has_all(r.cells))
+        .filter(|r| solved.has_all(r.cells()))
         .filter(|r| {
             board.value(r.top_left()) == board.value(r.bottom_right())
                 && board.value(r.top_right()) == board.value(r.bottom_left())
@@ -37,12 +38,12 @@ pub fn creates_deadly_rectangles(
     let solved = board.solved();
 
     let found: Vec<Rectangle> = Rectangle::iter()
-        .filter(|r| r.cells.has(cell))
-        .filter(|r| (r.cells - solved).len() == 1)
+        .filter(|r| r.cells().has(cell))
+        .filter(|r| (r.cells() - solved).len() == 1)
         .filter(|r| {
             let r = r.with_origin(cell);
-            board.value(r.bottom_right) == value
-                && board.value(r.top_right) == board.value(r.bottom_left)
+            board.value(r.bottom_right()) == value
+                && board.value(r.top_right()) == board.value(r.bottom_left())
         })
         .collect();
 

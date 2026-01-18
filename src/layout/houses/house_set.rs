@@ -4,11 +4,12 @@ use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Not, Sub, SubAssign, 
 };
 
+use crate::layout::Shape;
 use crate::layout::CellSet;
 use crate::symbols::EMPTY_SET;
 use crate::layout::houses::shape::ShapeTrait;
 
-use super::{Coord, CoordSet, House, Shape};
+use super::{Coord, CoordSet, House};
 
 pub trait HouseSetLike: Copy + Sized {
 
@@ -47,6 +48,19 @@ pub trait HouseSetLike: Copy + Sized {
 pub struct HouseSet{
     shape: Shape,
     coords: CoordSet,
+}
+
+impl Sub<HouseSet> for HouseSet {
+    type Output = HouseSet;
+
+    fn sub(self, other: HouseSet) -> HouseSet {
+        debug_assert_eq!(self.shape(), other.shape());
+        let mut out = self;
+        for h in other.iter() {
+            out = out - h; // nutzt Sub<House>
+        }
+        out
+    }
 }
 
 impl HouseSetLike for HouseSet {
@@ -284,7 +298,7 @@ impl From<&str> for HouseSet {
        labels
             .split_whitespace()
             .map(House::from)
-            .fold(HouseSet::empty(self.shape), |mut acc, h| {
+            .fold(HouseSet::empty(Shape::Row), |acc, h| {
                 acc.add(h);
                 acc
             })
@@ -420,7 +434,7 @@ impl FromIterator<House> for HouseSet {
             None => return HouseSet::empty(Shape::Row),
         };
 
-        let mut set = HouseSet::empty(first.shape());
+        let set = HouseSet::empty(first.shape());
         set.add(first);
 
         for h in iter {

@@ -107,7 +107,7 @@ impl ClueCollection for Clues {
     }
 
     fn collect(&self) -> HashMap<Cell, HashMap<Known, Verdict>> {
-        let mut map = HashMap::new();
+        let mut map: HashMap<Cell, HashMap<Known, Verdict>> = HashMap::new();
         for clue in &self.clues {
             for cell in clue.cells.iter() {
                 map.entry(cell).or_default().insert(clue.known, clue.verdict);

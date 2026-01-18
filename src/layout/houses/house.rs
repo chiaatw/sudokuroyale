@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 use std::fmt;
+use std::sync::OnceLock;
 use std::ops::{Add, Neg};
 
 use crate::layout::houses::house_set::{blocks, cols, rows};
 use crate::layout::{Cell, CellSet, Coord};
 
 use super::{HouseSet, Shape};
-use crate::layout::houses::house_set::HouseSetLike;
 
 
 //Trait, describes House-API
@@ -149,17 +149,17 @@ impl House {
                 acc + cell.row_coord()
             }),
             Shape::Block => {
-                let mut acc = HouseSet::empty(Shape::Row) + HouseSet::empty(Shape::Column);
+                let mut acc = HouseSet::empty(Shape::Row);
                 for c in cells.iter() {
-                    acc = acc + c.row_coord() + c.column_coord();
+                    acc = acc + c.row_coord();
                 }
                 acc
             }
         }
     }
 
-    pub const fn intersect(&self, other: House) -> CellSet {
-        INTERSECTIONS[self.shape.usize()][self.coord.usize()][other.shape.usize()]
+    pub fn intersect(&self, other: House) -> CellSet {
+        intersections()[self.shape.usize()][self.coord.usize()][other.shape.usize()]
             [other.coord.usize()]
     }
 
@@ -215,7 +215,23 @@ impl HouseLike for House {
         House::crossing_houses(self, cells)
     }
     fn houses(&self, shape: Shape) -> HouseSet {
-        House::houses(self, shape)
+        match self.shape() {
+            Shape::Row => match shape {
+                Shape::Row => ROW_ROWS[self.coord().usize()],
+                Shape::Column => ROW_COLUMNS[self.coord().usize()],
+                Shape::Block => ROW_BLOCKS[self.coord().usize()],
+            },
+            Shape::Column => match shape {
+                Shape::Row => COLUMN_ROWS[self.coord().usize()],
+                Shape::Column => COLUMN_COLUMNS[self.coord().usize()],
+                Shape::Block => COLUMN_BLOCKS[self.coord().usize()],
+            },
+            Shape::Block => match shape {
+                Shape::Row => BLOCK_ROWS[self.coord().usize()],
+                Shape::Column => BLOCK_COLUMNS[self.coord().usize()],
+                Shape::Block => BLOCK_BLOCKS[self.coord().usize()],
+            },
+        }
     }
 }
 
@@ -295,7 +311,7 @@ impl HouseLike for Row {
     fn shape(&self) -> Shape { Shape::Row }
 
     fn cells(&self) -> CellSet {
-        ROW_CELLS[self.coord.usize()]
+        house_cells(Shape::Row)[self.coord.usize()]
     }
 
     fn cell(&self, coord: Coord) -> Cell {
@@ -333,7 +349,7 @@ impl HouseLike for Column {
     fn shape(&self) -> Shape { Shape::Column }
 
     fn cells(&self) -> CellSet {
-        COLUMN_CELLS[self.coord.usize()]
+        house_cells(Shape::Column)[self.coord.usize()]
     }
 
     fn cell(&self, coord: Coord) -> Cell {
@@ -371,20 +387,20 @@ impl HouseLike for Block {
     fn shape(&self) -> Shape { Shape::Block}
 
     fn cells(&self) -> CellSet {
-        BLOCK_CELLS[self.coord.usize()]
+        house_cells(Shape::Block)[self.coord.usize()]
     }
 
     fn cell(&self, coord: Coord) -> Cell {
-        Cell::from_block(self.coord, coord)
+        Cell::from_block(House::block(self.coord), coord)
     }
 
     fn label(&self) -> &str { &LABELS[2][self.coord.usize()] }
     fn console_label(&self) -> char { CONSOLE_LABELS[2][self.coord.usize()] }
 
     fn crossing_houses(&self, cells: CellSet) -> HouseSet {
-        let mut acc = HouseSet::empty(Shape::Row) + HouseSet::empty(Shape::Column);
+        let mut acc = HouseSet::empty(Shape::Row);
         for c in cells.iter() {
-            acc = acc + c.row_coord() + c.column_coord();
+            acc = acc + c.row_coord();
         }
         acc
     }
@@ -530,43 +546,54 @@ pub const ALL: [House; 27] = {
     houses
 };
 
-pub const INTERSECTIONS: [[[[CellSet; 9]; 3]; 9]; 3] = {
-    let mut sets: [[[[CellSet; 9]; 3]; 9]; 3] = [[[[CellSet::empty(); 9]; 3]; 9]; 3];
+pub fn intersections() -> &'static [[[[CellSet; 9]; 3]; 9]; 3] {
+    static INT: OnceLock<[[[[CellSet; 9]; 3]; 9]; 3]> = OnceLock::new();
+    INT.get_or_init(|| {
+        let mut sets: [[[[CellSet; 9]; 3]; 9]; 3] = [[[[CellSet::empty(); 9]; 3]; 9]; 3];
 
-    let mut i = 0;
-    while i < 3 {
-        let mut ii = 0;
-        while ii < 9 {
-            let mut j = 0;
-            while j < 3 {
-                let mut jj = 0;
-                while jj < 9 {
-                    sets[i][ii][j][jj] = House::new(Shape::new(i as u8), Coord::new(ii as u8))
-                        .cells()
-                        .intersect(House::new(Shape::new(j as u8), Coord::new(jj as u8)).cells());
-                    jj += 1;
+        let mut i = 0usize;
+        while i < 3 {
+            let mut ii = 0usize;
+            while ii < 9 {
+                let mut j = 0usize;
+                while j < 3 {
+                    let mut jj = 0usize;
+                    while jj < 9 {
+                        let a = House::new(Shape::new(i as u8), Coord::new(ii as u8)).cells();
+                        let b = House::new(Shape::new(j as u8), Coord::new(jj as u8)).cells();
+                        sets[i][ii][j][jj] = a.intersect(b);
+                        jj += 1;
+                    }
+                    j += 1;
                 }
-                j += 1;
+                ii += 1;
             }
-            ii += 1;
+            i += 1;
         }
-        i += 1;
-    }
-    sets
-};
+        sets
+    })
+}
 
-const ROW_CELLS: [CellSet; 9] = make_house_cells(Shape::Row);
-const COLUMN_CELLS: [CellSet; 9] = make_house_cells(Shape::Column);
-const BLOCK_CELLS: [CellSet; 9] = make_house_cells(Shape::Block);
+fn house_cells(shape: Shape) -> &'static [CellSet; 9] {
+    static ROW: OnceLock<[CellSet; 9]> = OnceLock::new();
+    static COL: OnceLock<[CellSet; 9]> = OnceLock::new();
+    static BLK: OnceLock<[CellSet; 9]> = OnceLock::new();
 
-const fn make_house_cells(shape: Shape) -> [CellSet; 9] {
-    let mut out = [CellSet::empty(); 9];
-    let mut i = 0;
-    while i < 9 {
-        out[i] = House::new(shape, Coord::new(i as u8)).cells();
-        i += 1;
-    }
-    out
+    let slot = match shape {
+        Shape::Row => &ROW,
+        Shape::Column => &COL,
+        Shape::Block => &BLK,
+    };
+
+    slot.get_or_init(|| {
+        let mut out = [CellSet::empty(); 9];
+        let mut i = 0usize;
+        while i < 9 {
+            out[i] = House::new(shape, Coord::new(i as u8)).cells();
+            i += 1;
+        }
+        out
+    })
 }
 
 const ROW_ROWS: [HouseSet; 9] = [

@@ -82,14 +82,11 @@ impl BruteForceSolver {
         let mut stack = Vec::with_capacity(81);
         stack.push(Entry::new(*board));
 
-        while let Some(entry) = stack.last_mut() {
-            if cancelable.is_canceled() {
-                return BruteForceResult::Canceled;
-            }
+        while !stack.is_empty() {
+            let stack_len = stack.len();
+            let entry = stack.last_mut().unwrap();
 
-            if self.log {
-                println!("stack size {}\n", stack.len());
-            }
+            println!("stack size {}\n", stack_len);
 
             if entry.candidates.is_empty() {
                 if self.log {

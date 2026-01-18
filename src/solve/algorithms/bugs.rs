@@ -2,7 +2,6 @@ use super::*;
 
 use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
 use crate::layout::values::known_set::KnownSetLike;
-use crate::layout::houses::house::HouseLike;
 
 // Solver wrapper for the BUG (Bi-value Universal Grave) strategy
 pub struct BugSolver;
@@ -20,7 +19,7 @@ impl Solver for BugSolver {
 }
 
 // Find BUG patterns and returns the corresponding effects
-pub fn find_bugs(board: &Board, single: bool) -> Option<Effects> {
+pub fn find_bugs(board: &Board, _single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
 // Bi-value and tri-value cells

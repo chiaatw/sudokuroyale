@@ -53,7 +53,7 @@ impl Timings {
                 println!(
                     "{:20} {:>11} {:>11} {:>11} {:>11} {:>11}",
                     strategy.label(),
-                    format_number(*count as u128),
+                    format_number(*count as usize),
                     display_found(*found),
                     format_runtime(*duration),
                     format_runtime(duration.div_f64(*count as f64)),
@@ -78,7 +78,7 @@ impl Timings {
                         (
                             acc.0 + found * count,
                             acc.1 + count,
-                            acc.2 + duration,
+                            acc.2 + *duration,
                         )
                     },
                 );
@@ -89,7 +89,7 @@ impl Timings {
             println!(
                 "{:20} {:>11} {:>11} {:>11} {:>11} {:>11}",
                 strategy.label(),
-                format_number(count as u128),
+                format_number(count as usize),
                 display_found(found),
                 format_runtime(duration),
                 format_runtime(duration.div_f64(count as f64)),
@@ -104,7 +104,7 @@ fn display_found(found: usize) -> String {
     if found == 0 {
         "-".to_string()
     } else {
-        format_number(found as u128)
+        format_number(found as usize)
     }
 }
 

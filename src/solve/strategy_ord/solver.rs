@@ -4,6 +4,7 @@ use crate::io::Cancelable;
 use crate::puzzle::{
     Action, Board, ChangeResult, Changer, Difficulty, Effects, Options,
 };
+use crate::solve::algorithms::brute_force::BruteForceResult;
 use crate::solve::{find_brute_force, Timings, NON_PEER_TECHNIQUES};
 
 pub enum Resolution {
@@ -76,11 +77,11 @@ impl Solver {
 
                 ChangeResult::Valid(after, _) => {
                     applied.add_action(action);
-                    board = *after;
+                    board = after;
                 }
 
                 ChangeResult::Invalid(before, _, action, errors) => {
-                    if self.check && find_brute_force(start, false, 0, 2).is_solved() {
+                    if self.check && matches!(find_brute_force(start, false), BruteForceResult::Solved(_)) {
                         eprintln!(
                             "error: solver caused errors in solvable puzzle: {}",
                             start.packed_string()
@@ -88,7 +89,7 @@ impl Solver {
                     }
 
                     return Resolution::Failed(
-                        *before,
+                        before,
                         applied,
                         difficulty,
                         action.clone(),

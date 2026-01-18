@@ -37,7 +37,7 @@ impl Coord {
     }
 
     pub const fn from_digit(digit: u8) -> Self {
-        debug_assert!((1..=9).contains(&digit));
+        debug_assert!(digit >= 1 && digit <= 9);
         Self::from_index((digit -1) as u32)
     }
 

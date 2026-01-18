@@ -1,4 +1,5 @@
 use std::fmt;
+use std::sync::OnceLock;
 use std::ops::{Add, Neg};
 
 use crate::layout::{Coord, House, Shape};
@@ -156,12 +157,12 @@ impl Cell {
     }
 
     /// Returns the set of all peer cells.
-    pub const fn peers(&self) -> CellSet {
-        PEERS[self.usize()]
+    pub fn peers(&self) -> CellSet {
+    peers_table()[self.usize()]
     }
 
     /// Returns true if this cell sees another cell.
-    pub const fn sees(&self, other: Cell) -> bool {
+    pub fn sees(&self, other: Cell) -> bool {
         self.peers().has(other)
     }
 
@@ -308,20 +309,23 @@ const COORDS_IN_HOUSES: [[Coord; 3]; 81] = {
 };
 
 /// Cached peer sets for every cell.
-const PEERS: [CellSet; 81] = {
-    let mut sets = [CellSet::empty(); 81];
-    let mut i = 0;
-    while i < 81 {
-        let cell = Cell::new(i as u8);
-        sets[i] = CellSet::empty()
-            .union(cell.row().cells())
-            .union(cell.column().cells())
-            .union(cell.block().cells())
-            .without(cell);
-        i += 1;
-    }
-    sets
-};
+fn peers_table() -> &'static [CellSet; 81] {
+    static PEERS: OnceLock<[CellSet; 81]> = OnceLock::new();
+    PEERS.get_or_init(|| {
+        let mut sets = [CellSet::empty(); 81];
+        let mut i = 0usize;
+        while i < 81 {
+            let cell = Cell::new(i as u8);
+            sets[i] = CellSet::empty()
+                .union(cell.row().cells())
+                .union(cell.column().cells())
+                .union(cell.block().cells())
+                .without(cell);
+            i += 1;
+        }
+        sets
+    })
+}
 
 #[cfg(test)]
 mod tests {

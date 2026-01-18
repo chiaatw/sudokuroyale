@@ -140,7 +140,7 @@ impl Board {
     pub fn all_knowns(&self, cells: CellSet) -> KnownSet {
         let mut result = KnownSet::empty();
         for cell in cells {
-            if let Some(k) = self.value(cell).is_known() {
+            if let Some(k) = self.value(cell).known() {
                 result += k;
             }
         }
@@ -218,7 +218,7 @@ impl Board {
         candidates -= known;
         self.candidate_knowns_by_cell[cell.usize()] = KnownSet::empty();
 
-        for k in candidates {
+        for k in candidates.iter() {
             self.candidate_cells_by_known[k.usize()] -= cell;
             change &= self.remove_candidate_cell_from_houses(cell, k, effects);
         }
@@ -235,7 +235,7 @@ impl Board {
     }
 
     #[inline(always)]
-    pub const fn is_candidate(&self, cell: Cell, known: Known) -> bool {
+    pub fn is_candidate(&self, cell: Cell, known: Known) -> bool {
         self.candidate_knowns_by_cell[cell.usize()].has(known)
     }
 
@@ -278,7 +278,7 @@ impl Board {
         .map(|cell| (cell, self.candidates(cell)))
     }
 
-    pub const fn candidate_cells(&self, known: Known) -> CellSet {
+    pub fn candidate_cells(&self, known: Known) -> CellSet {
         self.candidate_cells_by_known[known.usize()]
     }
 
@@ -288,7 +288,7 @@ impl Board {
 
     pub fn remove_candidate(&mut self, cell: Cell, known: Known, effects: &mut Effects) -> Change {
         let knowns = &mut self.candidate_knowns_by_cell[cell.usize()];
-        if !knowns[known] {
+        if !knowns.has(known) {
             return Change::None;
         }
 
@@ -342,7 +342,7 @@ impl Board {
         effects: &mut Effects,
     ) -> Change {
         let mut change = Change::None;
-        for known in knowns {
+        for known in knowns.iter() {
             change &= self.remove_candidate(cell, known, effects);
         }
         change
@@ -369,7 +369,7 @@ impl Board {
     ) -> Change {
         let mut change = Change::None;
         for cell in cells {
-            for known in knowns {
+            for known in knowns.iter() {
                 change &= self.remove_candidate(cell, known, effects);
             }
         }
@@ -419,11 +419,11 @@ impl fmt::Display for Board {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::{Cell, Known, KnownSet, CellSet, House};
+    use crate::layout::{Cell, Known, KnownSet};
     use crate::puzzle::{Effects, Strategy};
 
     fn cell(i: usize) -> Cell {
-        Cell::new(i)
+        Cell::new(i as u8)
     }
 
     fn known(n: u8) -> Known {

@@ -62,7 +62,7 @@ impl Changer {
         let mut after = *board;
         let mut effects = Effects::new();
 
-        let mut change = action.apply(&mut after, &mut effects);
+        let change = action.apply(&mut after, &mut effects);
 
         if self.options.stop_on_error() && effects.has_errors() {
             ChangeResult::Invalid(*board, after, action.clone(), effects)
@@ -74,7 +74,8 @@ impl Changer {
 // Applies all automatic actions to the given board
     pub fn apply_all(&self, board: &mut Board, actions: &Effects) -> ChangeResult {
         let mut effects = actions.clone();
-        self.apply_all_changed(board, board, &mut effects, Change::None)
+        let mut after = board.clone();
+        self.apply_all_changed(board, &mut after, &mut effects, Change::None)
     }
 
     fn apply_all_changed(

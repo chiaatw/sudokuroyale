@@ -1,8 +1,11 @@
 use super::*;
+use itertools::Itertools;
 
 use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
 use crate::layout::Shape;
-use crate::layout::houses::shape::ShapeTrait;
+use crate::layout::houses::house_set::HouseSetLike;
+use crate::layout::HouseSet;
+use crate::layout::cells::cell_set::CellSetIteratorUnion;
 // X-Wing solver wrapper for the engine
 pub struct XWingSolver;
 
@@ -101,10 +104,10 @@ fn check_houses(
             .combinations(size)
         {
 // Union of all crossing houses (the other orientation)
-            let crosses = candidates
-                .iter()
-                .map(|(_, _, crosses)| *crosses)
-                .union_houses();
+        let crosses = candidates
+            .iter()
+            .map(|(_, _, crosses)| *crosses)
+            .fold(HouseSet::empty(Shape::Row), |acc, hs| acc | hs);
 
             if crosses.len() != size {
                 continue;

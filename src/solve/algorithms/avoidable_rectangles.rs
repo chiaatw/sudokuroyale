@@ -1,4 +1,3 @@
-use super::hidden_tuples::is_degenerate;
 use super::*;
 use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
 use crate::layout::Rectangle;
