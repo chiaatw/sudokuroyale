@@ -145,17 +145,12 @@ impl Action {
         pub fn strategy(&self) -> Strategy {
         self.strategy
     }
-}
-
-impl SolverAction for Action {
-    fn strategy(&self) -> Strategy {
-        self.strategy
-    }
-
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.set.is_empty() && self.erase.is_empty()
     }
 }
+
+impl SolverAction for Action {}
 
 impl ProvidesClues for Action {
     fn clues(&self) -> &Clues {

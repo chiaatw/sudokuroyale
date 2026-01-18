@@ -49,6 +49,14 @@ impl Value {
     pub const fn value(self) -> u8 {
         self.0
     }
+    #[inline(always)]
+    pub fn known(self) -> Option<Known> {
+        if self.is_known() {
+            Some(Known::new(self.0)) // 1..=9, denn 0 ist unknown
+        } else {
+            None
+        }
+    }
 }
 
 impl ValueLike for Value {

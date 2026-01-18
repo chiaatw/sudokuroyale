@@ -354,6 +354,15 @@ impl CellSet {
             self.bits().reverse_bits() >> (128 - 81)
         )
     }
+
+    pub fn from_str(labels: &str) -> Self {
+    let mut set = Self::empty();
+    for token in labels.split_whitespace() {
+        if token.is_empty() { continue; }
+        set = set + Cell::from_str(token);
+    }
+    set
+}
 }
 
 

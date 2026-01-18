@@ -33,12 +33,12 @@ impl Coord {
 
     pub const fn new(coord: u8) -> Self {
         debug_assert!(coord < 9);
-        Self::from_index(coord)
+        Self::from_index(coord as u32)
     }
 
     pub const fn from_digit(digit: u8) -> Self {
         debug_assert!((1..=9).contains(&digit));
-        Self::from_index(digit -1)
+        Self::from_index((digit -1) as u32)
     }
 
     pub const fn from_index(index: u32) -> Self {

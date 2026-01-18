@@ -66,7 +66,7 @@
                 match solver.solve(&next, &unapplied, &mut timings) {
                     Resolution::Canceled(..) => break,
                     Resolution::Solved(_, actions, _) => {
-                        if !find_brute_force(&board, false, 0, 2).is_solved() {
+                        if !find_brute_force(&board, false).is_solved() {
                             continue;
                         }
                         if next.known_count() < fewest_clues {

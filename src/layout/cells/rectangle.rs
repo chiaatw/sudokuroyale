@@ -3,6 +3,7 @@ use std::hash::{Hash, Hasher};
 use std::iter::FusedIterator;
 
 use crate::layout::{Coord, House};
+use crate::layout::houses::house_set::HouseSetLike;
 
 use super::{Cell, CellSet};
 

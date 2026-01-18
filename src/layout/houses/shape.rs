@@ -156,7 +156,32 @@ impl ShapeTrait for Shape {
                 _ => panic!("Invalid Shape index"),
             }
         }
+        pub const fn usize(self) -> usize {
+        self as usize
     }
+
+    pub const fn is_row(self) -> bool {
+        matches!(self, Shape::Row)
+    }
+    pub const fn is_column(self) -> bool {
+        matches!(self, Shape::Column)
+    }
+    pub const fn is_block(self) -> bool {
+        matches!(self, Shape::Block)
+    }
+
+    pub fn cells(self, house: Coord) -> CellSet {
+        <Shape as ShapeTrait>::cells(&self, house)
+    }
+
+    pub fn cell(self, house: Coord, coord: Coord) -> Cell {
+        <Shape as ShapeTrait>::cell_at(&self, house, coord.usize())
+    }
+
+    pub fn house_iter(self) -> HouseIter {
+        <Shape as ShapeTrait>::house_iter(&self)
+    }
+}
 
 impl fmt::Display for Shape {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -167,18 +192,6 @@ impl fmt::Display for Shape {
 impl fmt::Debug for Shape {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Shape::{}", self.label())
-    }
-}
-
-impl fmt::Debug for Coord {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_tuple("Coord").field(&self.0).finish()
-    }
-}
-
-impl fmt::Debug for Cell {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_tuple("Cell").field(&self.0).finish()
     }
 }
 

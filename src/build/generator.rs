@@ -42,7 +42,7 @@ impl Generator {
         }) = stack.pop()
         {
             if self.bar {
-                show_progress(stack.len());
+                show_progress(stack.len(), stack.len());
             }
             if cancelable.is_canceled() {
                 return Some(board);
@@ -57,7 +57,7 @@ impl Generator {
                     // failed to set known which we know is a candidate
                     return Some(board);
                 }
-                ChangeResult::Valid(after, _) => *after,
+                ChangeResult::Valid(after, _) => after,
                 ChangeResult::Invalid(..) => {
                     continue;
                 }

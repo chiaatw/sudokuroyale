@@ -7,10 +7,7 @@ use crate::solve::creates_deadly_rectangles;
 
 use crate::layout::values::known::KnownLike;
 use crate::layout::values::known_set::KnownSetLike;
-use crate::layout::Known;
 use crate::layout::values::value::ValueLike;
-use crate::layout::values::known_set::KnownSetLike;
-use crate::layout::values::known::KnownLike;
 
 use super::{Effects, Error, PseudoCell, Strategy};
 
@@ -123,6 +120,10 @@ impl Board {
 
     pub const fn knowns(&self) -> CellSet {
         self.knowns
+    }
+
+    pub fn known(&self, cell: Cell) -> Option<Known> {
+    self.value(cell).known()
     }
 
     pub fn known_iter(&self) -> impl Iterator<Item = (Cell, Known)> + '_ {

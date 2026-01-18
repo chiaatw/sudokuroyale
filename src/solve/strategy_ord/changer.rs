@@ -72,9 +72,9 @@ impl Changer {
     }
 
 // Applies all automatic actions to the given board
-    pub fn apply_all(&self, board: &Board, actions: &Effects) -> ChangeResult {
+    pub fn apply_all(&self, board: &mut Board, actions: &Effects) -> ChangeResult {
         let mut effects = actions.clone();
-        self.apply_all_changed(board, &mut *board, &mut effects, Change::None)
+        self.apply_all_changed(board, board, &mut effects, Change::None)
     }
 
     fn apply_all_changed(

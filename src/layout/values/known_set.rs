@@ -329,12 +329,6 @@ impl fmt::Debug for KnownSet {
     }
 }
 
-impl fmt::Display for Known {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.label())
-    }
-}
-
 impl fmt::Debug for Known {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, f)

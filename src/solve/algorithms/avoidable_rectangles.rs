@@ -125,14 +125,6 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
                                     .chain([pseudo.knowns])
                                     .collect();
                                 let knowns = known_sets.iter().copied().union_knowns();
-                                
-                                // Skip degenerate tuples
-                                if knowns.len() != size
-                                    || is_degenerate(&known_sets, size, 2)
-                                    || is_degenerate(&known_sets, size, 3)
-                                {
-                                    return;
-                                }
 
                                 let tuple_cells = peer_knowns.iter().map(|(c, _)| *c).union_cells();
                                 let erase_cells = peers - tuple_cells;

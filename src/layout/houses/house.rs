@@ -126,15 +126,15 @@ impl House {
         self.shape.is_block()
     }
 
-    pub const fn cell(&self, coord: Coord) -> Cell {
+    pub fn cell(&self, coord: Coord) -> Cell {
         self.shape.cell(self.coord, coord)
     }
 
-    pub const fn cells(&self) -> CellSet {
+    pub fn cells(&self) -> CellSet {
         self.shape.cells(self.coord)
     }
 
-    pub const fn has(&self, cell: Cell) -> bool {
+    pub fn has(&self, cell: Cell) -> bool {
         self.cells().has(cell)
     }
 

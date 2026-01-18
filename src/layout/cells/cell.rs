@@ -44,6 +44,27 @@ impl Cell {
         Self::from_coords(row.coord(), column.coord())
     }
 
+    pub const fn from_row(row: Coord, column: Coord) -> Self {
+    Self::from_coords(row, column)
+    }
+
+    pub const fn from_column(column: Coord, row: Coord) -> Self {
+    Self::from_coords(row, column)
+    }
+
+    pub const fn from_block(block: House, coord: Coord) -> Self {
+    let b = block.coord().usize() as u8;
+    let i = coord.usize() as u8;
+
+    let br = b / 3;
+    let bc = b % 3;
+
+    let r = br * 3 + (i / 3);
+    let c = bc * 3 + (i % 3);
+
+    Self::new(r * 9 + c)
+    }
+
     /// Parses a cell from its textual label (e.g. "A1").
     pub fn from_str(label: &str) -> Self {
         Self::new(index_from_label(label))
@@ -251,7 +272,7 @@ const HOUSE_COORDS: [[Coord; 3]; 81] = {
         let r = i / 9;
         let c = i % 9;
         let b = (r / 3) * 3 + (c / 3);
-        coords[i] = [Coord::new(r), Coord::new(c), Coord::new(b)];
+        coords[i] = [Coord::new(r as u8), Coord::new(c as u8), Coord::new(b as u8)];
         i += 1;
     }
     coords
@@ -280,7 +301,7 @@ const COORDS_IN_HOUSES: [[Coord; 3]; 81] = {
         let r = i / 9;
         let c = i % 9;
         let b = 3 * (r % 3) + (c % 3);
-        coords[i] = [Coord::new(c), Coord::new(r), Coord::new(b)];
+        coords[i] = [Coord::new(c as u8), Coord::new(r as u8), Coord::new(b as u8)];
         i += 1;
     }
     coords

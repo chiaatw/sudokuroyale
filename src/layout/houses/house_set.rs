@@ -6,7 +6,6 @@ use std::ops::{
 
 use crate::layout::CellSet;
 use crate::symbols::EMPTY_SET;
-use crate::layout::houses::house_set::HouseSetLike;
 use crate::layout::houses::shape::ShapeTrait;
 
 use super::{Coord, CoordSet, House, Shape};
@@ -144,6 +143,34 @@ impl HouseSetLike for HouseSet {
 
 impl HouseSet {
 
+    pub const fn empty(shape: Shape) -> Self {
+        Self {
+            shape,
+            coords: CoordSet::empty(),
+        }
+    }
+
+    pub const fn full(shape: Shape) -> Self {
+        Self {
+            shape,
+            coords: CoordSet::full(),
+        }
+    }
+
+    pub const fn from_bits(shape: Shape, bits: u16) -> Self {
+        Self {
+            shape,
+            coords: CoordSet::new(bits),
+        }
+    }
+
+    pub const fn from_coords(shape: Shape, coords: i32) -> Self {
+        Self {
+            shape,
+            coords: CoordSet::from_coords(coords),
+        }
+    }
+
     pub fn from_labels(shape: Shape, labels: &str) -> Self {
         labels
             .split_whitespace()
@@ -257,7 +284,7 @@ impl From<&str> for HouseSet {
        labels
             .split_whitespace()
             .map(House::from)
-            .fold(HouseSet::empty(Shape::House), |mut acc, h| {
+            .fold(HouseSet::empty(self.shape), |mut acc, h| {
                 acc.add(h);
                 acc
             })
@@ -444,28 +471,28 @@ impl fmt::Debug for HouseSet {
 #[allow(unused_macros)]
 macro_rules! rows {
     ($coords:literal) => {
-        <HouseSet as HouseSetLike>::from_coords(Shape::Row, $coords)
+        HouseSet::from_coords(Shape::Row, $coords)
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! houses {
     ($coords:literal) => {
-        <HouseSet as HouseSetLike>::from_coords(Shape::House, $coords)
+        HouseSet::from_coords(Shape::House, $coords)
     };
 }
 
 #[allow(unused_macros)]
 macro_rules! cols {
     ($coords:literal) => {
-        <HouseSet as HouseSetLike>::from_coords(Shape::Column, $coords)
+        HouseSet::from_coords(Shape::Column, $coords)
     }
 }
 
 #[allow(unused_macros)]
 macro_rules! blocks {
     ($coords:literal) => {
-        <HouseSet as HouseSetLike>::from_coords(Shape::Block, $coords)
+        HouseSet::from_coords(Shape::Block, $coords)
     }
 }
 
@@ -475,7 +502,7 @@ pub(crate) use {blocks, cols, houses, rows};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::houses::coord::coord;
+    use crate::layout::houses::coord;
 
     #[test]
     fn empty_and_full_sets() {

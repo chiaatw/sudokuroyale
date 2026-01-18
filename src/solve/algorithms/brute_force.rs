@@ -39,6 +39,12 @@ impl Solver for BruteForceSolver {
     }
 }
 
+impl BruteForceResult {
+    pub fn is_solved(&self) -> bool {
+        matches!(self, BruteForceResult::AlreadySolved | BruteForceResult::Solved(_))
+    }
+}
+
 impl BruteForceSolver {
     pub fn new(log: bool, pause: u32, max_solutions: usize) -> Self {
         let max_solutions = if (1..=MAXIMUM_SOLUTIONS).contains(&max_solutions) {
