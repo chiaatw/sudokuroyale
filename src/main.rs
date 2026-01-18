@@ -170,7 +170,7 @@ impl<'r> FromRequest<'r> for AuthUser {
 }
 
 #[get("/me")]
-fn me(
+async fn me(
     users: &State<Mutex<UserRepository>>,
     sessions: &State<Mutex<SessionRepository>>,
     cookies: &CookieJar<'_>,
@@ -197,7 +197,7 @@ fn me(
     let users_guard = users.lock().unwrap();
     let sessions_guard = sessions.lock().unwrap();
 
-    match get_user_from_session(&sessions_guard, &users_guard, &session_id) {
+    match get_user_from_session(&sessions_guard, &users_guard, &session_id).await {
         Some(user) => Ok(Json(MeResponse {
             id: user.id.to_string(),
             username: user.username.clone(),

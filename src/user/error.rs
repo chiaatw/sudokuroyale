@@ -18,6 +18,7 @@ pub enum AuthError {
 
     //Technische fehler
     PasswordHashingFailed,
+    DatabaseError,
 
     TokenInvalid,
     TokenExpired,
@@ -37,8 +38,16 @@ impl fmt::Display for AuthError {
             AuthError::InvalidPasswordLogin => write!(f, "Password is incorrect"),
             AuthError::TokenInvalid => write!(f, "Reset token is invalid"),
             AuthError::TokenExpired => write!(f, "Reset token has expired"),
+            AuthError::DatabaseError => write!(f, "Database error"),
+
         
         }
     }
 }
 pub type AuthResult<T> = Result<T, AuthError>;
+
+impl From<sqlx::Error> for AuthError {
+    fn from(_: sqlx::Error) -> Self {
+        AuthError::DatabaseError
+    }
+}

@@ -12,5 +12,4 @@ pub mod puzzle;
 // Domain
 pub mod user;
 pub mod game_match;
-
 pub use crate::constants::symbols as symbols;
