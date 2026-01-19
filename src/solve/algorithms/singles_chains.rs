@@ -136,6 +136,7 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
 
 // Tracks a candidate chain
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct Chain {
     candidate: Cell,
     nodes: CellSet,
@@ -253,7 +254,6 @@ impl Colors {
 mod singles_chain_tests {
     use super::*;
     use crate::layout::cells::cell::cell;
-    use crate::layout::cells::cell_set::cells;
     use crate::layout::values::known::known;
 
     #[test]

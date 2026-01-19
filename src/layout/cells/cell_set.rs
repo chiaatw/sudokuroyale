@@ -15,6 +15,8 @@ use crate::symbols::EMPTY_SET;
 use super::{Bit, Cell};
 
 type Bits = u128;
+
+#[allow(dead_code)]
 type Size = u8;
 
 /// A set of cells implemented using a bit field.
@@ -27,7 +29,7 @@ enum CellSetRepr {
     Full,
     Bits(Bits),
 }
-
+#[allow(dead_code)]
 const ALL_CELLS: std::ops::Range<Size> = 0..Cell::COUNT;
 const ALL_SET: Bits = (1 << Cell::COUNT) - 1;
 
@@ -658,8 +660,6 @@ impl FusedIterator for BitIter {}
 #[cfg(test)]
 mod tests {
     use crate::layout::cells::cell::cell;
-    use crate::layout::houses::house_set::houses;
-    use crate::symbols::EMPTY_SET_STR;
 
     use super::*;
 

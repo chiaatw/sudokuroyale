@@ -135,6 +135,7 @@ impl Forest {
 
 /// Graph of connected bi-value cells
 /// Index by candidate
+#[allow(dead_code)]
 struct Graph {
     root: Cell,
     cells: [CellSet; 9], 
@@ -198,6 +199,7 @@ impl Graph {
 }
 
 /// Node representing a single bi-value cell
+#[allow(dead_code)]
 struct Node {
     cell: Cell,
     pair: KnownSet,
@@ -245,6 +247,7 @@ impl Node {
 }
 
 /// Chain of nodes for XY-Chain search
+#[allow(dead_code)]
 struct Chain {
     head: Rc<Link>,
     len: usize,
@@ -299,6 +302,7 @@ impl Chain {
 }
 
 /// Shared link in a chain of nodes
+#[allow(dead_code)]
 struct Link {
     tail: Option<Rc<Link>>,
     tail_known: Known,
@@ -334,6 +338,7 @@ impl Link {
 }
 
 /// Tracks shortest unique chains for a starting known
+#[allow(dead_code)]
 struct Found {
     known: Known,
     erases: CellSet,

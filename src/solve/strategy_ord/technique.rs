@@ -3,13 +3,20 @@ use crate::puzzle::{Board, Difficulty, Effects, Strategy};
 use super::algorithms;
 
 /// Names and categorizes a solver technique.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug)]
 pub struct Technique {
     strategy: Strategy,
     difficulty: Difficulty,
     label: &'static str,
     solve: TechniqueFunc,
 }
+
+impl PartialEq for Technique {
+    fn eq(&self, other: &Self) -> bool {
+        self.strategy == other.strategy
+    }
+}
+impl Eq for Technique {}
 
 impl Technique {
     pub const fn new(strategy: Strategy, solve: TechniqueFunc) -> Self {

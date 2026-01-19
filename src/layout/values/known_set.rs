@@ -337,9 +337,9 @@ impl fmt::Debug for Known {
 
 impl FromIterator<Known> for KnownSet {
     fn from_iter<I: IntoIterator<Item = Known>>(iter: I) -> Self {
-        let set = KnownSet::empty();
+        let mut set = KnownSet::empty();
         for k in iter {
-            set.add(k);
+            set = set.add(k);
         }
         set
     }
