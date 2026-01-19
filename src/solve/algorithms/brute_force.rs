@@ -76,7 +76,7 @@ impl BruteForceSolver {
             return BruteForceResult::UnsolvableCells(empty);
         }
 
-        let cancelable = Cancelable::new();
+        let _cancelable = Cancelable::new();
         let changer = Changer::new(Options::errors());
         let mut solutions = Vec::new();
         let mut stack = Vec::with_capacity(81);

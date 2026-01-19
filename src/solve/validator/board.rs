@@ -86,14 +86,17 @@ impl Board {
 
     /// Recompute candidates for all cells from scratch (safe baseline).
     pub fn recompute_candidates(&mut self) {
-        recompute_all_candidates(self, &mut self.candidates);
+        let mut candidates = std::mem::take(&mut self.candidates);
+        recompute_all_candidates(self, &mut candidates);
+        self.candidates = candidates;
     }
 
     /// Set a known digit into a cell and update candidates incrementally.
     /// (No rule validation here; validator handles that.)
     pub fn set_known(&mut self, cell: Cell, known: Known) {
-        self.cells[cell.usize()] = known.value();
-        update_after_set_known(self, &mut self.candidates, cell, known);
+        let mut candidates = std::mem::take(&mut self.candidates);
+        update_after_set_known(self, &mut candidates, cell, known);
+        self.candidates = candidates;
     }
 
     /// All known cells as CellSet.
