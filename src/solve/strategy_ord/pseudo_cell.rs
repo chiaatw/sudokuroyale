@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     fn pseudo_cell_new_sets_pseudo_and_cells() {
-        let cells: CellSet = (Cell::new(1) + Cell::new(2) + Cell::new(3));
+        let cells: CellSet = Cell::new(1) + Cell::new(2) + Cell::new(3);
         let knowns: KnownSet = KnownSet::from_iter([Known::from(1), Known::from(2)]);
         let p = PseudoCell::new(cells, knowns);
 
@@ -81,7 +81,7 @@ mod tests {
 
     #[test]
     fn pseudo_cell_from_trait_for_cellset() {
-        let cells: CellSet = (Cell::new(4) + Cell::new(5));
+        let cells: CellSet = Cell::new(4) + Cell::new(5);
         let knowns: KnownSet = KnownSet::from_iter([Known::from(3)]);
         let p = PseudoCell::new(cells, knowns);
 
@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn pseudo_cell_from_trait_for_cell() {
-        let cells: CellSet = (Cell::new(7) + Cell::new(8));
+        let cells: CellSet = Cell::new(7) + Cell::new(8);
         let knowns: KnownSet = KnownSet::from_iter([Known::from(4)]);
         let p = PseudoCell::new(cells, knowns);
 

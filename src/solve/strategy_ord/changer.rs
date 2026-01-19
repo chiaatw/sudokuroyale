@@ -134,10 +134,10 @@ mod tests {
     use super::*;
     use crate::layout::{Cell, Known};
     use crate::puzzle::{Board, Effects, Strategy};
-    use crate::solve::Options;
+    use crate::solve::options::Options;
 
     fn cell(i: usize) -> Cell {
-        Cell::new(i)
+        Cell::new(i as u8)
     }
 
     fn known(n: u8) -> Known {

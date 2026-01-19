@@ -268,10 +268,10 @@ impl fmt::Display for Effects {
 mod tests {
     use super::*;
     use crate::layout::{Cell, Known};
-    use crate::puzzle::{Action, Board, Strategy, Change, Error, KnownSet, CellSet};
+    use crate::puzzle::{Action, Board, Strategy, Change, Error};
 
     fn cell(i: usize) -> Cell {
-        Cell::new(i)
+        Cell::new(i as u8)
     }
 
     fn known(n: u8) -> Known {
