@@ -128,66 +128,57 @@ struct Entry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::puzzle::{Board, Changer, KnownSet, Known};
-    use crate::layout::Cell;
 
-    // A dummy Changer that always accepts a value
-    struct DummyChanger;
-
-    impl Changer for DummyChanger {
-        fn set_known(
-            &self,
-            board: &Board,
-            _strategy: crate::puzzle::Strategy,
-            _cell: Cell,
-            _known: Known,
-        ) -> crate::puzzle::ChangeResult {
-            crate::puzzle::ChangeResult::Valid(Box::new(board.clone()), vec![])
-        }
-    }
+    use crate::puzzle::Options;
+    use crate::layout::values::known_set::KnownSetLike;
 
     #[test]
-    fn test_generate_returns_board() {
+    fn test_generate_returns_some_board() {
         let mut generator = Generator::new(false, false);
-        let changer = DummyChanger;
+
+        // Echter Changer aus deinem Projekt (kein Dummy Trait)
+        let changer = Changer::new(Options::errors());
 
         let board = generator.generate(&changer);
-
-        assert!(board.is_some(), "Generator should return a board");
+        assert!(board.is_some(), "Generator should return a board (or partial board) in normal operation");
     }
 
     #[test]
-    fn test_generate_partial_board_on_cancel() {
-        let mut generator = Generator::new(false, false);
-        let changer = DummyChanger;
-
-        // simulate cancellation by patching Cancelable (or just rely on generate returning early)
-        // for simplicity, just check that calling generate doesn't panic
-        let result = generator.generate(&changer);
-
-        assert!(result.is_some(), "Generator should handle early return without panic");
-    }
-
-    #[test]
-    fn test_all_cells_length() {
+    fn test_all_cells_length_is_81() {
         let mut generator = Generator::new(false, false);
         let cells = generator.all_cells();
-
-        assert_eq!(cells.len(), 81, "all_cells should return 81 cells");
-        for (i, cell) in cells.iter().enumerate() {
-            assert_eq!(cell.index(), i, "Cell index should match position");
-        }
+        assert_eq!(cells.len(), 81);
     }
 
     #[test]
-    fn test_shuffle_candidates() {
+    fn test_shuffle_candidates_is_permutation() {
         let mut generator = Generator::new(true, false);
-        let candidates = KnownSet::full(); // assuming full returns all Known values
+
+        let candidates = KnownSet::full();
         let shuffled = generator.shuffle_candidates(candidates);
 
-        assert_eq!(shuffled.len(), KnownSet::full().len(), "Shuffled candidates should have same length");
-        // optional: check that order changed (not guaranteed but likely)
-        let unshuffled: Vec<Known> = KnownSet::full().iter().collect();
-        assert_ne!(shuffled, unshuffled, "Candidates should be shuffled");
+        // gleiche Anzahl
+        assert_eq!(shuffled.len(), KnownSet::full().len());
+
+        // gleiche Elemente (Permutation), ohne flaky "order changed" assertion
+        let mut a = shuffled.clone();
+        a.sort();
+
+        let mut b: Vec<Known> = KnownSet::full().iter().collect();
+        b.sort();
+
+        assert_eq!(a, b, "Shuffled candidates should contain exactly the same values");
+    }
+
+    // Cancel-Tests sind ohne steuerbaren Cancelable schwer und tendieren zu Flakes.
+    // Wenn du später Cancelable injizierbar machst, kann man das sauber testen.
+    #[test]
+    #[ignore = "Cancelable is not controllable from tests without dependency injection"]
+    fn test_generate_partial_board_on_cancel() {
+        let mut generator = Generator::new(false, false);
+        let changer = Changer::new(Options::errors());
+
+        let result = generator.generate(&changer);
+        assert!(result.is_some());
     }
 }

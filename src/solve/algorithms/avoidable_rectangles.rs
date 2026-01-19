@@ -164,7 +164,6 @@ mod tests {
     use super::*;
 
     use crate::layout::values::known::Known;
-    use crate::layout::values::known_set::KnownSetLike;
 
 #[allow(unused_macros)]
 macro_rules! knowns {

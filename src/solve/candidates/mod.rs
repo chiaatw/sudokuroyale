@@ -8,6 +8,10 @@
 
 mod store;
 mod update;
+mod elimination;
+mod intersection;
+mod singles;
+mod utils;
 
 pub use store::Candidates;
 pub use update::{recompute_all_candidates, update_after_set_known};
