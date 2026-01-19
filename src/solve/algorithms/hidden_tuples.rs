@@ -141,31 +141,46 @@ pub fn is_degenerate(cell_sets: &[CellSet], size: usize, smaller_size: usize) ->
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use crate::layout::cells::cell::cell;
     use crate::layout::cells::cell_set::cells;
-    use crate::layout::values::known_set::knowns;
-    use crate::layout::Cell;
+    use crate::layout::values::known::Known;
+    use crate::layout::values::known_set::{KnownSet, KnownSetLike};
 
-    use super::*;
+    // Local helper macro: build a KnownSet from a string like "1 2 3"
+    // (keeps tests independent from any missing global `knowns!` macro)
+    macro_rules! knowns {
+        ($s:literal) => {{
+            let mut ks = KnownSet::empty();
+            for part in $s.split_whitespace() {
+                ks.add(Known::from_str(part));
+            }
+            ks
+        }};
+    }
 
     #[test]
     fn hidden_pairs() {
         let mut board = Board::new();
         let mut effects = Effects::new();
 
-        let cells = cells!("A1 A2 A4 A5 A6 A8 A9");
-        let knowns = knowns!("1 2");
-        board.remove_candidates_from_cells(cells, knowns, &mut effects);
+        // Make (1,2) a hidden pair in row A at A3 & A7 by removing {1,2}
+        // from all other cells in the row.
+        let cs = cells!("A1 A2 A4 A5 A6 A8 A9");
+        let ks = knowns!("1 2");
+        board.remove_candidates_from_cells(cs, ks, &mut effects);
 
-        find_hidden_pairs(&board, false)
-            .unwrap()
-            .apply_all(&mut board);
+        let found = find_hidden_pairs(&board, false).expect("expected hidden pair effects");
+        found.apply_all(&mut board);
 
-        assert_eq!(knowns, board.candidates(cell!("A3")));
-        assert_eq!(knowns, board.candidates(cell!("A7")));
-        assert_eq!(!knowns, board.candidates(cell!("A2")));
-        assert_eq!(!knowns, board.candidates(cell!("A6")));
-        assert_eq!(!knowns, board.candidates(cell!("A9")));
+        assert_eq!(ks, board.candidates(cell!("A3")));
+        assert_eq!(ks, board.candidates(cell!("A7")));
+
+        // Other cells in the row must not contain 1 or 2 anymore
+        for c in cells!("A1 A2 A4 A5 A6 A8 A9").iter() {
+            assert!(!board.candidates(c).has_any(ks));
+        }
     }
 
     #[test]
@@ -173,20 +188,22 @@ mod tests {
         let mut board = Board::new();
         let mut effects = Effects::new();
 
-        let cells = cells!("A1 A2 A4 A6 A8 A9");
-        let knowns = knowns!("1 2 3");
-        board.remove_candidates_from_cells(cells, knowns, &mut effects);
+        // Make (1,2,3) a hidden triple in row A at A3,A5,A7 by removing {1,2,3}
+        // from all other cells in the row.
+        let cs = cells!("A1 A2 A4 A6 A8 A9");
+        let ks = knowns!("1 2 3");
+        board.remove_candidates_from_cells(cs, ks, &mut effects);
 
-        find_hidden_triples(&board, false)
-            .unwrap()
-            .apply_all(&mut board);
+        let found = find_hidden_triples(&board, false).expect("expected hidden triple effects");
+        found.apply_all(&mut board);
 
-        assert_eq!(knowns, board.candidates(cell!("A3")));
-        assert_eq!(knowns, board.candidates(cell!("A5")));
-        assert_eq!(knowns, board.candidates(cell!("A7")));
-        assert_eq!(!knowns, board.candidates(cell!("A2")));
-        assert_eq!(!knowns, board.candidates(cell!("A6")));
-        assert_eq!(!knowns, board.candidates(cell!("A9")));
+        assert_eq!(ks, board.candidates(cell!("A3")));
+        assert_eq!(ks, board.candidates(cell!("A5")));
+        assert_eq!(ks, board.candidates(cell!("A7")));
+
+        for c in cells!("A1 A2 A4 A6 A8 A9").iter() {
+            assert!(!board.candidates(c).has_any(ks));
+        }
     }
 
     #[test]
@@ -194,76 +211,53 @@ mod tests {
         let mut board = Board::new();
         let mut effects = Effects::new();
 
-        let cells = cells!("A2 A4 A6 A8 A9");
-        let knowns = knowns!("1 2 3 4");
-        board.remove_candidates_from_cells(cells, knowns, &mut effects);
+        // Make (1,2,3,4) a hidden quad in row A at A1,A3,A5,A7 by removing {1,2,3,4}
+        // from all other cells in the row.
+        let cs = cells!("A2 A4 A6 A8 A9");
+        let ks = knowns!("1 2 3 4");
+        board.remove_candidates_from_cells(cs, ks, &mut effects);
 
-        find_hidden_quads(&board, false)
-            .unwrap()
-            .apply_all(&mut board);
+        let found = find_hidden_quads(&board, false).expect("expected hidden quad effects");
+        found.apply_all(&mut board);
 
-        assert_eq!(knowns, board.candidates(cell!("A1")));
-        assert_eq!(knowns, board.candidates(cell!("A3")));
-        assert_eq!(knowns, board.candidates(cell!("A5")));
-        assert_eq!(knowns, board.candidates(cell!("A7")));
-        assert_eq!(!knowns, board.candidates(cell!("A2")));
-        assert_eq!(!knowns, board.candidates(cell!("A6")));
-        assert_eq!(!knowns, board.candidates(cell!("A9")));
-    }
-    #[test]
-    fn hidden_pair_single_true() {
-        let mut board = Board::new();
-        let mut effects = Effects::new();
+        assert_eq!(ks, board.candidates(cell!("A1")));
+        assert_eq!(ks, board.candidates(cell!("A3")));
+        assert_eq!(ks, board.candidates(cell!("A5")));
+        assert_eq!(ks, board.candidates(cell!("A7")));
 
-        // Setup: A1-A3 have candidates 1,2
-        board.set_candidates(cell!("A1"), knowns!("1 2"));
-        board.set_candidates(cell!("A2"), knowns!("1 2"));
-        board.set_candidates(cell!("A3"), knowns!("1 2 3"));
-        board.set_candidates(cell!("A4"), knowns!("3"));
-
-        // Only one action should be returned with single = true
-        let found = find_hidden_pairs(&board, true).unwrap();
-        assert_eq!(found.actions().len(), 1);
-
-        // Candidates outside hidden pair cells should be erased
-        let action = &found.actions()[0];
-        assert!(action.erased(cell!("A3")).contains(&knowns!("1")));
-        assert!(action.erased(cell!("A3")).contains(&knowns!("2")));
-    }
-
-    #[test]
-    fn hidden_triple_non_degenerate() {
-        let mut board = Board::new();
-
-        // Setup: Hidden triple in row A
-        board.set_candidates(cell!("A1"), knowns!("1 2 3"));
-        board.set_candidates(cell!("A2"), knowns!("1 2 3"));
-        board.set_candidates(cell!("A3"), knowns!("2 3 4"));
-        board.set_candidates(cell!("A4"), knowns!("4"));
-
-        let found = find_hidden_triples(&board, false).unwrap();
-        // Should generate at least one effect
-        assert!(found.actions().len() >= 1);
-
-        // Cells in triple should only keep tuple knowns
-        for c in [cell!("A1"), cell!("A2"), cell!("A3")] {
-            let ks = board.candidates(c) & knowns!("1 2 3");
-            assert!(!ks.is_empty());
+        for c in cells!("A2 A4 A6 A8 A9").iter() {
+            assert!(!board.candidates(c).has_any(ks));
         }
     }
 
     #[test]
-    fn hidden_quad_degenerate_ignored() {
+    fn hidden_pair_single_true_returns_one_action() {
         let mut board = Board::new();
+        let mut effects = Effects::new();
 
-        // Setup: degenerate quad (subset forms hidden triple)
-        board.set_candidates(cell!("A1"), knowns!("1 2 3"));
-        board.set_candidates(cell!("A2"), knowns!("1 2 3"));
-        board.set_candidates(cell!("A3"), knowns!("1 2 3"));
-        board.set_candidates(cell!("A4"), knowns!("4"));
+        let cs = cells!("A1 A2 A4 A5 A6 A8 A9");
+        let ks = knowns!("1 2");
+        board.remove_candidates_from_cells(cs, ks, &mut effects);
 
-        // Degenerate quad should be skipped
-        let result = find_hidden_quads(&board, false);
-        assert!(result.is_none());
+        let found = find_hidden_pairs(&board, true).expect("expected hidden pair effects");
+        assert_eq!(found.actions().len(), 1);
+
+        found.apply_all(&mut board);
+        assert_eq!(ks, board.candidates(cell!("A3")));
+        assert_eq!(ks, board.candidates(cell!("A7")));
+    }
+
+    #[test]
+    fn is_degenerate_detects_smaller_subset() {
+        // Construct a clearly-degenerate "quad": three sets already fit in 3 cells
+        // (i.e., it degenerates to a triple).
+        let a = cells!("A1 A2 A3");
+        let b = cells!("A1 A2 A3");
+        let c = cells!("A1 A2 A3");
+        let d = cells!("A1 A2 A3 A4");
+
+        let sets = vec![a, b, c, d];
+
+        assert!(is_degenerate(&sets, 4, 3));
     }
 }

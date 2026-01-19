@@ -134,7 +134,7 @@ mod tests {
     use super::*;
     use crate::layout::{Cell, Known};
     use crate::puzzle::{Board, Effects, Strategy};
-    use crate::solve::options::Options;
+    use crate::solve::strategy_ord::Options;
 
     fn cell(i: usize) -> Cell {
         Cell::new(i as u8)
@@ -149,10 +149,7 @@ mod tests {
     }
 
     fn changer_stop_on_error() -> Changer {
-        Changer::new(Options {
-            stop_on_error: true,
-            ..Options::default()
-        })
+    Changer::new(Options::errors())
     }
 
     /* ---------------- set_known ---------------- */
@@ -263,12 +260,12 @@ mod tests {
     #[test]
     fn apply_all_applies_effects() {
         let changer = changer_default();
-        let board = Board::new();
+        let mut board = Board::new();
         let mut effects = Effects::new();
 
         effects.add_set(Strategy::NakedSingle, cell(3), known(6));
 
-        let result = changer.apply_all(&board, &effects);
+        let result = changer.apply_all(&mut board, &effects);
 
         match result {
             ChangeResult::Valid(after, unapplied) => {
@@ -281,16 +278,13 @@ mod tests {
 
     #[test]
     fn apply_all_respects_options() {
-        let changer = Changer::new(Options {
-            apply_naked_singles: false,
-            ..Options::default()
-        });
+        let changer = Changer::new(Options::default().set_solve_naked_singles(false));
 
-        let board = Board::new();
+        let mut board = Board::new();
         let mut effects = Effects::new();
         effects.add_set(Strategy::NakedSingle, cell(4), known(7));
 
-        let result = changer.apply_all(&board, &effects);
+        let result = changer.apply_all(&mut board, &effects);
 
         match result {
             ChangeResult::Valid(after, unapplied) => {
@@ -306,10 +300,10 @@ mod tests {
     #[test]
     fn changer_does_not_panic_on_empty_actions() {
         let changer = changer_default();
-        let board = Board::new();
+        let mut board = Board::new();
         let effects = Effects::new();
 
-        let result = changer.apply_all(&board, &effects);
+        let result = changer.apply_all(&mut board, &effects);
 
         matches!(result, ChangeResult::None);
     }

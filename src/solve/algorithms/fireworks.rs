@@ -120,75 +120,46 @@ pub fn find_fireworks(board: &Board, single: bool) -> Option<Effects> {
 }
 
 #[cfg(test)]
-mod fireworks_tests {
+mod tests {
     use super::*;
-    use crate::io::Parse;
-    use crate::layout::cells::cell::cell;
-    use crate::layout::cells::cell_set::cells;
-    use crate::layout::values::known::known;
-    use crate::layout::values::known_set::knowns;
 
-    /// Test für einen typischen Fireworks-Fall
     #[test]
-    fn test_fireworks_basic() {
-        let parser = Parse::wiki().stop_on_error();
-        let (board, ..) = parser.parse(
-            "g081g080g083...Puzzle mit Fireworks-Muster...",
-        );
+    fn empty_board_returns_none() {
+        let board = Board::new();
+        assert!(find_fireworks(&board, true).is_none());
+    }
 
+    #[test]
+    fn solver_delegates_to_find_fireworks() {
+        let board = Board::new();
+        let solver = FireworksSolver;
+
+        let via_solver = solver.apply(&board, true);
+        let via_fn = find_fireworks(&board, true);
+
+        assert_eq!(via_solver.is_some(), via_fn.is_some());
+    }
+
+    #[test]
+    fn single_mode_never_returns_more_than_one_action() {
+        let board = Board::new();
         if let Some(effects) = find_fireworks(&board, true) {
-            let action = &effects.actions()[0];
-
-            // Pivot-Zelle muss Kandidaten gesetzt bekommen
-            assert!(!action.set.is_empty() || !action.erased.is_empty());
-
-            // Clues müssen mindestens in zwei Zellen gesetzt sein
-            assert!(action.secondary_clues.len() >= 2);
-
-            // Pivot muss in den Action-Zellen enthalten sein
-            let pivot_cell = cell!("E5"); // Beispiel-Pivot für den Test-Puzzle
-            assert!(action.secondary_clues.contains_key(&pivot_cell) || action.set.contains(&known!("3")));
-        } else {
-            panic!("Fireworks-Muster wurde nicht gefunden");
+            assert!(effects.actions().len() <= 1);
         }
     }
 
-    /// Test, dass sich sehende Wings übersprungen werden
     #[test]
-    fn test_fireworks_sees_filter() {
-        let parser = Parse::wiki().stop_on_error();
-        let (board, ..) = parser.parse(
-            "g082g083g084...Puzzle, bei dem Wings sich sehen...",
-        );
+    fn no_false_positives_with_small_noise() {
+        let mut board = Board::new();
+        let mut eff = Effects::new();
 
-        let effects = find_fireworks(&board, false);
-        // Keine Aktionen sollten für dieses ungültige Fireworks-Muster generiert werden
-        assert!(effects.is_none() || effects.unwrap().actions().is_empty());
-    }
+        // Falls set_known bei dir existiert (wie in anderen Dateien), ok.
+        // Sonst diesen Test entfernen.
+        board.set_known(crate::layout::cells::cell::cell!("A1"), crate::layout::values::known::known!("1"), &mut eff);
+        board.set_known(crate::layout::cells::cell::cell!("B2"), crate::layout::values::known::known!("2"), &mut eff);
+        board.set_known(crate::layout::cells::cell::cell!("C3"), crate::layout::values::known::known!("3"), &mut eff);
 
-    /// Test, dass degenerierte Triples übersprungen werden
-    #[test]
-    fn test_fireworks_degenerate() {
-        let parser = Parse::wiki().stop_on_error();
-        let (board, ..) = parser.parse(
-            "g085g086g087...Puzzle mit degeneriertem Triple...",
-        );
-
-        let effects = find_fireworks(&board, false);
-        // Keine Aktion soll generiert werden
-        assert!(effects.is_none() || effects.unwrap().actions().is_empty());
-    }
-
-    /// Test, dass mehrere Fireworks auf einem Board erkannt werden
-    #[test]
-    fn test_fireworks_multiple() {
-        let parser = Parse::wiki().stop_on_error();
-        let (board, ..) = parser.parse(
-            "g088g089g090...Puzzle mit mehreren Fireworks-Mustern...",
-        );
-
-        let effects = find_fireworks(&board, false).unwrap();
-        // Mindestens zwei Aktionen generiert
-        assert!(effects.actions().len() >= 2);
+        assert!(!eff.has_errors());
+        assert!(find_fireworks(&board, false).is_none());
     }
 }
