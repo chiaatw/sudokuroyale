@@ -1,6 +1,5 @@
 use crate::layout::{Cell, CellSet, Known, KnownSet, Value, ValueLike};
 use crate::layout::values::known_set::KnownSetLike;
-use crate::layout::values::known::KnownLike;
 
 use crate::solve::candidates::{
     recompute_all_candidates, update_after_set_known, Candidates,

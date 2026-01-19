@@ -50,3 +50,9 @@ impl Candidates {
         self.get(cell).has(k)
     }
 }
+
+impl Default for Candidates {
+    fn default() -> Self {
+        Self::new_full()
+    }
+}
