@@ -1,15 +1,15 @@
+use itertools::Itertools;
 use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
-use itertools::Itertools;
 
 use super::*;
-use crate::puzzle::{Action, Cell, CellSet, Known, KnownSet, Board, Effects, Strategy, Verdict};
+use crate::puzzle::{Action, Board, Cell, CellSet, Effects, Known, KnownSet, Strategy, Verdict};
 
-use crate::layout::values::known::KnownLike;
 use crate::layout::cells::cell_set::CellIteratorUnion;
+use crate::layout::values::known::KnownLike;
 
 /// Solver for the XY-Chain strategy
-/// 
+///
 /// Detects XY-Chains on the board and produces candidate eliminations
 pub struct XYChainSolver;
 
@@ -32,7 +32,7 @@ pub fn find_xy_chains(board: &Board, single: bool) -> Option<Effects> {
     let bi_values = board.cells_with_n_candidates(2);
     let mut forest = Forest::new();
 
-// Build graph nodes for all bi-value cells
+    // Build graph nodes for all bi-value cells
     for cell in bi_values {
         forest.add_node(board, cell);
     }
@@ -43,7 +43,7 @@ pub fn find_xy_chains(board: &Board, single: bool) -> Option<Effects> {
 
         for graph in forest.graphs.values() {
             if graph.nodes.len() < 4 {
-// Ignore too small graphs
+                // Ignore too small graphs
                 continue;
             }
 
@@ -52,7 +52,7 @@ pub fn find_xy_chains(board: &Board, single: bool) -> Option<Effects> {
                 continue;
             }
 
-// Find starting cells for chains
+            // Find starting cells for chains
             let starts = erasables.iter().fold(CellSet::empty(), |acc, cell| {
                 acc | (cell.peers() & candidates & graph.cells[k.usize()])
             });
@@ -102,11 +102,11 @@ impl Forest {
         }
     }
 
-/// Adds a new node to the appropriate graph, or creates a new graph if necessary
+    /// Adds a new node to the appropriate graph, or creates a new graph if necessary
     fn add_node(&mut self, board: &Board, cell: Cell) {
         let node = Rc::new(Node::new(board, cell));
 
-// Identify which graphs the node can connect to
+        // Identify which graphs the node can connect to
         let mut sees = self
             .graphs
             .iter()
@@ -138,7 +138,7 @@ impl Forest {
 #[allow(dead_code)]
 struct Graph {
     root: Cell,
-    cells: [CellSet; 9], 
+    cells: [CellSet; 9],
     peers: [CellSet; 9],
     nodes: HashMap<Cell, Rc<Node>>,
 }
@@ -165,7 +165,8 @@ impl Graph {
     }
 
     fn can_add_node(&self, node: &Rc<Node>) -> bool {
-        self.peers[node.min_known.usize()].has(node.cell) || self.peers[node.max_known.usize()].has(node.cell)
+        self.peers[node.min_known.usize()].has(node.cell)
+            || self.peers[node.max_known.usize()].has(node.cell)
     }
 
     fn add_node(&mut self, node: &Rc<Node>) {
@@ -243,7 +244,7 @@ impl Node {
         } else {
             panic!("Node::edges: known not in pair")
         }
-    } 
+    }
 }
 
 /// Chain of nodes for XY-Chain search
@@ -315,7 +316,7 @@ impl Link {
     fn new(start: &Rc<Node>, known: Known) -> Self {
         Self {
             tail: None,
-            tail_known: known, 
+            tail_known: known,
             len: 1,
             node: Rc::clone(start),
             known: start.other(known),
@@ -361,12 +362,13 @@ impl Found {
 
     fn resolve(&self, single: bool, effects: &mut Effects) -> bool {
         let mut remaining = self.erases;
-        for chain in self.chains.iter().sorted_by(|a, b| {
-            a.len
-                .cmp(&b.len)
-                .then(a.erases.len().cmp(&b.erases.len()))
-        }) {
-            let mut action = Action::new_erase_cells(Strategy::XYChain, chain.erases, chain.start_known);
+        for chain in self
+            .chains
+            .iter()
+            .sorted_by(|a, b| a.len.cmp(&b.len).then(a.erases.len().cmp(&b.erases.len())))
+        {
+            let mut action =
+                Action::new_erase_cells(Strategy::XYChain, chain.erases, chain.start_known);
 
             let mut link = Some(&chain.head);
             while let Some(next) = link {

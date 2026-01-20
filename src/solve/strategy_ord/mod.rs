@@ -1,8 +1,10 @@
 pub mod action;
 pub mod algorithms;
 pub mod board;
+pub mod cancelable;
 pub mod changer;
 pub mod clues;
+pub mod deadly_rectangles;
 pub mod effects;
 pub mod error;
 pub mod options;
@@ -12,8 +14,6 @@ pub mod solver;
 pub mod strategy;
 pub mod technique;
 pub mod timing;
-pub mod deadly_rectangles;
-pub mod cancelable;
 
 pub use action::Action;
 pub use board::{Board, Change};
@@ -23,7 +23,7 @@ pub use effects::Effects;
 pub use error::Error;
 pub use options::Options;
 pub use pseudo_cell::PseudoCell;
+pub use strategy::{Difficulty, Strategy};
 pub use timing::Timings;
-pub use strategy::{Strategy, Difficulty};
 
 pub trait SolverAction {}

@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::game::state::{GameState, LoseReason};
 use crate::game::player::{PlayerId, PlayerState};
+use crate::game::state::{GameState, LoseReason};
 use crate::layout::Sudoku;
 use crate::layout::{Cell, Value};
 
-
-
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MoveResult {
     Accepted,
+    Mistake { mistakes_left: u8 },
     Rejected,
     Won,
     Lost,
@@ -38,26 +38,33 @@ impl Game {
         &self.state
     }
 
-    pub fn apply_move(
-        &mut self,
-        player: PlayerId,
-        cell: Cell,
-        value: Value,
-    ) -> MoveResult {
+    pub fn apply_move(&mut self, player: PlayerId, cell: Cell, value: Value) -> MoveResult {
         if !matches!(self.state, GameState::InProgress) {
             return MoveResult::Rejected;
         }
 
+        let Some(p) = self.players.get_mut(&player) else {
+            return MoveResult::Rejected;
+        };
+
         if !self.sudoku.is_correct_move(cell, value) {
-            let p = self.players.get_mut(&player).unwrap();
             if p.register_mistake() {
+                let winner = match player {
+                    PlayerId::PlayerA => PlayerId::PlayerB,
+                    PlayerId::PlayerB => PlayerId::PlayerA,
+                };
+
                 self.state = GameState::Lost {
-                    player,
+                    loser: player,
+                    winner,
                     reason: LoseReason::TooManyMistakes,
                 };
                 return MoveResult::Lost;
             }
-            return MoveResult::Accepted;
+
+            return MoveResult::Mistake {
+                mistakes_left: p.mistakes_left(),
+            };
         }
 
         self.sudoku.set(cell, value);
@@ -71,11 +78,22 @@ impl Game {
     }
 
     pub fn tick(&mut self, player: PlayerId, delta: Duration) {
+        if !matches!(self.state, GameState::InProgress) {
+            return;
+        }
+
         if let Some(p) = self.players.get_mut(&player) {
             p.time.tick(delta);
+
             if p.time.is_expired() {
+                let winner = match player {
+                    PlayerId::PlayerA => PlayerId::PlayerB,
+                    PlayerId::PlayerB => PlayerId::PlayerA,
+                };
+
                 self.state = GameState::Lost {
-                    player,
+                    loser: player,
+                    winner,
                     reason: LoseReason::TimeExpired,
                 };
             }

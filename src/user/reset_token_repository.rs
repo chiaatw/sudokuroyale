@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use crate::user::reset_token::ResetToken;
+use uuid::Uuid;
 
 pub struct ResetTokenRepository {
     tokens: Vec<ResetToken>,

@@ -4,15 +4,14 @@ use rocket::State;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
-use crate::game_match::services::start_match_by_user;
 use crate::game_match::repository::MatchRepository;
+use crate::game_match::services::start_match_by_user;
 use crate::game_match::services::{create_match, join_match};
 use crate::user::repository::UserRepository;
 use crate::user::session_repository::SessionRepository;
 use crate::AuthUser;
 use rocket::http::CookieJar;
 use uuid::Uuid;
-
 
 #[derive(Serialize)]
 pub struct CreateMatchResponse {
@@ -36,8 +35,13 @@ pub fn create_match_route(
     let mut matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
 
     // 3) Match erstellen
-    let match_id = create_match(&users_guard, &sessions_guard, &mut matches_guard, &session_id)
-        .ok_or(Status::Unauthorized)?;
+    let match_id = create_match(
+        &users_guard,
+        &sessions_guard,
+        &mut matches_guard,
+        &session_id,
+    )
+    .ok_or(Status::Unauthorized)?;
 
     Ok(Json(CreateMatchResponse {
         match_id: match_id.to_string(),
@@ -71,7 +75,13 @@ pub fn join_match_route(
     let sessions_guard = sessions.lock().map_err(|_| Status::InternalServerError)?;
     let mut matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
 
-    let ok = join_match(&users_guard, &sessions_guard, &mut matches_guard, &session_id, &match_id);
+    let ok = join_match(
+        &users_guard,
+        &sessions_guard,
+        &mut matches_guard,
+        &session_id,
+        &match_id,
+    );
 
     Ok(Json(JoinMatchResponse { ok }))
 }
@@ -92,7 +102,9 @@ pub fn get_match_route(
     let match_uuid = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
     let matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
 
-    let m = matches_guard.find_by_id(&match_uuid).ok_or(Status::NotFound)?;
+    let m = matches_guard
+        .find_by_id(&match_uuid)
+        .ok_or(Status::NotFound)?;
 
     Ok(Json(MatchInfoResponse {
         match_id: m.id.to_string(),
@@ -101,7 +113,6 @@ pub fn get_match_route(
         player2_id: m.player2_id.map(|id| id.to_string()),
     }))
 }
-
 
 #[derive(Deserialize)]
 pub struct LeaveMatchRequest {
@@ -119,7 +130,6 @@ pub fn leave_match_route(
     req: Json<LeaveMatchRequest>,
     matches: &State<Mutex<MatchRepository>>,
 ) -> Result<Json<LeaveMatchResponse>, Status> {
-
     let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
 
     let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
@@ -128,7 +138,6 @@ pub fn leave_match_route(
 
     Ok(Json(LeaveMatchResponse { ok }))
 }
-
 
 #[derive(Deserialize)]
 pub struct StartMatchRequest {

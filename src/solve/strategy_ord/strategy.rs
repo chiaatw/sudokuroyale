@@ -1,13 +1,13 @@
 use std::fmt;
 
 /// Identifies the logic used to solve cells and remove candidates
-/// 
+///
 /// Strategy is intentionally a simple enum
-/// fast to copy 
+/// fast to copy
 /// easy to match
 /// exhaustive and compiler checked
-/// 
-/// 
+///
+///
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
@@ -72,9 +72,7 @@ impl Strategy {
         match self {
             Self::Given | Self::Solve | Self::Erase => Difficulty::Trivial,
 
-            Self::Peer
-            | Self::NakedSingle
-            | Self::HiddenSingle => Difficulty::Trivial,
+            Self::Peer | Self::NakedSingle | Self::HiddenSingle => Difficulty::Trivial,
 
             Self::NakedPair
             | Self::HiddenPair
@@ -228,11 +226,11 @@ mod tests {
         ];
         for &d in &difficulties {
             match d {
-                Difficulty::Trivial => {},
-                Difficulty::Basic => {},
-                Difficulty::Tough => {},
-                Difficulty::Diabolical => {},
-                Difficulty::Extreme => {},
+                Difficulty::Trivial => {}
+                Difficulty::Basic => {}
+                Difficulty::Tough => {}
+                Difficulty::Diabolical => {}
+                Difficulty::Extreme => {}
             }
         }
     }

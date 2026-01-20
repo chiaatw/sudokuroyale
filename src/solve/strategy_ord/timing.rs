@@ -41,9 +41,7 @@ impl Timings {
     pub fn print_details(&self) {
         println!("Strategy              Called   Found       Total    Call Avg         Avg");
 
-        for (strategy, found_times) in
-            self.timings.iter().sorted_by(|(a, _), (b, _)| a.cmp(b))
-        {
+        for (strategy, found_times) in self.timings.iter().sorted_by(|(a, _), (b, _)| a.cmp(b)) {
             for (found, (count, duration)) in found_times
                 .iter()
                 .sorted_by(|(_, (a, _)), (_, (b, _))| a.cmp(b))
@@ -75,11 +73,7 @@ impl Timings {
                 let (found, count, duration) = found_times.iter().fold(
                     (0usize, 0usize, Duration::default()),
                     |acc, (found, (count, duration))| {
-                        (
-                            acc.0 + found * count,
-                            acc.1 + count,
-                            acc.2 + *duration,
-                        )
+                        (acc.0 + found * count, acc.1 + count, acc.2 + *duration)
                     },
                 );
                 (strategy, (found, count, duration))

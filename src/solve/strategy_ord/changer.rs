@@ -20,11 +20,9 @@ pub struct Changer {
 
 impl Changer {
     pub const fn new(options: Options) -> Self {
-        Self {
-            options
-        }
+        Self { options }
     }
-// Sets the given (clue) for a single cell
+    // Sets the given (clue) for a single cell
     pub fn set_given(
         &self,
         board: &Board,
@@ -35,7 +33,7 @@ impl Changer {
         self.apply(board, &Action::new_set(strategy, cell, known))
     }
 
-// Solves a single cell to one of its candidates
+    // Solves a single cell to one of its candidates
     pub fn set_known(
         &self,
         board: &Board,
@@ -46,7 +44,7 @@ impl Changer {
         self.apply(board, &Action::new_set(strategy, cell, known))
     }
 
-// Remove a candidate from a single cell
+    // Remove a candidate from a single cell
     pub fn remove_candidate(
         &self,
         board: &Board,
@@ -57,7 +55,7 @@ impl Changer {
         self.apply(board, &Action::new_erase(strategy, cell, known))
     }
 
-// Applies the given action it creates
+    // Applies the given action it creates
     pub fn apply(&self, board: &Board, action: &Action) -> ChangeResult {
         let mut after = *board;
         let mut effects = Effects::new();
@@ -71,7 +69,7 @@ impl Changer {
         }
     }
 
-// Applies all automatic actions to the given board
+    // Applies all automatic actions to the given board
     pub fn apply_all(&self, board: &mut Board, actions: &Effects) -> ChangeResult {
         let mut effects = actions.clone();
         let mut after = board.clone();
@@ -232,12 +230,8 @@ mod tests {
         let changer = changer_default();
 
         // LockedCandidates existiert nicht -> IntersectionRemoval (oder eine andere Strategie, die bei dir existiert)
-        let result = changer.remove_candidate(
-            &board,
-            Strategy::IntersectionRemoval,
-            cell(2),
-            known(4),
-        );
+        let result =
+            changer.remove_candidate(&board, Strategy::IntersectionRemoval, cell(2), known(4));
 
         match result {
             ChangeResult::Valid(after, _) => {
@@ -255,12 +249,8 @@ mod tests {
 
         board.remove_candidate(cell(2), known(5), &mut effects);
 
-        let result = changer.remove_candidate(
-            &board,
-            Strategy::IntersectionRemoval,
-            cell(2),
-            known(5),
-        );
+        let result =
+            changer.remove_candidate(&board, Strategy::IntersectionRemoval, cell(2), known(5));
 
         assert!(matches!(result, ChangeResult::None));
     }

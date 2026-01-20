@@ -1,5 +1,5 @@
-use std::time::Duration;
 use crate::game::time::TimeControl;
+use std::time::Duration;
 
 pub const MAX_MISTAKES: u8 = 3;
 
@@ -24,7 +24,13 @@ impl PlayerState {
     }
 
     pub fn register_mistake(&mut self) -> bool {
-        self.mistakes += 1;
+        if self.mistakes < MAX_MISTAKES {
+            self.mistakes += 1;
+        }
         self.mistakes >= MAX_MISTAKES
+    }
+
+    pub fn mistakes_left(&self) -> u8 {
+        MAX_MISTAKES - self.mistakes
     }
 }

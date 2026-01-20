@@ -14,8 +14,6 @@ pub struct Generator {
 }
 
 impl Generator {
-    /// Pass true for shuffle to randomize the order the cells are solved.
-    /// This will take longer and likely solve fewer cells using singles.
     pub fn new(shuffle: bool, bar: bool) -> Generator {
         Generator {
             rng: rand::thread_rng(),
@@ -24,10 +22,10 @@ impl Generator {
         }
     }
 
-    /// Returns a complete solution or a partial solution if canceled.
-    pub fn generate(&mut self, changer: &Changer) -> Option<Board> {
-        let cancelable = Cancelable::new();
+    /// GUI-friendly: caller supplies a Cancelable they can trigger (button, timeout, etc.)
+    pub fn generate(&mut self, changer: &Changer, cancelable: &Cancelable) -> Option<Board> {
         let cells = self.all_cells();
+
         let mut stack = Vec::with_capacity(81);
         stack.push(Entry {
             board: Board::new(),
@@ -42,25 +40,23 @@ impl Generator {
         }) = stack.pop()
         {
             if self.bar {
-                show_progress(stack.len(), stack.len());
+                let filled = stack.len().min(81);
+                show_progress(filled, 81);
             }
+
             if cancelable.is_canceled() {
                 return Some(board);
             }
+
             if candidates.is_empty() {
                 continue;
             }
 
             let known = candidates.pop().unwrap();
             let mut clone = match changer.set_known(&board, Strategy::BruteForce, cell, known) {
-                ChangeResult::None => {
-                    // failed to set known which we know is a candidate
-                    return Some(board);
-                }
+                ChangeResult::None => return None,
                 ChangeResult::Valid(after, _) => after,
-                ChangeResult::Invalid(..) => {
-                    continue;
-                }
+                ChangeResult::Invalid(..) => continue,
             };
 
             if let Some(effects) = find_intersection_removals(&clone, false) {
@@ -74,6 +70,7 @@ impl Generator {
                 cell,
                 candidates,
             });
+
             loop {
                 if stack.len() == 81 || cancelable.is_canceled() {
                     return Some(clone);
@@ -88,6 +85,7 @@ impl Generator {
                     });
                     break;
                 }
+
                 stack.push(Entry {
                     board: clone,
                     cell: next,
@@ -101,14 +99,12 @@ impl Generator {
 
     fn all_cells(&mut self) -> Vec<Cell> {
         let mut cells: Vec<Cell> = Vec::with_capacity(81);
-
         for i in 0..81 {
             cells.push(Cell::new(i));
         }
         if self.shuffle {
             cells.shuffle(&mut self.rng);
         }
-
         cells
     }
 
@@ -129,8 +125,8 @@ struct Entry {
 mod tests {
     use super::*;
 
-    use crate::puzzle::Options;
     use crate::layout::values::known_set::KnownSetLike;
+    use crate::puzzle::Options;
 
     #[test]
     fn test_generate_returns_some_board() {
@@ -139,8 +135,14 @@ mod tests {
         // Echter Changer aus deinem Projekt (kein Dummy Trait)
         let changer = Changer::new(Options::errors());
 
-        let board = generator.generate(&changer);
-        assert!(board.is_some(), "Generator should return a board (or partial board) in normal operation");
+        // NEU: Cancelable wird von außen übergeben
+        let cancelable = Cancelable::new();
+
+        let board = generator.generate(&changer, &cancelable);
+        assert!(
+            board.is_some(),
+            "Generator should return a board (or partial board) in normal operation"
+        );
     }
 
     #[test]
@@ -167,18 +169,28 @@ mod tests {
         let mut b: Vec<Known> = KnownSet::full().iter().collect();
         b.sort();
 
-        assert_eq!(a, b, "Shuffled candidates should contain exactly the same values");
+        assert_eq!(
+            a, b,
+            "Shuffled candidates should contain exactly the same values"
+        );
     }
 
     // Cancel-Tests sind ohne steuerbaren Cancelable schwer und tendieren zu Flakes.
-    // Wenn du später Cancelable injizierbar machst, kann man das sauber testen.
+    // ABER: durch Dependency Injection (Cancelable von außen) ist es prinzipiell testbar,
+    // sofern Cancelable in deinem Projekt eine Möglichkeit bietet, "cancel" auszulösen.
+    //
+    // Wenn es z.B. `cancelable.cancel()` gibt, kannst du den Test ent-ignorieren
+    // und entsprechend anpassen.
     #[test]
-    #[ignore = "Cancelable is not controllable from tests without dependency injection"]
+    #[ignore = "Enable once Cancelable can be triggered from tests (e.g., cancelable.cancel())"]
     fn test_generate_partial_board_on_cancel() {
         let mut generator = Generator::new(false, false);
         let changer = Changer::new(Options::errors());
 
-        let result = generator.generate(&changer);
+        let cancelable = Cancelable::new();
+        // cancelable.cancel(); // <- falls es so eine Methode gibt
+
+        let result = generator.generate(&changer, &cancelable);
         assert!(result.is_some());
     }
 }

@@ -1,18 +1,15 @@
 use std::fmt;
 use std::iter::FusedIterator;
-use std::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Not, Sub, SubAssign, 
-};
+use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Not, Sub, SubAssign};
 
-use crate::layout::Shape;
-use crate::layout::CellSet;
-use crate::symbols::EMPTY_SET;
 use crate::layout::houses::shape::ShapeTrait;
+use crate::layout::CellSet;
+use crate::layout::Shape;
+use crate::symbols::EMPTY_SET;
 
 use super::{Coord, CoordSet, House};
 
 pub trait HouseSetLike: Copy + Sized {
-
     fn empty(shape: Shape) -> Self;
     fn full(shape: Shape) -> Self;
     fn from_bits(shape: Shape, bits: u16) -> Self;
@@ -38,14 +35,14 @@ pub trait HouseSetLike: Copy + Sized {
     }
 
     fn is_subset_of(self, superset: Self) -> bool {
-        self.shape() ==  superset.shape() && self.intersect(superset).coords() == self.coords()
+        self.shape() == superset.shape() && self.intersect(superset).coords() == self.coords()
     }
 
     fn coords(&self) -> CoordSet;
 }
 
 #[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
-pub struct HouseSet{
+pub struct HouseSet {
     shape: Shape,
     coords: CoordSet,
 }
@@ -64,7 +61,6 @@ impl Sub<HouseSet> for HouseSet {
 }
 
 impl HouseSetLike for HouseSet {
-
     fn empty(shape: Shape) -> Self {
         Self {
             shape,
@@ -156,7 +152,6 @@ impl HouseSetLike for HouseSet {
 }
 
 impl HouseSet {
-
     pub const fn empty(shape: Shape) -> Self {
         Self {
             shape,
@@ -227,7 +222,7 @@ impl HouseSet {
         }
         Self {
             shape: self.shape,
-            coords: self.coords.with(house.coord())
+            coords: self.coords.with(house.coord()),
         }
     }
 
@@ -242,7 +237,7 @@ impl HouseSet {
     }
 
     pub fn cells(&self) -> CellSet {
-        self.iter().fold(CellSet::empty(), | acc, h| acc | h.cells())
+        self.iter().fold(CellSet::empty(), |acc, h| acc | h.cells())
     }
 
     pub fn iter(&self) -> Iter {
@@ -257,11 +252,19 @@ impl HouseSet {
     }
 
     pub fn as_pair(&self) -> Option<(House, House)> {
-        self.coords.as_pair().map(|(a, b)| (House::new(self.shape, a), House::new(self.shape, b)))
+        self.coords
+            .as_pair()
+            .map(|(a, b)| (House::new(self.shape, a), House::new(self.shape, b)))
     }
 
     pub fn as_triple(&self) -> Option<(House, House, House)> {
-        self.coords.as_triple().map(|(a, b, c)| (House::new(self.shape, a), House::new(self.shape, b), House::new(self.shape, c)))
+        self.coords.as_triple().map(|(a, b, c)| {
+            (
+                House::new(self.shape, a),
+                House::new(self.shape, b),
+                House::new(self.shape, c),
+            )
+        })
     }
 
     pub fn add(&mut self, house: House) {
@@ -272,7 +275,7 @@ impl HouseSet {
         self.coords -= house.coord();
     }
 
-    pub fn union_with(&mut self, other:Self) {
+    pub fn union_with(&mut self, other: Self) {
         *self = *self | other;
     }
 
@@ -295,7 +298,7 @@ impl HouseSet {
 
 impl From<&str> for HouseSet {
     fn from(labels: &str) -> Self {
-       labels
+        labels
             .split_whitespace()
             .map(House::from)
             .fold(HouseSet::empty(Shape::Row), |acc, h| acc.add(h))
@@ -345,7 +348,7 @@ impl BitAnd for HouseSet {
 }
 
 impl Not for HouseSet {
-    type Output= Self;
+    type Output = Self;
     fn not(self) -> Self {
         self.inverted()
     }
@@ -418,7 +421,7 @@ impl IntoIterator for HouseSet {
     type Item = House;
     type IntoIter = Iter;
 
-    fn into_iter(self) -> Self::IntoIter{
+    fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
 }
@@ -488,33 +491,25 @@ macro_rules! rows {
 }
 
 #[allow(unused_macros)]
-macro_rules! houses {
-    ($coords:literal) => {
-        HouseSet::from_coords(Shape::House, $coords)
-    };
-}
-
-#[allow(unused_macros)]
 macro_rules! cols {
     ($coords:literal) => {
         HouseSet::from_coords(Shape::Column, $coords)
-    }
+    };
 }
 
 #[allow(unused_macros)]
 macro_rules! blocks {
     ($coords:literal) => {
         HouseSet::from_coords(Shape::Block, $coords)
-    }
+    };
 }
 
 #[allow(unused_imports)]
-pub(crate) use {blocks, cols, houses, rows};
+pub(crate) use {blocks, cols, rows};
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::houses::coord;
 
     #[test]
     fn empty_and_full_sets() {
@@ -531,8 +526,8 @@ mod tests {
 
     #[test]
     fn add_and_remove_houses() {
-        let r1 = House::row(coord!(0));
-        let r2 = House::row(coord!(1));
+        let r1 = House::row(Coord::from(0));
+        let r2 = House::row(Coord::from(1));
 
         let mut set = HouseSet::empty(Shape::Row);
         set.add(r1);
@@ -550,14 +545,15 @@ mod tests {
 
     #[test]
     fn union_and_intersect() {
-        let r1 = House::row(coord!(0));
-        let r2 = House::row(coord!(1));
+        let r1 = House::row(Coord::from(0));
+        let r2 = House::row(Coord::from(1));
 
         let set1 = HouseSet::empty(Shape::Row).with(r1);
         let set2 = HouseSet::empty(Shape::Row).with(r2);
 
         let union = set1.union(set2);
-        assert!(union.has(r1) && union.has(r2));
+        assert!(union.has(r1));
+        assert!(union.has(r2));
         assert_eq!(union.len(), 2);
 
         let intersect = union.intersect(set1);
@@ -568,47 +564,84 @@ mod tests {
 
     #[test]
     fn minus_and_inverted() {
-        let r1 = House::row(coord!(0));
-        let r2 = House::row(coord!(1));
+        let r1 = House::row(Coord::from(0));
+        let r2 = House::row(Coord::from(1));
 
         let full = HouseSet::full(Shape::Row);
+
+        // full - {r1}
         let minus_set = full.minus(HouseSet::empty(Shape::Row).with(r1));
         assert!(!minus_set.has(r1));
         assert!(minus_set.has(r2));
+        assert_eq!(minus_set.len(), 8);
 
+        // invert -> sollte r1 wieder drin haben, r2 raus (weil r2 in minus_set drin war)
         let inv = minus_set.inverted();
         assert!(inv.has(r1));
         assert!(!inv.has(r2));
+        assert_eq!(inv.len(), 1);
     }
 
     #[test]
     #[should_panic]
     fn add_wrong_shape_panics() {
-        let r1 = House::row(coord!(0));
-        let c1 = House::column(coord!(0));
+        let c1 = House::column(Coord::from(0));
         let _ = HouseSet::empty(Shape::Row).with(c1);
     }
 
     #[test]
     fn iter_and_from_iter() {
-        let r1 = House::row(coord!(0));
-        let r2 = House::row(coord!(1));
+        let r1 = House::row(Coord::from(0));
+        let r2 = House::row(Coord::from(1));
+
         let set: HouseSet = vec![r1, r2].into_iter().collect();
 
-        let mut iterated = vec![];
-        for h in set {
-            iterated.push(h);
-        }
+        let iterated: Vec<House> = set.into_iter().collect();
         assert_eq!(iterated.len(), 2);
-        assert!(iterated.contains(&r1) && iterated.contains(&r2));
+        assert!(iterated.contains(&r1));
+        assert!(iterated.contains(&r2));
     }
 
     #[test]
     fn from_labels() {
-        let set = HouseSet::from_labels("R1 R2");
-        assert!(set.has(House::row(coord!(0))));
-        assert!(set.has(House::row(coord!(1))));
+        // Signatur bei dir: from_labels(shape, labels)
+        let set = HouseSet::from_labels(Shape::Row, "R1 R2");
+
+        assert!(set.has(House::row(Coord::from(0))));
+        assert!(set.has(House::row(Coord::from(1))));
         assert_eq!(set.len(), 2);
     }
-}
 
+    #[test]
+    fn as_single_pair_triple() {
+        let r1 = House::row(Coord::from(0));
+        let r2 = House::row(Coord::from(1));
+        let r3 = House::row(Coord::from(2));
+
+        let set1 = HouseSet::empty(Shape::Row).with(r1);
+        assert_eq!(set1.as_single(), Some(r1));
+
+        let set2 = HouseSet::empty(Shape::Row).with(r1).with(r2);
+        assert_eq!(set2.as_pair(), Some((r1, r2)));
+
+        let set3 = HouseSet::empty(Shape::Row).with(r1).with(r2).with(r3);
+        assert_eq!(set3.as_triple(), Some((r1, r2, r3)));
+    }
+
+    #[test]
+    fn cells_union_of_houses() {
+        let r1 = House::row(Coord::from(0));
+        let r2 = House::row(Coord::from(1));
+
+        let set = HouseSet::empty(Shape::Row).with(r1).with(r2);
+        let cells = set.cells();
+
+        // Muss alle Zellen aus beiden Reihen enthalten
+        for c in r1.cells().iter() {
+            assert!(cells.has(c));
+        }
+        for c in r2.cells().iter() {
+            assert!(cells.has(c));
+        }
+    }
+}

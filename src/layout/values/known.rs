@@ -119,7 +119,7 @@ impl Neg for Known {
 
 impl fmt::Display for Known {
     #[inline(always)]
-    fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.label())
     }
 }
@@ -157,18 +157,21 @@ impl ExactSizeIterator for KnownIter {
 #[allow(unused_macros)]
 macro_rules! known {
     ($k:expr) => {
-        Known::from_str($k)
+        crate::layout::values::known::Known::from_str($k)
     };
 }
 
 #[allow(unused_imports)]
 pub(crate) use known;
 
-const HIGHLIGHT_LABELS: [char; 9] = 
-    ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+const HIGHLIGHT_LABELS: [char; 9] = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 #[cfg(test)]
 mod tests {
+
+    use super::*;
+    use crate::layout::values::known_set::KnownSetLike;
+
     #[test]
     fn new_maps_value_to_index() {
         let k = Known::new(1);
@@ -216,7 +219,7 @@ mod tests {
     #[test]
     fn iter_yields_all_knowns() {
         let values: Vec<_> = Known::iter().map(|k| k.label()).collect();
-        assert_eq!(values, ['1','2','3','4','5','6','7','8','9']);
+        assert_eq!(values, ['1', '2', '3', '4', '5', '6', '7', '8', '9']);
     }
 
     #[test]
@@ -232,14 +235,14 @@ mod tests {
         let a = Known::new(3);
         let b = Known::new(5);
         let set = a + b;
-        assert!(set.contains(a));
-        assert!(set.contains(b));
+        assert!(set.has(a));
+        assert!(set.has(b));
     }
 
     #[test]
     fn negation_excludes_value() {
         let k = Known::new(4);
         let set = -k;
-        assert!(!set.contains(k));
+        assert!(!set.has(k));
     }
 }

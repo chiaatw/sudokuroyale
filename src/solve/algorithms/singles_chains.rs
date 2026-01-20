@@ -1,12 +1,12 @@
-use std::collections::HashMap;
 use itertools::Itertools;
+use std::collections::HashMap;
 
 use super::*;
-use crate::puzzle::{Action, Cell, CellSet, Known, Board, Effects, Strategy};
 use crate::layout::House;
+use crate::puzzle::{Action, Board, Cell, CellSet, Effects, Known, Strategy};
 
 /// Solver for Singles Chain (Strong-Weak Link / X-Chain) strategy
-/// 
+///
 /// Detecs chains of candidates confined to pairs across houses and removes candidates
 /// that can be logically deduced from the chain
 pub struct SinglesChainSolver;
@@ -27,7 +27,7 @@ impl Solver for SinglesChainSolver {
 pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
-// Ignore cells that already have a single candidate
+    // Ignore cells that already have a single candidate
     let ignore = board.cells_with_n_candidates(1);
 
     for known in Known::iter() {
@@ -36,7 +36,7 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
             continue;
         }
 
-// Build the candidate nodes and peer graph
+        // Build the candidate nodes and peer graph
         let mut nodes = CellSet::empty();
         let mut peer_graph: HashMap<Cell, CellSet> = HashMap::new();
 
@@ -51,13 +51,16 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
             }
         }
 
-// Identify candidate cells that see each other
-        let candidates = possibles & nodes
-            .iter()
-            .combinations(2)
-            .fold(CellSet::empty(), |acc, pair| acc | (pair[0].peers() & pair[1].peers()));
+        // Identify candidate cells that see each other
+        let candidates = possibles
+            & nodes
+                .iter()
+                .combinations(2)
+                .fold(CellSet::empty(), |acc, pair| {
+                    acc | (pair[0].peers() & pair[1].peers())
+                });
 
-        let mut chains:Vec<Chain> = Vec::new();
+        let mut chains: Vec<Chain> = Vec::new();
         let mut cell_chains: HashMap<Cell, (usize, usize)> = HashMap::new();
 
         for candidate in candidates {
@@ -87,7 +90,7 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
 
                 if sees[node] && chain.is_mismatched() {
                     if chain.all_nodes_in_same_block() {
-// degenerate hidden pair, ignore
+                        // degenerate hidden pair, ignore
                         cell_chains.remove(&candidate);
                         break;
                     }
@@ -112,10 +115,10 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
             }
         }
 
-// Group cells y chain index and create actions
+        // Group cells y chain index and create actions
         let mut grouped: HashMap<usize, CellSet> = HashMap::new();
         cell_chains.iter().for_each(|(cell, (index, _))| {
-            *grouped.entry(*index).or_default()+= *cell;
+            *grouped.entry(*index).or_default() += *cell;
         });
 
         for (_, cells) in grouped {
@@ -158,7 +161,7 @@ impl Chain {
         }
     }
 
-//Returns true if the chain is mismatched (strong/weak link logic)
+    //Returns true if the chain is mismatched (strong/weak link logic)
     pub fn is_mismatched(&self) -> bool {
         match self.color {
             Color::Red => false,
@@ -166,14 +169,16 @@ impl Chain {
         }
     }
 
-// Returns true if all nodes of the chain are in the same block (degenerate case)
+    // Returns true if all nodes of the chain are in the same block (degenerate case)
     pub fn all_nodes_in_same_block(&self) -> bool {
         let mut block: Option<House> = None;
         for cell in self.nodes {
             match block {
                 None => block = Some(cell.block()),
-                Some(b) => if b != cell.block() {
-                    return false;
+                Some(b) => {
+                    if b != cell.block() {
+                        return false;
+                    }
                 }
             }
         }
@@ -206,7 +211,7 @@ impl Chain {
         self.stack.len().saturating_sub(1)
     }
 
-// Returns the intersection of peers of first and last nodes in the stack
+    // Returns the intersection of peers of first and last nodes in the stack
     pub fn sees(&self) -> CellSet {
         self.stack.first().unwrap().peers() & self.stack.last().unwrap().peers()
     }
@@ -216,7 +221,7 @@ impl Chain {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Color {
     Red,
-    Green
+    Green,
 }
 
 impl Color {
@@ -320,11 +325,14 @@ mod singles_chain_tests {
         // 4 Zellen im selben Block (A1,A2,B1,B2) mit Kandidat 3 “erzwingen”
         // Wir reduzieren auf {3}, indem wir alles außer 3 entfernen.
         // Dafür brauchen wir knowns!-Makro im Testmodul:
-        board.remove_candidates_from_cells(cells!("A1 A2 B1 B2"), KnownSet::full() - knowns!("3"), &mut eff);
+        board.remove_candidates_from_cells(
+            cells!("A1 A2 B1 B2"),
+            KnownSet::full() - knowns!("3"),
+            &mut eff,
+        );
         assert!(!eff.has_errors());
 
         // Degenerate hidden pair/chain in einem Block soll ignoriert werden
         assert!(find_singles_chains(&board, false).is_none());
     }
-
 }

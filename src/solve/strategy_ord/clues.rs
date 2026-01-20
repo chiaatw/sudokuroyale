@@ -53,9 +53,7 @@ pub struct Clues {
 
 impl Clues {
     pub const fn new() -> Self {
-        Self {
-            clues: Vec::new(),
-        }
+        Self { clues: Vec::new() }
     }
 }
 
@@ -77,8 +75,8 @@ impl ClueCollection for Clues {
 
     fn clue_cells_for_known(&mut self, verdict: Verdict, cells: CellSet, known: Known) {
         let clue = Clue {
-            verdict: verdict, 
-            known: known, 
+            verdict: verdict,
+            known: known,
             cells: cells,
         };
 
@@ -90,7 +88,7 @@ impl ClueCollection for Clues {
             .unwrap()
         }) {
             Ok(index) => self.clues[index].cells |= cells,
-            Err(index) => self.clues.insert(index, clue)
+            Err(index) => self.clues.insert(index, clue),
         }
     }
 
@@ -99,7 +97,9 @@ impl ClueCollection for Clues {
     }
 
     fn clue_cells_for_knowns(&mut self, verdict: Verdict, cells: CellSet, knowns: KnownSet) {
-        knowns.iter().for_each(|k| self.clue_cells_for_known(verdict, cells, k));
+        knowns
+            .iter()
+            .for_each(|k| self.clue_cells_for_known(verdict, cells, k));
     }
 
     fn is_empty(&self) -> bool {
@@ -110,7 +110,9 @@ impl ClueCollection for Clues {
         let mut map: HashMap<Cell, HashMap<Known, Verdict>> = HashMap::new();
         for clue in &self.clues {
             for cell in clue.cells.iter() {
-                map.entry(cell).or_default().insert(clue.known, clue.verdict);
+                map.entry(cell)
+                    .or_default()
+                    .insert(clue.known, clue.verdict);
             }
         }
         map

@@ -30,7 +30,7 @@ impl Change {
             (Change::None, _) => other,
             (_, Change::None) => self,
             (Change::Valid, Change::Valid) => Change::Valid,
-            _ => Change::Invalid
+            _ => Change::Invalid,
         }
     }
 }
@@ -51,7 +51,6 @@ impl BitAndAssign for Change {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Board {
-
     givens: CellSet,
     knowns: CellSet,
     values: [Value; 81],
@@ -110,8 +109,8 @@ impl Board {
 
     pub fn unknown_iter(&self) -> impl Iterator<Item = (Cell, KnownSet)> + '_ {
         self.unknowns()
-        .into_iter()
-        .map(|cell| (cell, self.candidates(cell)))
+            .into_iter()
+            .map(|cell| (cell, self.candidates(cell)))
     }
 
     pub const fn known_count(&self) -> usize {
@@ -123,18 +122,19 @@ impl Board {
     }
 
     pub fn known(&self, cell: Cell) -> Option<Known> {
-    self.value(cell).known()
+        self.value(cell).known()
     }
 
     pub fn known_iter(&self) -> impl Iterator<Item = (Cell, Known)> + '_ {
-        self.knowns.into_iter()
-        .map(|cell| (cell, self.value(cell).known().unwrap()))
+        self.knowns
+            .into_iter()
+            .map(|cell| (cell, self.value(cell).known().unwrap()))
     }
 
     pub fn knowns_iter(&self, cells: CellSet) -> impl Iterator<Item = (Cell, Known)> + '_ {
         (cells & self.knowns)
-        .into_iter()
-        .map(|cell| (cell, self.value(cell).known().unwrap()))
+            .into_iter()
+            .map(|cell| (cell, self.value(cell).known().unwrap()))
     }
 
     pub fn all_knowns(&self, cells: CellSet) -> KnownSet {
@@ -196,7 +196,7 @@ impl Board {
                 return Change::Invalid;
             }
         } else if !self.is_candidate(cell, known) {
-            effects.add_error(Error::NotCandidate(cell,known));
+            effects.add_error(Error::NotCandidate(cell, known));
             return Change::Invalid;
         }
 
@@ -274,8 +274,8 @@ impl Board {
         n: usize,
     ) -> impl Iterator<Item = (Cell, KnownSet)> + '_ {
         self.cells_with_n_candidates(n)
-        .iter()
-        .map(|cell| (cell, self.candidates(cell)))
+            .iter()
+            .map(|cell| (cell, self.candidates(cell)))
     }
 
     pub fn candidate_cells(&self, known: Known) -> CellSet {
@@ -327,7 +327,11 @@ impl Board {
                 effects.add_error(Error::UnsolvableHouse(house, known));
                 change &= Change::Invalid;
             } else if candidates.len() == 1 {
-                effects.add_set(Strategy::HiddenSingle, candidates.as_single().unwrap(), known);
+                effects.add_set(
+                    Strategy::HiddenSingle,
+                    candidates.as_single().unwrap(),
+                    known,
+                );
                 change &= Change::Valid;
             }
         }

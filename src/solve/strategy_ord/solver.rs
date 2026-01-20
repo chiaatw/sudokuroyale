@@ -1,9 +1,7 @@
 use std::time::Instant;
 
 use crate::io::Cancelable;
-use crate::puzzle::{
-    Action, Board, ChangeResult, Changer, Difficulty, Effects, Options,
-};
+use crate::puzzle::{Action, Board, ChangeResult, Changer, Difficulty, Effects, Options};
 use crate::solve::algorithms::brute_force::BruteForceResult;
 use crate::solve::{find_brute_force, Timings, NON_PEER_TECHNIQUES};
 
@@ -81,20 +79,16 @@ impl Solver {
                 }
 
                 ChangeResult::Invalid(before, _, action, errors) => {
-                    if self.check && matches!(find_brute_force(start, false), BruteForceResult::Solved(_)) {
+                    if self.check
+                        && matches!(find_brute_force(start, false), BruteForceResult::Solved(_))
+                    {
                         eprintln!(
                             "error: solver caused errors in solvable puzzle: {}",
                             start.packed_string()
                         );
                     }
 
-                    return Resolution::Failed(
-                        before,
-                        applied,
-                        difficulty,
-                        action.clone(),
-                        errors,
-                    );
+                    return Resolution::Failed(before, applied, difficulty, action.clone(), errors);
                 }
             }
         }
@@ -117,11 +111,7 @@ impl Solver {
 
             match result {
                 Some(moves) => {
-                    timings.add(
-                        solver.strategy(),
-                        moves.action_count(),
-                        elapsed,
-                    );
+                    timings.add(solver.strategy(), moves.action_count(), elapsed);
 
                     if solver.difficulty() > *difficulty {
                         *difficulty = solver.difficulty();

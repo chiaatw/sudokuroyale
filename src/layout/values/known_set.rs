@@ -1,7 +1,7 @@
 use std::fmt;
+use std::iter::FromIterator;
 use std::iter::FusedIterator;
 use std::ops::{Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Not, Sub, SubAssign};
-use std::iter::FromIterator;
 
 use crate::layout::values::known::{Known, KnownLike};
 
@@ -114,9 +114,7 @@ impl KnownSet {
     }
 
     pub fn iter(&self) -> KnownSetIter {
-        KnownSetIter {
-            bits: self.bits()
-        }
+        KnownSetIter { bits: self.bits() }
     }
 
     pub fn debug(&self) -> String {
@@ -169,7 +167,7 @@ impl KnownSetLike for KnownSet {
         self.0 |= known.bit();
     }
 
-    fn remove(&mut self, known:Known) {
+    fn remove(&mut self, known: Known) {
         self.0 &= !known.bit();
     }
 
@@ -191,7 +189,7 @@ impl KnownSetLike for KnownSet {
 }
 
 // Operator implementations
-impl Add<Known> for KnownSet{
+impl Add<Known> for KnownSet {
     type Output = Self;
     fn add(self, rhs: Known) -> Self {
         self.with(rhs)
@@ -200,7 +198,7 @@ impl Add<Known> for KnownSet{
 
 impl AddAssign<Known> for KnownSet {
     fn add_assign(&mut self, rhs: Known) {
-        KnownSetLike::add(self,rhs)
+        KnownSetLike::add(self, rhs)
     }
 }
 
@@ -264,7 +262,7 @@ impl Not for KnownSet {
 }
 
 // Iterator for KnownSet
-pub struct KnownSetIter{
+pub struct KnownSetIter {
     bits: Bits,
 }
 
@@ -292,7 +290,7 @@ impl KnownIter {
     }
 }
 
-impl Iterator for KnownIter{
+impl Iterator for KnownIter {
     type Item = Known;
     fn next(&mut self) -> Option<Self::Item> {
         if self.0 < Known::COUNT {
@@ -313,13 +311,11 @@ impl ExactSizeIterator for KnownIter {
 
 // Display / Debug
 impl fmt::Display for KnownSet {
-fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let s: String = Known::iter()
-        .map(|k| if self.has(k) {
-        k.label()
-    } else { '·'})
-        .collect();
-    write!(f, "({})", s)
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s: String = Known::iter()
+            .map(|k| if self.has(k) { k.label() } else { '·' })
+            .collect();
+        write!(f, "({})", s)
     }
 }
 
@@ -361,17 +357,17 @@ pub trait KnownIteratorUnion {
 }
 
 impl<I> KnownIteratorUnion for I
-    where
+where
     I: Iterator<Item = Known>,
-    {
-        fn union(self) -> KnownSet{
-            self.union_knowns()
-        }
-
-        fn union_knowns(self) -> KnownSet {
-            self.fold(KnownSet::empty(), |acc, h| acc + h)
-        }
+{
+    fn union(self) -> KnownSet {
+        self.union_knowns()
     }
+
+    fn union_knowns(self) -> KnownSet {
+        self.fold(KnownSet::empty(), |acc, h| acc + h)
+    }
+}
 
 pub trait KnownSetIteratorUnion {
     fn union(self) -> KnownSet;
@@ -379,33 +375,35 @@ pub trait KnownSetIteratorUnion {
 }
 
 impl<I> KnownSetIteratorUnion for I
-    where
+where
     I: Iterator<Item = KnownSet>,
-    {
-        fn union(self) -> KnownSet {
-            self.union_knowns()
-        }
-
-        fn union_knowns(self) -> KnownSet {
-            self.fold(KnownSet::empty(), |acc, h| acc | h)
-        }
+{
+    fn union(self) -> KnownSet {
+        self.union_knowns()
     }
+
+    fn union_knowns(self) -> KnownSet {
+        self.fold(KnownSet::empty(), |acc, h| acc | h)
+    }
+}
 
 pub trait KnownSetIteratorIntersection {
     fn intersection(self) -> KnownSet;
 }
 
 impl<I> KnownSetIteratorIntersection for I
-    where
+where
     I: Iterator<Item = KnownSet>,
-    {
-        fn intersection(self) -> KnownSet {
-            self.fold(KnownSet::full(), |acc, h| acc & h)
-        }
+{
+    fn intersection(self) -> KnownSet {
+        self.fold(KnownSet::full(), |acc, h| acc & h)
     }
+}
 
 #[cfg(test)]
 mod tests {
+
+    use super::*;
     #[test]
     fn known_new_and_index() {
         let k = Known::new(1);
@@ -431,7 +429,7 @@ mod tests {
     #[test]
     fn known_iter_yields_all() {
         let labels: Vec<_> = Known::iter().map(|k| k.label()).collect();
-        assert_eq!(labels, ['1','2','3','4','5','6','7','8','9']);
+        assert_eq!(labels, ['1', '2', '3', '4', '5', '6', '7', '8', '9']);
     }
 
     #[test]
@@ -474,7 +472,7 @@ mod tests {
 
     #[test]
     fn knownset_inverted() {
-        let mut set = KnownSet::empty();
+        let set = KnownSet::empty();
         set.add(Known::new(1));
         let inv = !set;
         assert!(!inv.has(Known::new(1)));
@@ -489,8 +487,14 @@ mod tests {
         let set2 = KnownSet::empty().with(Known::new(1)).with(Known::new(2));
         assert_eq!(set2.as_pair().unwrap(), (Known::new(1), Known::new(2)));
 
-        let set3 = KnownSet::empty().with(Known::new(1)).with(Known::new(2)).with(Known::new(3));
-        assert_eq!(set3.as_triple().unwrap(), (Known::new(1), Known::new(2), Known::new(3)));
+        let set3 = KnownSet::empty()
+            .with(Known::new(1))
+            .with(Known::new(2))
+            .with(Known::new(3));
+        assert_eq!(
+            set3.as_triple().unwrap(),
+            (Known::new(1), Known::new(2), Known::new(3))
+        );
     }
 
     #[test]
@@ -530,7 +534,12 @@ mod tests {
 
     #[test]
     fn from_iterator_knownset() {
-        let sets: KnownSet = vec![KnownSet::empty().with(Known::new(1)), KnownSet::empty().with(Known::new(2))].into_iter().collect();
+        let sets: KnownSet = vec![
+            KnownSet::empty().with(Known::new(1)),
+            KnownSet::empty().with(Known::new(2)),
+        ]
+        .into_iter()
+        .collect();
         assert!(sets.has(Known::new(1)));
         assert!(sets.has(Known::new(2)));
     }

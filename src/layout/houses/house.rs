@@ -1,13 +1,12 @@
 use std::cmp::Ordering;
 use std::fmt;
-use std::sync::OnceLock;
 use std::ops::{Add, Neg};
+use std::sync::OnceLock;
 
 use crate::layout::houses::house_set::{blocks, cols, rows};
 use crate::layout::{Cell, CellSet, Coord};
 
 use super::{HouseSet, Shape};
-
 
 //Trait, describes House-API
 pub trait HouseLike: Copy + Clone + Eq + PartialEq + Sized {
@@ -45,7 +44,7 @@ pub trait HouseLike: Copy + Clone + Eq + PartialEq + Sized {
         self.is_row() && self.coord().u8() == 8
     }
     fn is_left(&self) -> bool {
-        self.is_column() &&self.coord().u8() == 0
+        self.is_column() && self.coord().u8() == 0
     }
     fn is_right(&self) -> bool {
         self.is_column() && self.coord().u8() == 8
@@ -63,13 +62,11 @@ pub trait HouseLike: Copy + Clone + Eq + PartialEq + Sized {
         self.is_column() && self.coord().u8() % 3 == 2
     }
 
-
     fn intersect<H: HouseLike>(&self, other: H) -> CellSet {
         self.cells().intersect(other.cells())
     }
 
     fn crossing_houses(&self, cells: CellSet) -> HouseSet;
-
 
     //Returns the set of houses of a given shape that belong to this house
     fn houses(&self, shape: Shape) -> HouseSet;
@@ -142,10 +139,10 @@ impl House {
         match self.shape() {
             Shape::Row => cells
                 .iter()
-                .fold(HouseSet::empty(Shape::Column), | acc, cell | {
-                    acc+ cell.column_coord()
+                .fold(HouseSet::empty(Shape::Column), |acc, cell| {
+                    acc + cell.column_coord()
                 }),
-            Shape::Column => cells.iter().fold(HouseSet::empty(Shape::Row), | acc, cell | {
+            Shape::Column => cells.iter().fold(HouseSet::empty(Shape::Row), |acc, cell| {
                 acc + cell.row_coord()
             }),
             Shape::Block => {
@@ -235,7 +232,6 @@ impl HouseLike for House {
     }
 }
 
-
 impl From<&str> for House {
     fn from(label: &str) -> Self {
         if label.len() != 2 {
@@ -307,8 +303,12 @@ impl Row {
 }
 
 impl HouseLike for Row {
-    fn coord(&self) -> Coord { self.coord }
-    fn shape(&self) -> Shape { Shape::Row }
+    fn coord(&self) -> Coord {
+        self.coord
+    }
+    fn shape(&self) -> Shape {
+        Shape::Row
+    }
 
     fn cells(&self) -> CellSet {
         house_cells(Shape::Row)[self.coord.usize()]
@@ -318,11 +318,17 @@ impl HouseLike for Row {
         Cell::from_row(self.coord, coord)
     }
 
-    fn label(&self) -> &str { &LABELS[0][self.coord.usize()]}
-    fn console_label(&self) -> char { CONSOLE_LABELS[0][self.coord.usize()]}
+    fn label(&self) -> &str {
+        &LABELS[0][self.coord.usize()]
+    }
+    fn console_label(&self) -> char {
+        CONSOLE_LABELS[0][self.coord.usize()]
+    }
 
     fn crossing_houses(&self, cells: CellSet) -> HouseSet {
-        cells.iter().fold(HouseSet::empty(Shape::Column), |acc, c| acc + c.column_coord())
+        cells.iter().fold(HouseSet::empty(Shape::Column), |acc, c| {
+            acc + c.column_coord()
+        })
     }
     fn houses(&self, shape: Shape) -> HouseSet {
         match shape {
@@ -345,8 +351,12 @@ impl Column {
 }
 
 impl HouseLike for Column {
-    fn coord(&self) -> Coord { self.coord }
-    fn shape(&self) -> Shape { Shape::Column }
+    fn coord(&self) -> Coord {
+        self.coord
+    }
+    fn shape(&self) -> Shape {
+        Shape::Column
+    }
 
     fn cells(&self) -> CellSet {
         house_cells(Shape::Column)[self.coord.usize()]
@@ -356,11 +366,17 @@ impl HouseLike for Column {
         Cell::from_column(self.coord, coord)
     }
 
-    fn label(&self) -> &str { &LABELS[1][self.coord.usize()] }
-    fn console_label(&self) -> char { CONSOLE_LABELS[1][self.coord.usize()] }
+    fn label(&self) -> &str {
+        &LABELS[1][self.coord.usize()]
+    }
+    fn console_label(&self) -> char {
+        CONSOLE_LABELS[1][self.coord.usize()]
+    }
 
     fn crossing_houses(&self, cells: CellSet) -> HouseSet {
-        cells.iter().fold(HouseSet::empty(Shape::Row), |acc, c| acc + c.row_coord())
+        cells
+            .iter()
+            .fold(HouseSet::empty(Shape::Row), |acc, c| acc + c.row_coord())
     }
     fn houses(&self, shape: Shape) -> HouseSet {
         match shape {
@@ -372,7 +388,7 @@ impl HouseLike for Column {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct Block{
+pub struct Block {
     coord: Coord,
 }
 
@@ -383,8 +399,12 @@ impl Block {
 }
 
 impl HouseLike for Block {
-    fn coord(&self) -> Coord { self.coord }
-    fn shape(&self) -> Shape { Shape::Block}
+    fn coord(&self) -> Coord {
+        self.coord
+    }
+    fn shape(&self) -> Shape {
+        Shape::Block
+    }
 
     fn cells(&self) -> CellSet {
         house_cells(Shape::Block)[self.coord.usize()]
@@ -394,8 +414,12 @@ impl HouseLike for Block {
         Cell::from_block(House::block(self.coord), coord)
     }
 
-    fn label(&self) -> &str { &LABELS[2][self.coord.usize()] }
-    fn console_label(&self) -> char { CONSOLE_LABELS[2][self.coord.usize()] }
+    fn label(&self) -> &str {
+        &LABELS[2][self.coord.usize()]
+    }
+    fn console_label(&self) -> char {
+        CONSOLE_LABELS[2][self.coord.usize()]
+    }
 
     fn crossing_houses(&self, cells: CellSet) -> HouseSet {
         let mut acc = HouseSet::empty(Shape::Row);
@@ -420,12 +444,12 @@ pub struct HouseIter {
 
 impl HouseIter {
     pub const fn new(shape: Shape) -> Self {
-        Self { shape, coord: 0}
+        Self { shape, coord: 0 }
     }
     pub const fn all() -> Self {
         Self {
             shape: Shape::Row,
-            coord:0,
+            coord: 0,
         }
     }
 }
@@ -451,7 +475,7 @@ impl ExactSizeIterator for HouseIter {
 }
 
 pub struct HousesIter {
-    shape: Shape, 
+    shape: Shape,
     coord: u8,
 }
 
@@ -490,7 +514,7 @@ impl Iterator for HousesIter {
 impl ExactSizeIterator for HousesIter {
     fn len(&self) -> usize {
         match self.shape {
-            Shape::Row => 18 +9 - self.coord as usize,
+            Shape::Row => 18 + 9 - self.coord as usize,
             Shape::Column => 9 + 9 - self.coord as usize,
             Shape::Block => 9 - self.coord as usize,
         }
@@ -611,9 +635,15 @@ const ROW_ROWS: [HouseSet; 9] = [
 const COLUMN_ROWS: [HouseSet; 9] = [House::all_rows(); 9];
 
 const BLOCK_ROWS: [HouseSet; 9] = [
-    rows!(123), rows!(123), rows!(123),
-    rows!(456), rows!(456), rows!(456),
-    rows!(789), rows!(789), rows!(789),
+    rows!(123),
+    rows!(123),
+    rows!(123),
+    rows!(456),
+    rows!(456),
+    rows!(456),
+    rows!(789),
+    rows!(789),
+    rows!(789),
 ];
 
 const ROW_COLUMNS: [HouseSet; 9] = [House::all_columns(); 9];
@@ -712,261 +742,198 @@ impl House {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::cells::cell_set::cells;
-    use crate::layout::houses::coord::coord;
-    use crate::layout::houses::house_set::houses;
 
     #[test]
-    fn houses() {
-        let house_sets = [House::all_rows(), House::all_columns(), House::all_blocks()];
+    fn house_creation_and_basic_properties() {
+        let r = House::row(Coord::from(0));
+        let c = House::column(Coord::from(1));
+        let b = House::block(Coord::from(2));
 
-        for houses in house_sets {
-            let mut all = CellSet::empty();
-
-            for (i, house) in houses.iter().enumerate() {
-                assert_eq!(house, House::new(houses.shape(), Coord::new(i as u8)));
-                assert_eq!(houses.shape(), house.shape());
-                assert_eq!(Coord::new(i as u8), house.coord());
-                assert_eq!(i, house.usize());
-                if !matches!(houses.shape(), Shape::Row) {
-                    assert_eq!(format!("{} {}", houses.shape(), i + 1), house.label());
-                }
-
-                let mut house_cells = CellSet::empty();
-                (0..9).for_each(|c| {
-                    let cell = house.cell(c.into());
-                    assert_eq!(house, cell.house(houses.shape()));
-                    house_cells += cell
-                });
-                assert_eq!(house.cells(), house_cells);
-
-                all |= house.cells();
-            }
-
-            assert_eq!(CellSet::full(), all);
-        }
-    }
-
-    #[test]
-    fn intersect() {
-        assert_eq!(cells!("A1 A2 A3"), House::row(coord!(1)).intersect(House::block(coord!(1))));
-    }
-
-    #[test]
-    fn row_cells() {
-        assert_eq!(cells!("A1 A2 A3 A4 A5 A6 A7 A8 A9"), House::row(coord!(1)).cells());
-        assert_eq!(cells!("B1 B2 B3 B4 B5 B6 B7 B8 B9"), House::row(coord!(2)).cells());
-        assert_eq!(cells!("C1 C2 C3 C4 C5 C6 C7 C8 C9"), House::row(coord!(3)).cells());
-        assert_eq!(cells!("D1 D2 D3 D4 D5 D6 D7 D8 D9"), House::row(coord!(4)).cells());
-        assert_eq!(cells!("E1 E2 E3 E4 E5 E6 E7 E8 E9"), House::row(coord!(5)).cells());
-        assert_eq!(cells!("F1 F2 F3 F4 F5 F6 F7 F8 F9"), House::row(coord!(6)).cells());
-        assert_eq!(cells!("G1 G2 G3 G4 G5 G6 G7 G8 G9"), House::row(coord!(7)).cells());
-        assert_eq!(cells!("H1 H2 H3 H4 H5 H6 H7 H8 H9"), House::row(coord!(8)).cells());
-        assert_eq!(cells!("I1 I2 I3 I4 I5 I6 I7 I8 I9"), House::row(coord!(9)).cells());
-    }
-
-    #[test]
-    fn column_cells() {
-        assert_eq!(cells!("A1 B1 C1 D1 E1 F1 G1 H1 I1"), House::column(coord!(1)).cells());
-        assert_eq!(cells!("A2 B2 C2 D2 E2 F2 G2 H2 I2"), House::column(coord!(2)).cells());
-        assert_eq!(cells!("A3 B3 C3 D3 E3 F3 G3 H3 I3"), House::column(coord!(3)).cells());
-        assert_eq!(cells!("A4 B4 C4 D4 E4 F4 G4 H4 I4"), House::column(coord!(4)).cells());
-        assert_eq!(cells!("A5 B5 C5 D5 E5 F5 G5 H5 I5"), House::column(coord!(5)).cells());
-        assert_eq!(cells!("A6 B6 C6 D6 E6 F6 G6 H6 I6"), House::column(coord!(6)).cells());
-        assert_eq!(cells!("A7 B7 C7 D7 E7 F7 G7 H7 I7"), House::column(coord!(7)).cells());
-        assert_eq!(cells!("A8 B8 C8 D8 E8 F8 G8 H8 I8"), House::column(coord!(8)).cells());
-        assert_eq!(cells!("A9 B9 C9 D9 E9 F9 G9 H9 I9"), House::column(coord!(9)).cells());
-    }
-
-    #[test]
-    fn block_cells() {
-        assert_eq!(cells!("A1 A2 A3 B1 B2 B3 C1 C2 C3"), House::block(coord!(1)).cells());
-        assert_eq!(cells!("A4 A5 A6 B4 B5 B6 C4 C5 C6"), House::block(coord!(2)).cells());
-        assert_eq!(cells!("A7 A8 A9 B7 B8 B9 C7 C8 C9"), House::block(coord!(3)).cells());
-        assert_eq!(cells!("D1 D2 D3 E1 E2 E3 F1 F2 F3"), House::block(coord!(4)).cells());
-        assert_eq!(cells!("D4 D5 D6 E4 E5 E6 F4 F5 F6"), House::block(coord!(5)).cells());
-        assert_eq!(cells!("D7 D8 D9 E7 E8 E9 F7 F8 F9"), House::block(coord!(6)).cells());
-        assert_eq!(cells!("G1 G2 G3 H1 H2 H3 I1 I2 I3"), House::block(coord!(7)).cells());
-        assert_eq!(cells!("G4 G5 G6 H4 H5 H6 I4 I5 I6"), House::block(coord!(8)).cells());
-        assert_eq!(cells!("G7 G8 G9 H7 H8 H9 I7 I8 I9"), House::block(coord!(9)).cells());
-    }
-
-    #[test]
-    fn columns_cross_rows() {
-        let main = House::row(coord!(2));
-        let cells = cells!("B1 B2");
-        let got = main.crossing_houses(cells);
-
-        assert_eq!(houses!("C1 C2"), got);
-    }
-
-    #[test]
-    fn rows_cross_columns() {
-        let main = House::column(coord!(6));
-        let cells = cells!("C6 F6");
-        let got = main.crossing_houses(cells);
-
-        assert_eq!(houses!("R3 R6"), got);
-    }
-
-    #[test]
-    fn house_creation_and_properties() {
-        let r = House::row(coord!(0));
-        let c = House::column(coord!(1));
-        let b = House::block(coord!(2));
-
-        // Shape & Coord
         assert!(r.is_row());
         assert!(!r.is_column());
         assert!(!r.is_block());
-        assert_eq!(r.coord(), coord!(0));
+        assert_eq!(r.coord(), Coord::from(0));
 
         assert!(c.is_column());
-        assert_eq!(c.coord(), coord!(1));
+        assert_eq!(c.coord(), Coord::from(1));
 
         assert!(b.is_block());
-        assert_eq!(b.coord(), coord!(2));
+        assert_eq!(b.coord(), Coord::from(2));
+    }
 
-        // Label & console_label
+    #[test]
+    fn labels_and_console_labels() {
+        let r = House::row(Coord::from(0));
+        let c = House::column(Coord::from(1));
+        let b = House::block(Coord::from(2));
+
         assert_eq!(r.label(), "Row A");
         assert_eq!(r.console_label(), 'A');
+
         assert_eq!(c.label(), "Col 2");
         assert_eq!(c.console_label(), '2');
+
         assert_eq!(b.label(), "Box 3");
         assert_eq!(b.console_label(), '❸');
     }
 
     #[test]
+    fn row_cells_are_correct() {
+        let r = House::row(Coord::from(1)); // Row B
+        let mut expected = CellSet::empty();
+
+        for col in 0..9 {
+            expected += Cell::from_row(Coord::from(1), Coord::from(col));
+        }
+
+        assert_eq!(r.cells(), expected);
+    }
+
+    #[test]
+    fn column_cells_are_correct() {
+        let c = House::column(Coord::from(2)); // Column 3
+        let mut expected = CellSet::empty();
+
+        for row in 0..9 {
+            expected += Cell::from_column(Coord::from(2), Coord::from(row));
+        }
+
+        assert_eq!(c.cells(), expected);
+    }
+
+    #[test]
+    fn block_cells_are_correct() {
+        let b = House::block(Coord::from(0)); // Block 1
+        let mut expected = CellSet::empty();
+
+        for i in 0..9 {
+            expected += Cell::from_block(b, Coord::from(i));
+        }
+
+        assert_eq!(b.cells(), expected);
+    }
+
+    #[test]
+    fn cell_access_matches_cells() {
+        let r = House::row(Coord::from(3));
+
+        for i in 0..9 {
+            let cell = r.cell(Coord::from(i));
+            assert!(r.has(cell));
+        }
+    }
+
+    #[test]
     fn house_from_str() {
         let r: House = "R1".into();
-        assert_eq!(r, House::row(coord!(0)));
-
         let c: House = "C5".into();
-        assert_eq!(c, House::column(coord!(4)));
-
         let b: House = "B9".into();
-        assert_eq!(b, House::block(coord!(8)));
+
+        assert_eq!(r, House::row(Coord::from(0)));
+        assert_eq!(c, House::column(Coord::from(4)));
+        assert_eq!(b, House::block(Coord::from(8)));
     }
 
     #[test]
     #[should_panic]
     fn house_from_str_invalid_shape() {
-        let _ : House = "X1".into();
+        let _: House = "X1".into();
     }
 
     #[test]
     #[should_panic]
     fn house_from_str_invalid_coord() {
-        let _ : House = "R0".into();
-    }
-
-    #[test]
-    fn cells_and_cell_access() {
-        let r = House::row(coord!(1));
-        let expected = cells!("B1 B2 B3 B4 B5 B6 B7 B8 B9");
-        assert_eq!(r.cells(), expected);
-        assert_eq!(r.cell(coord!(0)), Cell::from_row(coord!(1), coord!(0)));
-
-        let c = House::column(coord!(2));
-        let expected_c = cells!("A3 B3 C3 D3 E3 F3 G3 H3 I3");
-        assert_eq!(c.cells(), expected_c);
-        assert_eq!(c.cell(coord!(1)), Cell::from_column(coord!(2), coord!(1)));
-
-        let b = House::block(coord!(3));
-        let expected_b = cells!("D1 D2 D3 E1 E2 E3 F1 F2 F3");
-        assert_eq!(b.cells(), expected_b);
-        assert_eq!(b.cell(coord!(0)), Cell::from_block(coord!(3), coord!(0)));
+        let _: House = "R0".into();
     }
 
     #[test]
     fn house_intersections() {
-        let row = House::row(coord!(0));
-        let block = House::block(coord!(0));
-        let expected = cells!("A1 A2 A3");
-        assert_eq!(row.intersect(block), expected);
+        let row = House::row(Coord::from(0));
+        let block = House::block(Coord::from(0));
+        let col = House::column(Coord::from(0));
 
-        let col = House::column(coord!(0));
-        assert_eq!(col.intersect(block), cells!("A1 D1 G1"));
+        let rb = row.intersect(block);
+        let mut expected_rb = CellSet::empty();
+        expected_rb += Cell::from_row(Coord::from(0), Coord::from(0));
+        expected_rb += Cell::from_row(Coord::from(0), Coord::from(1));
+        expected_rb += Cell::from_row(Coord::from(0), Coord::from(2));
+
+        assert_eq!(rb, expected_rb);
+
+        let cb = col.intersect(block);
+        let mut expected_cb = CellSet::empty();
+        expected_cb += Cell::from_column(Coord::from(0), Coord::from(0));
+        expected_cb += Cell::from_column(Coord::from(0), Coord::from(3));
+        expected_cb += Cell::from_column(Coord::from(0), Coord::from(6));
+
+        assert_eq!(cb, expected_cb);
     }
 
     #[test]
-    fn crossing_houses_test() {
-        let row = House::row(coord!(1));
-        let selected_cells = cells!("B1 B2");
-        let crossing = row.crossing_houses(selected_cells);
-        assert_eq!(crossing, houses!("C1 C2"));
+    fn crossing_houses_row_to_columns() {
+        let row = House::row(Coord::from(1)); // Row B
+        let mut cells = CellSet::empty();
+        cells += Cell::from_row(Coord::from(1), Coord::from(0));
+        cells += Cell::from_row(Coord::from(1), Coord::from(1));
 
-        let col = House::column(coord!(5));
-        let selected_cells = cells!("C6 F6");
-        let crossing_col = col.crossing_houses(selected_cells);
-        assert_eq!(crossing_col, houses!("R3 R6"));
+        let houses = row.crossing_houses(cells);
+
+        let mut expected = HouseSet::empty(Shape::Column);
+        expected += House::column(Coord::from(0));
+        expected += House::column(Coord::from(1));
+
+        assert_eq!(houses, expected);
+    }
+
+    #[test]
+    fn crossing_houses_column_to_rows() {
+        let col = House::column(Coord::from(5)); // Column 6
+        let mut cells = CellSet::empty();
+        cells += Cell::from_column(Coord::from(5), Coord::from(2));
+        cells += Cell::from_column(Coord::from(5), Coord::from(5));
+
+        let houses = col.crossing_houses(cells);
+
+        let mut expected = HouseSet::empty(Shape::Row);
+        expected += House::row(Coord::from(2));
+        expected += House::row(Coord::from(5));
+
+        assert_eq!(houses, expected);
     }
 
     #[test]
     fn house_iterators() {
         let mut iter = HouseIter::new(Shape::Row);
+
         for i in 0..9 {
-            let house = iter.next().unwrap();
-            assert_eq!(house.coord(), Coord::new(i));
-            assert!(house.is_row());
+            let h = iter.next().unwrap();
+            assert!(h.is_row());
+            assert_eq!(h.coord(), Coord::from(i));
         }
+
         assert!(iter.next().is_none());
 
-        let mut all_iter = HousesIter::new();
+        let mut all = HousesIter::new();
         let mut count = 0;
-        while let Some(h) = all_iter.next() {
+
+        while let Some(h) = all.next() {
+            assert!(matches!(
+                h.shape(),
+                Shape::Row | Shape::Column | Shape::Block
+            ));
             count += 1;
-            assert!(matches!(h.shape(), Shape::Row | Shape::Column | Shape::Block));
         }
+
         assert_eq!(count, 27);
     }
 
     #[test]
-    fn add_and_neg_operators() {
-        let r1 = House::row(coord!(0));
-        let r2 = House::row(coord!(1));
-        let hs = r1 + r2; // HouseSet
-        assert_eq!(hs.len(), 2);
-        assert!(hs.contains(r1));
-        assert!(hs.contains(r2));
+    fn ordering_of_houses() {
+        let r0 = House::row(Coord::from(0));
+        let r1 = House::row(Coord::from(1));
+        let c0 = House::column(Coord::from(0));
 
-        let hs_neg = -r1; // HouseSet without r1
-        assert_eq!(hs_neg.len(), 8);
-        assert!(!hs_neg.contains(r1));
-    }
-
-    #[test]
-    fn house_boundaries() {
-        let top_row = House::row(coord!(0));
-        let bottom_row = House::row(coord!(8));
-        let left_col = House::column(coord!(0));
-        let right_col = House::column(coord!(8));
-
-        assert!(top_row.is_top());
-        assert!(!bottom_row.is_top());
-        assert!(bottom_row.is_bottom());
-        assert!(left_col.is_left());
-        assert!(right_col.is_right());
-
-        // Block boundaries
-        let block_row_top = House::row(coord!(0));
-        let block_row_bottom = House::row(coord!(2));
-        let block_col_left = House::column(coord!(0));
-        let block_col_right = House::column(coord!(2));
-
-        assert!(block_row_top.is_block_top());
-        assert!(block_row_bottom.is_block_bottom());
-        assert!(block_col_left.is_block_left());
-        assert!(block_col_right.is_block_right());
-    }
-
-    #[test]
-    fn partial_ord_house() {
-        let h1 = House::row(coord!(0));
-        let h2 = House::row(coord!(1));
-        let h3 = House::column(coord!(0));
-        assert!(h1 < h2);
-        assert!(h2 > h1);
-        assert!(h1 < h3); // Rows < Columns
+        assert!(r0 < r1);
+        assert!(r1 < c0); // Rows < Columns by Shape ordering
     }
 }

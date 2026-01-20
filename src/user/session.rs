@@ -1,8 +1,7 @@
+use chrono::{DateTime, Duration, Utc};
 use uuid::Uuid;
-use chrono::{DateTime, Utc, Duration};
 
-
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct Session {
     pub id: Uuid,
     pub user_id: Uuid,

@@ -1,18 +1,17 @@
+use chrono::{Duration, Utc};
 use uuid::Uuid;
-use chrono::{Utc, Duration};
 
 use crate::user::{
+    auth::{hash_password, verify_password},
+    error::{AuthError, AuthResult},
     model::User,
     repository::UserRepository,
-    session::Session,
-    session_repository::SessionRepository,
-    auth::{hash_password, verify_password},
-    validation::{validate_username, validate_email, validate_password},
     reset_token::ResetToken,
     reset_token_repository::ResetTokenRepository,
-    error::{AuthError, AuthResult},
+    session::Session,
+    session_repository::SessionRepository,
+    validation::{validate_email, validate_password, validate_username},
 };
-
 
 pub async fn register_user(
     repo: &UserRepository,
@@ -20,7 +19,6 @@ pub async fn register_user(
     email: &str,
     password: &str,
 ) -> AuthResult<()> {
-
     validate_username(username).map_err(|_| AuthError::InvalidUsername)?;
     validate_email(email).map_err(|_| AuthError::InvalidEmail)?;
     validate_password(password).map_err(|_| AuthError::InvalidPassword)?;
@@ -33,8 +31,7 @@ pub async fn register_user(
         return Err(AuthError::EmailExists);
     }
 
-    let password_hash = hash_password(password)
-        .map_err(|_| AuthError::PasswordHashingFailed)?;
+    let password_hash = hash_password(password).map_err(|_| AuthError::PasswordHashingFailed)?;
 
     let user = User {
         id: Uuid::new_v4(),
@@ -44,11 +41,12 @@ pub async fn register_user(
         created_at: chrono::Utc::now().naive_utc(),
     };
 
-    repo.add_user(&user).await.map_err(|_| AuthError::DatabaseError)?;
+    repo.add_user(&user)
+        .await
+        .map_err(|_| AuthError::DatabaseError)?;
 
     Ok(())
 }
-
 
 pub async fn login_user(
     repo: &UserRepository,
@@ -56,7 +54,6 @@ pub async fn login_user(
     username: &str,
     password: &str,
 ) -> AuthResult<Uuid> {
-
     let user = repo
         .find_by_username(username)
         .await?
@@ -82,7 +79,6 @@ pub async fn login_user(
     Ok(session_id)
 }
 
-
 pub fn is_logged_in(session_repo: &SessionRepository, session_id: &Uuid) -> bool {
     session_repo.validate_session(session_id)
 }
@@ -92,26 +88,20 @@ pub fn logout_user(session_repo: &mut SessionRepository, session_id: &Uuid) {
 }
 
 pub async fn get_user_from_session<'a>(
-    
     session_repo: &'a SessionRepository,
     user_repo: &'a UserRepository,
     session_id: &Uuid,
 ) -> Option<User> {
-    // 1. session finden 
+    // 1. session finden
     let session = session_repo.find_by_session_id(session_id)?;
 
-    //2.  checken ob session gültig ist 
+    //2.  checken ob session gültig ist
     if !session.is_valid() {
         return None;
     }
 
-    //3. user anhand der user_id aus session holen 
-    user_repo
-    .find_by_id(&session.user_id)
-    .await
-    .ok()
-    .flatten()
-
+    //3. user anhand der user_id aus session holen
+    user_repo.find_by_id(&session.user_id).await.ok().flatten()
 }
 
 pub async fn change_password(
@@ -121,7 +111,7 @@ pub async fn change_password(
     old_password: &str,
     new_password: &str,
 ) -> AuthResult<()> {
-    // session check 
+    // session check
     let session = session_repo
         .find_by_session_id(session_id)
         .ok_or(AuthError::SessionExpired)?;
@@ -150,15 +140,13 @@ pub async fn change_password(
     validate_password(new_password).map_err(|_| AuthError::InvalidPassword)?;
 
     //neues passwort hashen
-    let new_hash = hash_password(new_password)
-        .map_err(|_| AuthError::PasswordHashingFailed)?;
+    let new_hash = hash_password(new_password).map_err(|_| AuthError::PasswordHashingFailed)?;
 
     //passwort im user repository updaten
     user_repo
-    .update_password(&user_id, new_hash)
-    .await
-    .map_err(|_| AuthError::DatabaseError)?;
-
+        .update_password(&user_id, new_hash)
+        .await
+        .map_err(|_| AuthError::DatabaseError)?;
 
     Ok(())
 }
@@ -168,7 +156,6 @@ pub async fn request_password_reset(
     token_repo: &mut ResetTokenRepository,
     email: &str,
 ) -> AuthResult<Uuid> {
-
     let user = repo
         .find_by_email(email)
         .await?
@@ -182,14 +169,12 @@ pub async fn request_password_reset(
     Ok(token_id)
 }
 
-
 pub async fn reset_password(
     repo: &UserRepository,
     token_repo: &mut ResetTokenRepository,
     token: &Uuid,
     new_password: &str,
 ) -> AuthResult<()> {
-
     let token_data = token_repo
         .find_token(token)
         .ok_or(AuthError::TokenInvalid)?;
@@ -200,8 +185,7 @@ pub async fn reset_password(
 
     validate_password(new_password).map_err(|_| AuthError::InvalidPassword)?;
 
-    let new_hash = hash_password(new_password)
-        .map_err(|_| AuthError::PasswordHashingFailed)?;
+    let new_hash = hash_password(new_password).map_err(|_| AuthError::PasswordHashingFailed)?;
 
     repo.update_password(&token_data.user_id, new_hash).await?;
 

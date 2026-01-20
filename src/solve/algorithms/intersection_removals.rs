@@ -1,15 +1,14 @@
 use super::*;
 
-use crate::layout::values::known_set::KnownSetLike;
-use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
-use crate::layout::{House, HouseSet};
 use crate::layout::houses::house::HouseLike;
-
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::{House, HouseSet};
+use crate::puzzle::{Action, Board, Effects, Known, Strategy, Verdict};
 
 /// Solver for Intersection Removal strategies:
 /// Pointing Pair/Triple
 /// Box Line Reduction
-/// 
+///
 /// Detects candidates confined to a row/column withing a block (Pointing)
 /// and removes candidates from block/line disjoint ares(Box-Line Reduction)
 pub struct IntersectionSolver;
@@ -32,7 +31,8 @@ pub fn find_intersection_removals(board: &Board, single: bool) -> Option<Effects
     let mut effects = Effects::new();
 
     for block in House::blocks_iter() {
-        if check_intersection(board, single, block, block.rows(), &mut effects) || check_intersection(board, single, block, block.columns(), &mut effects)
+        if check_intersection(board, single, block, block.rows(), &mut effects)
+            || check_intersection(board, single, block, block.columns(), &mut effects)
         {
             break;
         }
@@ -68,11 +68,11 @@ fn check_intersection(
             let intersection_candidate_cells_count = intersection_candidate_cells.len();
 
             if intersection_candidate_cells_count < 2 {
-// ignore hidden single
+                // ignore hidden single
                 continue;
             }
 
-// Case 1: Box Line Reduction
+            // Case 1: Box Line Reduction
             if box_candidates.has(known) && !line_candidates.has(known) {
                 let erase = box_cells & candidate_cells;
                 if !erase.is_empty() {
@@ -94,8 +94,7 @@ fn check_intersection(
                     }
                 }
             }
-
-// Case 2: Pointing Pair/Triple
+            // Case 2: Pointing Pair/Triple
             else if line_candidates.has(known) {
                 let erase = line_cells & candidate_cells;
                 if !erase.is_empty() {

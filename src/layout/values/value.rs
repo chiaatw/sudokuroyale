@@ -1,12 +1,11 @@
+use crate::layout::values::known::KnownLike;
 use std::fmt;
 use std::ops::Not;
-use crate::layout::values::known::KnownLike;
 
-use crate::symbols::MISSING;
 use super::Known;
+use crate::symbols::MISSING;
 
 pub trait ValueLike: Copy + Eq + Ord {
-    
     fn raw(self) -> u8;
 
     #[inline(always)]
@@ -42,7 +41,11 @@ impl Value {
 
     #[inline(always)]
     pub const fn new(value: u8) -> Self {
-        if value <= 9 { Self(value) } else { Self(Self::UNKNOWN) }
+        if value <= 9 {
+            Self(value)
+        } else {
+            Self(Self::UNKNOWN)
+        }
     }
 
     #[inline(always)]
@@ -94,7 +97,11 @@ impl From<char> for Value {
 impl From<&str> for Value {
     #[inline(always)]
     fn from(label: &str) -> Self {
-        label.chars().next().map(Value::from).unwrap_or(Value::unknown())
+        label
+            .chars()
+            .next()
+            .map(Value::from)
+            .unwrap_or(Value::unknown())
     }
 }
 
@@ -188,5 +195,4 @@ mod tests {
         assert_eq!(format!("{}", v), "7");
         assert_eq!(format!("{:?}", v), "7");
     }
-
 }

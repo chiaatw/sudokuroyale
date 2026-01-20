@@ -217,7 +217,9 @@ impl CoordSet {
     }
 
     pub const fn iter(&self) -> Iter {
-        Iter { bits: self.bits_raw() }
+        Iter {
+            bits: self.bits_raw(),
+        }
     }
 
     pub fn debug(&self) -> String {
@@ -455,7 +457,6 @@ impl FusedIterator for Iter {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Coord;
 
     #[test]
     fn test_empty_and_full() {

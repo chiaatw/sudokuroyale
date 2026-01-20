@@ -1,7 +1,7 @@
 use super::*;
 
-use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
 use crate::layout::cells::cell_set::CellIteratorUnion;
+use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
 use itertools::Itertools;
 // Solver wrapper for the XYZ-Wing strategy
 pub struct XYZWingSolver;
@@ -44,7 +44,7 @@ impl XYZWingSolver {
 
                 let candidates = pivot_peers & c1.peers() & c2.peers();
                 if candidates.len() != 2 {
-// degenerate naked triple
+                    // degenerate naked triple
                     continue;
                 }
 
@@ -53,13 +53,11 @@ impl XYZWingSolver {
                 let ks2 = board.candidates(c2);
 
                 if ks1 | ks2 != ks {
-// degenerate naked pair or unrelated candidates
+                    // degenerate naked pair or unrelated candidates
                     continue;
                 }
 
-                let k = (ks1 & ks2)
-                    .as_single()
-                    .expect("one candidate in common");
+                let k = (ks1 & ks2).as_single().expect("one candidate in common");
 
                 let mut action = Action::new(Strategy::XYZWing);
                 action.erase_cells(candidates & board.candidate_cells(k), k);

@@ -39,8 +39,6 @@ impl fmt::Display for AuthError {
             AuthError::TokenInvalid => write!(f, "Reset token is invalid"),
             AuthError::TokenExpired => write!(f, "Reset token has expired"),
             AuthError::DatabaseError => write!(f, "Database error"),
-
-        
         }
     }
 }

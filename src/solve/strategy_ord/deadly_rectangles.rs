@@ -1,6 +1,6 @@
+use crate::layout::values::known::KnownLike;
 use crate::layout::{Cell, Known, Rectangle};
 use crate::puzzle::Board;
-use crate::layout::values::known::KnownLike;
 
 /// Finds all existing deadly rectangles in the board.
 ///
@@ -113,12 +113,7 @@ mod tests {
     }
 
     fn test_creates(givens: bool) {
-        const KNOWNS: [Known; 4] = [
-            Known::new(1),
-            Known::new(2),
-            Known::new(1),
-            Known::new(2),
-        ];
+        const KNOWNS: [Known; 4] = [Known::new(1), Known::new(2), Known::new(1), Known::new(2)];
 
         fn test(givens: bool, rectangle: Rectangle) {
             // FIX: Rectangle corners are methods, not fields

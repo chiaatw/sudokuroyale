@@ -1,6 +1,6 @@
 use super::*;
 
-use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
+use crate::puzzle::{Action, Board, Effects, KnownSet, Strategy, Verdict};
 
 pub struct NakedSingleSolver;
 
@@ -23,11 +23,7 @@ pub fn find_naked_singles(board: &Board, single: bool) -> Option<Effects> {
         let known = knowns.as_single().unwrap();
 
         let mut action = Action::new_set(Strategy::NakedSingle, cell, known);
-        action.clue_cell_for_knowns(
-            Verdict::Related,
-            cell,
-            KnownSet::full() - known,
-        );
+        action.clue_cell_for_knowns(Verdict::Related, cell, KnownSet::full() - known);
 
         if effects.add_action(action) && single {
             return Some(effects);

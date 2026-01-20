@@ -124,4 +124,3 @@ mod tests {
         assert_eq!(bit.index(), 5);
     }
 }
-

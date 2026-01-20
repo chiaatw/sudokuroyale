@@ -1,35 +1,31 @@
-mod user;
-mod game_match;
 mod api;
+mod game_match;
+mod user;
 
 #[macro_use]
 extern crate rocket;
 
-use sqlx::PgPool;
+use ::rocket::Request;
 use rocket::http::Status;
+use rocket::http::{Cookie, CookieJar};
+use rocket::request::{FromRequest, Outcome};
 use rocket::serde::json::Json;
 use rocket::State;
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use std::sync::Mutex;
-use rocket::http::{Cookie, CookieJar};
-use rocket::request::{FromRequest, Outcome};
-use::rocket::Request;
-
-
 
 // nur EINMAL, und zwar mit crate::
-use crate::user::repository::UserRepository;
-use crate::user::session_repository::SessionRepository;
-use crate::user::reset_token_repository::ResetTokenRepository;
 use crate::user::error::AuthError;
-use crate::user::services::register_user;
-use crate::user::services::get_user_from_session;
+use crate::user::repository::UserRepository;
+use crate::user::reset_token_repository::ResetTokenRepository;
 use crate::user::services::change_password;
-use crate::user::services::request_password_reset;
+use crate::user::services::get_user_from_session;
 use crate::user::services::login_user;
+use crate::user::services::register_user;
+use crate::user::services::request_password_reset;
 use crate::user::services::reset_password;
-
-
+use crate::user::session_repository::SessionRepository;
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -80,8 +76,6 @@ struct ResetPasswordRequest {
     new_password: String,
 }
 
-
-
 #[post("/register", data = "<req>")]
 fn register(
     req: Json<RegisterRequest>,
@@ -112,7 +106,12 @@ fn login(
     let users_guard = users.lock().unwrap();
     let mut sessions_guard = sessions.lock().unwrap();
 
-    match login_user(&users_guard, &mut sessions_guard, &req.username, &req.password) {
+    match login_user(
+        &users_guard,
+        &mut sessions_guard,
+        &req.username,
+        &req.password,
+    ) {
         Ok(session_id) => {
             let cookie = Cookie::build(("session_id", session_id.to_string()))
                 .path("/")
@@ -124,8 +123,7 @@ fn login(
             Ok(Json(LoginResponse {
                 message: "User logged in successfully",
             }))
-
-        },
+        }
         Err(err) => Err(err.into()),
     }
 }
@@ -162,7 +160,9 @@ impl<'r> FromRequest<'r> for AuthUser {
 
         let sessions_guard = sessions.lock().unwrap();
         match sessions_guard.find_by_session_id(&session_id) {
-            Some(session) => Outcome::Success(AuthUser { user_id: session.user_id }),
+            Some(session) => Outcome::Success(AuthUser {
+                user_id: session.user_id,
+            }),
 
             None => Outcome::Error((Status::Unauthorized, ())),
         }
@@ -175,7 +175,6 @@ async fn me(
     sessions: &State<Mutex<SessionRepository>>,
     cookies: &CookieJar<'_>,
 ) -> Result<Json<MeResponse>, (Status, Json<ErrorResponse>)> {
-
     let session_cookie = cookies.get("session_id").ok_or_else(|| {
         (
             Status::Unauthorized,
@@ -217,7 +216,6 @@ fn logout(
     sessions: &State<Mutex<SessionRepository>>,
     cookies: &CookieJar<'_>,
 ) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
-
     // 1) Cookie lesen
     let session_cookie = cookies.get("session_id").ok_or_else(|| {
         (
@@ -250,26 +248,23 @@ fn logout(
     }))
 }
 
-
 #[post("/change-password", data = "<req>")]
 fn change_password_endpoint(
     auth: AuthUser,
     req: Json<ChangePasswordRequest>,
     users: &State<Mutex<UserRepository>>,
-    sessions: &State<Mutex<SessionRepository>>, 
-)
- -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+    sessions: &State<Mutex<SessionRepository>>,
+) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+    let sessions_guard = sessions.lock().unwrap();
+    let mut users_guard = users.lock().unwrap();
 
-        let sessions_guard = sessions.lock().unwrap();
-        let mut users_guard = users.lock().unwrap();
-
-        match change_password(
-            &sessions_guard,          
-            &mut users_guard,
-            &auth.user_id,
-            &req.new_password,
-            &req.old_password,
-        ) {
+    match change_password(
+        &sessions_guard,
+        &mut users_guard,
+        &auth.user_id,
+        &req.new_password,
+        &req.old_password,
+    ) {
         Ok(_) => Ok(Json(RegisterResponse {
             message: "password changed successfully",
         })),
@@ -283,15 +278,10 @@ fn request_reset(
     users: &State<Mutex<UserRepository>>,
     tokens: &State<Mutex<ResetTokenRepository>>,
 ) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
-
     let users_guard = users.lock().unwrap();
     let mut tokens_guard = tokens.lock().unwrap();
 
-    let _ = request_password_reset(
-        &users_guard,
-        &mut tokens_guard,
-        &req.email,
-    );
+    let _ = request_password_reset(&users_guard, &mut tokens_guard, &req.email);
 
     Ok(Json(RegisterResponse {
         message: "if the email exists, a reset link was sent",
@@ -304,18 +294,16 @@ fn reset_password_endpoint(
     users: &State<Mutex<UserRepository>>,
     tokens: &State<Mutex<ResetTokenRepository>>,
 ) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
-
     let mut users_guard = users.lock().unwrap();
     let mut tokens_guard = tokens.lock().unwrap();
     let token_id = uuid::Uuid::parse_str(&req.token).map_err(|_| {
-    (
-        Status::BadRequest,
-        Json(ErrorResponse {
-            error: "invalid reset token".to_string(),
-        }),
-    )
+        (
+            Status::BadRequest,
+            Json(ErrorResponse {
+                error: "invalid reset token".to_string(),
+            }),
+        )
     })?;
-
 
     match reset_password(
         &mut users_guard,
@@ -351,24 +339,28 @@ fn internal_error(_req: &Request) -> Json<ErrorResponse> {
     })
 }
 
-
-
 impl From<AuthError> for (Status, Json<ErrorResponse>) {
     fn from(err: AuthError) -> Self {
         let status = match err {
-            AuthError::InvalidUsername | AuthError::InvalidEmail | AuthError::InvalidPassword => Status::BadRequest,
+            AuthError::InvalidUsername | AuthError::InvalidEmail | AuthError::InvalidPassword => {
+                Status::BadRequest
+            }
             AuthError::UsernameExists => Status::Conflict,
             _ => Status::Unauthorized,
         };
 
-        (status, Json(ErrorResponse { error: err.to_string() }))
+        (
+            status,
+            Json(ErrorResponse {
+                error: err.to_string(),
+            }),
+        )
     }
 }
 
 #[launch]
 async fn rocket() -> _ {
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let pool = PgPool::connect(&database_url)
         .await
@@ -379,7 +371,9 @@ async fn rocket() -> _ {
         .manage(Mutex::new(UserRepository::new(pool.clone())))
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
-        .manage(std::sync::Mutex::new(game_match::repository::MatchRepository::new()))
+        .manage(std::sync::Mutex::new(
+            game_match::repository::MatchRepository::new(),
+        ))
         .mount(
             "/",
             routes![

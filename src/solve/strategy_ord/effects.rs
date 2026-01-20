@@ -1,9 +1,9 @@
-use std::fmt;
 use std::collections::HashMap;
+use std::fmt;
 
+use super::{Action, Board, Change, Error, Strategy};
 use crate::layout::{Cell, CellSet, Known, KnownSet};
 use crate::solve::strategy_ord::action::AppliesToBoard;
-use super::{Action, Board, Change, Error, Strategy};
 
 // Collects actions and errors encountered while modifying a board
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -141,7 +141,7 @@ impl Effects {
     pub fn affecting_cell(&self, cell: Cell) -> Self {
         let mut effects = Self {
             errors: Vec::new(),
-            actions: Vec::with_capacity(self.actions.len())
+            actions: Vec::with_capacity(self.actions.len()),
         };
         for action in &self.actions {
             if action.affects_cell(cell) {
@@ -175,9 +175,9 @@ impl Effects {
     }
 
     pub fn apply(&self, board: &mut Board, effects: &mut Effects) -> Change {
-        self.actions.iter().fold(Change::None, |chg, a| {
-            chg & a.apply(board, effects)
-        })
+        self.actions
+            .iter()
+            .fold(Change::None, |chg, a| chg & a.apply(board, effects))
     }
 
     pub fn apply_strategy(

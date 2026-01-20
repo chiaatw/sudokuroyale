@@ -5,14 +5,14 @@ use std::fmt::Write;
 
 use itertools::Itertools;
 
-use crate::layout::{Cell, CellSet, Known, KnownSet};
-use crate::symbols::{EMPTY_SET, REMOVE_CANDIDATE, SET_KNOWN};
-use crate::solve::strategy_ord::clues::ClueCollection;
-use crate::layout::values::known_set::KnownSetLike;
 use crate::layout::values::known::KnownLike;
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::{Cell, CellSet, Known, KnownSet};
+use crate::solve::strategy_ord::clues::ClueCollection;
+use crate::symbols::{EMPTY_SET, REMOVE_CANDIDATE, SET_KNOWN};
 
-use super::{Board, Change, Clues, Effects, Strategy, Verdict};
 use super::SolverAction;
+use super::{Board, Change, Clues, Effects, Strategy, Verdict};
 
 // Something that can be applied to a board and produce effects
 pub trait AppliesToBoard {
@@ -34,7 +34,6 @@ pub struct Action {
 }
 
 impl Action {
-    
     pub fn new(strategy: Strategy) -> Self {
         Self {
             strategy,
@@ -106,24 +105,24 @@ impl Action {
 
     pub fn collect_sets(&self) -> Vec<(Cell, Known)> {
         self.set
-        .iter()
-        .map(|(c, k)| (*c, *k))
-        .sorted_by(|a, b| match a.0.cmp(&b.0) {
-            Ordering::Equal => a.1.cmp(&b.1),
-            r => r,
-        })
-        .collect()
+            .iter()
+            .map(|(c, k)| (*c, *k))
+            .sorted_by(|a, b| match a.0.cmp(&b.0) {
+                Ordering::Equal => a.1.cmp(&b.1),
+                r => r,
+            })
+            .collect()
     }
 
     pub fn collect_erases(&self) -> Vec<(Cell, KnownSet)> {
         self.erase
-        .iter()
-        .map(|(c, k)| (*c, *k))
-        .sorted_by(|a, b| match a.0.cmp(&b.0) {
-            Ordering::Equal => a.1.cmp(&b.1),
-            r => r,
-        })
-        .collect()
+            .iter()
+            .map(|(c, k)| (*c, *k))
+            .sorted_by(|a, b| match a.0.cmp(&b.0) {
+                Ordering::Equal => a.1.cmp(&b.1),
+                r => r,
+            })
+            .collect()
     }
 
     pub fn clue_cell_for_known(&mut self, color: Verdict, cell: Cell, known: Known) {
@@ -142,15 +141,15 @@ impl Action {
         self.clues.clue_cells_for_knowns(color, cells, knowns);
     }
 
-        pub fn strategy(&self) -> Strategy {
+    pub fn strategy(&self) -> Strategy {
         self.strategy
     }
     pub fn is_empty(&self) -> bool {
         self.set.is_empty() && self.erase.is_empty()
     }
     pub fn has_strategy(&self, strategy: Strategy) -> bool {
-    self.strategy == strategy
-}
+        self.strategy == strategy
+    }
 
     /// Gibt alle Zellen zurück, aus denen `known` entfernt wird.
     pub fn erases_from_cells(&self, known: Known) -> CellSet {
@@ -162,7 +161,10 @@ impl Action {
 
     /// Gibt alle Kandidaten zurück, die aus `cell` entfernt werden.
     pub fn erases_knowns_from(&self, cell: Cell) -> KnownSet {
-        self.erase.get(&cell).copied().unwrap_or_else(KnownSet::empty)
+        self.erase
+            .get(&cell)
+            .copied()
+            .unwrap_or_else(KnownSet::empty)
     }
 }
 
@@ -215,11 +217,11 @@ impl fmt::Debug for Action {
                 write!(f, "\n- {} {} {}", cell, SET_KNOWN, known)?;
             }
             for (cell, known, color) in self
-            .clues
-            .collect()
-            .iter()
-            .flat_map(|(c, m)| m.iter().map(|(k, v)| (*c, *k, *v)))
-            .sorted()
+                .clues
+                .collect()
+                .iter()
+                .flat_map(|(c, m)| m.iter().map(|(k, v)| (*c, *k, *v)))
+                .sorted()
             {
                 write!(f, "\n- {} {} {:?}", cell, known, color)?;
             }

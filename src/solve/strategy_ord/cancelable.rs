@@ -1,10 +1,10 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-pub struct Cancelable{}
+pub struct Cancelable {}
 
 impl Cancelable {
     pub fn new() -> Self {
-        Self{}
+        Self {}
     }
 
     pub fn cancel(&self) {

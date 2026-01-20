@@ -1,6 +1,6 @@
 use crate::user::session::Session;
+use chrono::{Duration, Utc};
 use uuid::Uuid;
-use chrono::{Utc, Duration};
 
 pub struct SessionRepository {
     sessions: Vec<Session>,
@@ -8,7 +8,9 @@ pub struct SessionRepository {
 
 impl SessionRepository {
     pub fn new() -> Self {
-        Self { sessions: Vec::new() }
+        Self {
+            sessions: Vec::new(),
+        }
     }
 
     pub fn add_session(&mut self, session: Session) {
@@ -36,8 +38,7 @@ impl SessionRepository {
         if let Some(session) = self.sessions.iter_mut().find(|s| s.id == *session_id) {
             session.expires_at = Utc::now() + Duration::hours(hours);
             return true;
-        }   
+        }
         false
-    } 
-    
-}  
+    }
+}

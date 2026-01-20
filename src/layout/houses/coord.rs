@@ -1,15 +1,18 @@
 use std::fmt;
 
-#[derive(
-    Clone, Copy, Debug, Default, Hash,
-    Eq, PartialEq, Ord, PartialOrd
-)]
+#[derive(Clone, Copy, Debug, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 
 pub enum Coord {
-    #[default] C0,
-    C1, C2, C3,
-    C4, C5, C6,
-    C7, C8, 
+    #[default]
+    C0,
+    C1,
+    C2,
+    C3,
+    C4,
+    C5,
+    C6,
+    C7,
+    C8,
 }
 
 impl Coord {
@@ -29,8 +32,6 @@ impl Coord {
         }
     }
 
-
-
     pub const fn new(coord: u8) -> Self {
         debug_assert!(coord < 9);
         Self::from_index(coord as u32)
@@ -38,7 +39,7 @@ impl Coord {
 
     pub const fn from_digit(digit: u8) -> Self {
         debug_assert!(digit >= 1 && digit <= 9);
-        Self::from_index((digit -1) as u32)
+        Self::from_index((digit - 1) as u32)
     }
 
     pub const fn from_index(index: u32) -> Self {
@@ -70,52 +71,66 @@ impl Coord {
     }
 
     pub const fn label(&self) -> char {
-        (b'1' + self.index()) as char 
+        (b'1' + self.index()) as char
     }
 
-    pub const fn min( self, other: Self ) -> Self {
-        if self.index() <= other.index() { self } else { other }
+    pub const fn min(self, other: Self) -> Self {
+        if self.index() <= other.index() {
+            self
+        } else {
+            other
+        }
     }
 
     pub const fn max(self, other: Self) -> Self {
-        if self.index() >= other.index() { self } else { other }
+        if self.index() >= other.index() {
+            self
+        } else {
+            other
+        }
     }
 }
 
-    impl From <i32> for Coord {
-        fn from(coord: i32) -> Self {
-            debug_assert! (coord >= 0);
-            Coord::new(coord as u8)
-        }
+impl From<i32> for Coord {
+    fn from(coord: i32) -> Self {
+        debug_assert!(coord >= 0);
+        Coord::new(coord as u8)
     }
-    impl From <u8> for Coord {
-        fn from(coord: u8) -> Self {
-            Coord::new(coord)
-        }
+}
+impl From<u8> for Coord {
+    fn from(coord: u8) -> Self {
+        Coord::new(coord)
     }
+}
 
-    impl From <usize> for Coord {
-        fn from(coord: usize) -> Self {
-            Coord::new(coord as u8)
-        }
+impl From<usize> for Coord {
+    fn from(coord: usize) -> Self {
+        Coord::new(coord as u8)
     }
-    impl From <char> for Coord {
-        fn from (coord: char) -> Self {
-            Coord::new(coord as u8 - b'1')
-        }
+}
+impl From<char> for Coord {
+    fn from(coord: char) -> Self {
+        Coord::new(coord as u8 - b'1')
     }
-    impl From<&str> for Coord {
-        fn from(label: &str) -> Self {
-            Coord::from(label.chars().next().unwrap())
-        }
+}
+impl From<&str> for Coord {
+    fn from(label: &str) -> Self {
+        Coord::from(label.chars().next().unwrap())
     }
-    impl fmt::Display for Coord {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "{}", self.label())
-        }
+}
+impl fmt::Display for Coord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.label())
     }
+}
 
-    
+#[macro_export]
+macro_rules! coord {
+    ($c:expr) => {
+        $crate::layout::Coord::from_digit($c)
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

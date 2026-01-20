@@ -1,7 +1,7 @@
 use super::*;
 
-use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
 use crate::layout::values::known_set::KnownSetLike;
+use crate::puzzle::{Action, Board, Effects, KnownSet, Strategy, Verdict};
 
 // Solver wrapper for the BUG (Bi-value Universal Grave) strategy
 pub struct BugSolver;
@@ -22,17 +22,17 @@ impl Solver for BugSolver {
 pub fn find_bugs(board: &Board, _single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
-// Bi-value and tri-value cells
+    // Bi-value and tri-value cells
     let pairs = board.cells_with_n_candidates(2);
     let triples = board.cells_with_n_candidates(3);
 
-// Only proceed if there are pairs and exactly on triple
+    // Only proceed if there are pairs and exactly on triple
     if pairs.is_empty() || triples.len() != 1 {
         return None;
     }
 
-// No other candidate counts allowed in a BUG
-    for count in [1, 4, 5, 6 , 7, 8, 9] {
+    // No other candidate counts allowed in a BUG
+    for count in [1, 4, 5, 6, 7, 8, 9] {
         if !board.cells_with_n_candidates(count).is_empty() {
             return None;
         }
@@ -42,7 +42,7 @@ pub fn find_bugs(board: &Board, _single: bool) -> Option<Effects> {
     let candidates = board.candidates(triple);
     let mut eliminated = KnownSet::empty();
 
-// Determine which candidates can be safely removed
+    // Determine which candidates can be safely removed
     for known in candidates.iter() {
         for house in triple.houses() {
             if board.house_candidate_cells(house, known).len() == 2 {
@@ -52,7 +52,7 @@ pub fn find_bugs(board: &Board, _single: bool) -> Option<Effects> {
         }
     }
 
-// Only one solution remains
+    // Only one solution remains
     if eliminated.len() == 2 {
         let solution = (candidates - eliminated).as_single().unwrap();
         let mut action = Action::new_set(Strategy::Bug, triple, solution);
@@ -65,8 +65,8 @@ pub fn find_bugs(board: &Board, _single: bool) -> Option<Effects> {
         effects.add_action(action);
 
         if effects.has_actions() {
-            return Some(effects)
-        } 
+            return Some(effects);
+        }
     }
     None
 }
@@ -91,7 +91,11 @@ mod tests {
         let mut eff = Effects::new();
         // irgendein Given/Known setzen (wenn möglich)
         // (falls set_known nicht existiert, nimm set_given oder lass es weg)
-        board.set_known(crate::layout::cells::cell::cell!("A1"), crate::layout::values::known::known!("1"), &mut eff);
+        board.set_known(
+            crate::layout::cells::cell::cell!("A1"),
+            crate::layout::values::known::known!("1"),
+            &mut eff,
+        );
 
         assert!(find_bugs(&board, true).is_none());
     }

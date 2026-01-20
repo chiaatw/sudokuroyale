@@ -5,7 +5,7 @@ pub struct HiddenSingleSolver;
 
 impl Solver for HiddenSingleSolver {
     #[inline(always)]
-    fn strategy(&self) -> Strategy{
+    fn strategy(&self) -> Strategy {
         Strategy::HiddenSingle
     }
 
@@ -80,9 +80,21 @@ mod hidden_single_tests {
 
         // Optional: falls set_known bei dir existiert (wie in anderen Dateien), ok.
         // Sonst diesen Test entfernen.
-        board.set_known(crate::layout::cells::cell::cell!("A1"), crate::layout::values::known::known!("1"), &mut eff);
-        board.set_known(crate::layout::cells::cell::cell!("B2"), crate::layout::values::known::known!("2"), &mut eff);
-        board.set_known(crate::layout::cells::cell::cell!("C3"), crate::layout::values::known::known!("3"), &mut eff);
+        board.set_known(
+            crate::layout::cells::cell::cell!("A1"),
+            crate::layout::values::known::known!("1"),
+            &mut eff,
+        );
+        board.set_known(
+            crate::layout::cells::cell::cell!("B2"),
+            crate::layout::values::known::known!("2"),
+            &mut eff,
+        );
+        board.set_known(
+            crate::layout::cells::cell::cell!("C3"),
+            crate::layout::values::known::known!("3"),
+            &mut eff,
+        );
 
         assert!(!eff.has_errors());
         assert!(find_hidden_singles(&board, false).is_none());

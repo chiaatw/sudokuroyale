@@ -32,11 +32,13 @@ pub fn recompute_all_candidates(board: &Board, candidates: &mut Candidates) {
 /// Incremental update after setting a known value into a cell.
 /// - Set cell candidates to empty.
 /// - Remove this digit from all peer cells candidates.
-pub fn update_after_set_known(board: &Board, candidates: &mut Candidates, cell: Cell, known: Known) {
-    // if board says it's known -> candidates empty
-    if board.get(cell).is_known() {
-        candidates.set(cell, KnownSet::empty());
-    }
+pub fn update_after_set_known(
+    board: &Board,
+    candidates: &mut Candidates,
+    cell: Cell,
+    known: Known,
+) {
+    candidates.set(cell, KnownSet::empty());
 
     // peers cannot have that digit anymore
     for peer in cell.peers().iter() {

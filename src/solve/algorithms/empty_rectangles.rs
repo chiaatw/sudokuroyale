@@ -1,10 +1,10 @@
 use super::*;
 
-use crate::puzzle::{Action, CellSet, Known, Board, Effects, Strategy, Verdict};
-use crate::layout::House;
 use crate::layout::houses::house::HouseLike;
+use crate::layout::House;
+use crate::puzzle::{Action, Board, CellSet, Effects, Known, Strategy, Verdict};
 /// Solver for the Empty Rectangle strategy
-/// 
+///
 /// Detects Empty Rectangles on the board and produces candidate eliminations
 pub struct EmptyRectangleSolver;
 
@@ -24,16 +24,16 @@ impl Solver for EmptyRectangleSolver {
 pub fn find_empty_rectangles(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
-// Iterate over all possible candidates
+    // Iterate over all possible candidates
     for known in Known::iter() {
-// Iterate over all blocks
+        // Iterate over all blocks
         for block in House::blocks_iter() {
             if let Some((cells, row, column)) = fit_row_column(board, block, known) {
                 let mut erased = CellSet::empty();
 
-// Consider both orientations: (row, column) and (column, row)
+                // Consider both orientations: (row, column) and (column, row)
                 for (top, left) in [(row, column), (column, row)] {
-// Candidates in the left house not part of the rectangle
+                    // Candidates in the left house not part of the rectangle
                     let candidates = board.house_candidate_cells(left, known) - cells;
 
                     for start in (board.house_candidate_cells(top, known) - cells).iter() {
@@ -43,9 +43,10 @@ pub fn find_empty_rectangles(board: &Board, single: bool) -> Option<Effects> {
 
                         let right = start.house(left.shape());
 
-                        if let Some(pivot) = (board.house_candidate_cells(right, known) - start).as_single()
+                        if let Some(pivot) =
+                            (board.house_candidate_cells(right, known) - start).as_single()
                         {
-// Cannot remove candidates in the starting block
+                            // Cannot remove candidates in the starting block
                             if start.block() == pivot.block() {
                                 continue;
                             }
@@ -56,9 +57,10 @@ pub fn find_empty_rectangles(board: &Board, single: bool) -> Option<Effects> {
                             if let Some(end) = (ends & candidates).as_single() {
                                 erased += end;
 
-                                let mut action = Action::new_erase(Strategy::EmptyRectangle, end, known);
+                                let mut action =
+                                    Action::new_erase(Strategy::EmptyRectangle, end, known);
 
-// Determine clues or direct erase based on context
+                                // Determine clues or direct erase based on context
                                 if ends.len() == 1 {
                                     action.erase(start, known);
                                 } else {
@@ -91,7 +93,7 @@ fn fit_row_column(board: &Board, block: House, known: Known) -> Option<(CellSet,
     let cells = board.house_candidate_cells(block, known);
 
     if cells.len() < 3 {
-// Degenerate cases (1-2 candidates) are ignored
+        // Degenerate cases (1-2 candidates) are ignored
         return None;
     }
 

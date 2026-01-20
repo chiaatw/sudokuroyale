@@ -15,7 +15,10 @@ impl Sudoku {
     /// Creates a Sudoku from a solution grid.
     /// The current grid starts empty (all unknown).
     pub fn from_solution(solution: Grid) -> Self {
-        Self { current: Grid::new(), solution }
+        Self {
+            current: Grid::new(),
+            solution,
+        }
     }
 
     /// Creates a Sudoku from both current and solution grids.

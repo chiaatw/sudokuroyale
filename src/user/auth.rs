@@ -1,5 +1,5 @@
+use argon2::password_hash::{Error, PasswordHasher, SaltString};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
-use argon2::password_hash::{SaltString, PasswordHasher, Error};
 use rand_core::OsRng;
 
 pub fn hash_password(password: &str) -> Result<String, Error> {
@@ -7,7 +7,9 @@ pub fn hash_password(password: &str) -> Result<String, Error> {
 
     let argon2 = Argon2::default();
 
-    let password_hash = argon2.hash_password(password.as_bytes(), &salt)?.to_string();
+    let password_hash = argon2
+        .hash_password(password.as_bytes(), &salt)?
+        .to_string();
 
     Ok(password_hash)
 }

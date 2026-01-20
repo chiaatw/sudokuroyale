@@ -8,7 +8,9 @@ pub struct Grid {
 
 impl Default for Grid {
     fn default() -> Self {
-        Self { values: [Value::unknown(); 81] }
+        Self {
+            values: [Value::unknown(); 81],
+        }
     }
 }
 

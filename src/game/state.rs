@@ -4,8 +4,14 @@ use crate::game::player::PlayerId;
 pub enum GameState {
     Waiting,
     InProgress,
-    Won { player: PlayerId },
-    Lost { player: PlayerId, reason: LoseReason },
+    Won {
+        player: PlayerId,
+    },
+    Lost {
+        loser: PlayerId,
+        winner: PlayerId,
+        reason: LoseReason,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

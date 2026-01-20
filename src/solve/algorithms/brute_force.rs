@@ -2,8 +2,10 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use crate::io::{print_all_and_single_candidates, Cancelable};
-use crate::puzzle::{Action, Cell, CellSet, Changer, ChangeResult, KnownSet, Board, Effects, Options, Strategy};
 use crate::layout::values::known_set::KnownSetLike;
+use crate::puzzle::{
+    Action, Board, Cell, CellSet, ChangeResult, Changer, Effects, KnownSet, Options, Strategy,
+};
 
 use super::*;
 
@@ -26,22 +28,23 @@ impl Solver for BruteForceSolver {
 
     #[inline(always)]
     fn apply(&self, board: &Board, single: bool) -> Option<Effects> {
-       match self.find_brute_force(board, single) {
-        BruteForceResult::Solved(_) | BruteForceResult::AlreadySolved => {
-            None
+        match self.find_brute_force(board, single) {
+            BruteForceResult::Solved(_) | BruteForceResult::AlreadySolved => None,
+            BruteForceResult::MultipleSolutions(_) => None,
+            BruteForceResult::TooFewKnowns => None,
+            BruteForceResult::UnsolvableCells(_) => None,
+            BruteForceResult::Canceled => None,
+            BruteForceResult::Unsolvable => None,
         }
-        BruteForceResult::MultipleSolutions(_) => None,
-        BruteForceResult::TooFewKnowns => None,
-        BruteForceResult::UnsolvableCells(_) => None,
-        BruteForceResult::Canceled => None,
-        BruteForceResult::Unsolvable => None,
-       }
     }
 }
 
 impl BruteForceResult {
     pub fn is_solved(&self) -> bool {
-        matches!(self, BruteForceResult::AlreadySolved | BruteForceResult::Solved(_))
+        matches!(
+            self,
+            BruteForceResult::AlreadySolved | BruteForceResult::Solved(_)
+        )
     }
 }
 
@@ -62,17 +65,17 @@ impl BruteForceSolver {
 
     fn find_brute_force(&self, board: &Board, single: bool) -> BruteForceResult {
         if board.is_fully_solved() {
-// Already solved, nothing to do
+            // Already solved, nothing to do
             return BruteForceResult::AlreadySolved;
         }
         if board.known_count() < MINIMUM_KNOWNS_TO_BE_UNIQUELY_SOLVABLE {
-// Too few clues
+            // Too few clues
             return BruteForceResult::TooFewKnowns;
         }
 
         let empty = board.unknowns() & board.cells_with_n_candidates(0);
         if !empty.is_empty() {
-//Unsolvable cells exist
+            //Unsolvable cells exist
             return BruteForceResult::UnsolvableCells(empty);
         }
 
@@ -133,8 +136,8 @@ impl BruteForceSolver {
                             return BruteForceResult::MultipleSolutions(solutions);
                         }
 
-                            stack.pop();
-                            continue;
+                        stack.pop();
+                        continue;
                     } else {
                         stack.push(Entry::new(after));
                     }

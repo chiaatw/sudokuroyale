@@ -29,18 +29,10 @@ pub fn find_peers(board: &Board, single: bool) -> Option<Effects> {
             continue;
         }
 
-        let mut action = Action::new_erase_cells(
-            Strategy::Peer,
-            peers,
-            known,
-        );
+        let mut action = Action::new_erase_cells(Strategy::Peer, peers, known);
 
         // The known cell is the logical cause of the elimination
-        action.clue_cell_for_known(
-            Verdict::Secondary,
-            cell,
-            known,
-        );
+        action.clue_cell_for_known(Verdict::Secondary, cell, known);
 
         if effects.add_action(action) && single {
             return Some(effects);

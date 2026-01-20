@@ -1,8 +1,8 @@
 use super::*;
 
-use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
-use crate::layout::House;
 use crate::layout::houses::house_set::HouseSetLike;
+use crate::layout::House;
+use crate::puzzle::{Action, Board, Effects, Known, Strategy, Verdict};
 pub struct TwoStringKiteSolver;
 
 impl Solver for TwoStringKiteSolver {
@@ -45,30 +45,36 @@ impl TwoStringKiteSolver {
                     let (row_cell_left, row_cell_right) = row_cells.as_pair().unwrap();
                     let (column_cell_high, column_cell_low) = column_cells.as_pair().unwrap();
 
-                    let (pivots, ends) = 
-                        if row_cell_left.block() == column_cell_high.block() {
-                            (row_cell_left + column_cell_high,
-                             row_cell_right + column_cell_low)
-                        } else if row_cell_left.block() == column_cell_low.block() {
-                            (row_cell_left + column_cell_low,
-                             row_cell_right + column_cell_high)
-                        } else if row_cell_right.block() == column_cell_high.block() {
-                            (row_cell_right + column_cell_high,
-                             row_cell_left + column_cell_low)
-                        } else if row_cell_right.block() == column_cell_low.block() {
-                            (row_cell_right + column_cell_low,
-                             row_cell_left + column_cell_high)
-                        } else {
-                            continue;
-                        };
+                    let (pivots, ends) = if row_cell_left.block() == column_cell_high.block() {
+                        (
+                            row_cell_left + column_cell_high,
+                            row_cell_right + column_cell_low,
+                        )
+                    } else if row_cell_left.block() == column_cell_low.block() {
+                        (
+                            row_cell_left + column_cell_low,
+                            row_cell_right + column_cell_high,
+                        )
+                    } else if row_cell_right.block() == column_cell_high.block() {
+                        (
+                            row_cell_right + column_cell_high,
+                            row_cell_left + column_cell_low,
+                        )
+                    } else if row_cell_right.block() == column_cell_low.block() {
+                        (
+                            row_cell_right + column_cell_low,
+                            row_cell_left + column_cell_high,
+                        )
+                    } else {
+                        continue;
+                    };
 
                     let erase = ends.peers() & candidates;
                     if erase.is_empty() {
                         continue;
                     }
 
-                    let mut action = 
-                        Action::new_erase_cells(Strategy::TwoStringKite, erase, known);
+                    let mut action = Action::new_erase_cells(Strategy::TwoStringKite, erase, known);
                     action.clue_cells_for_known(Verdict::Secondary, ends, known);
                     action.clue_cells_for_known(Verdict::Primary, pivots, known);
 
@@ -87,7 +93,7 @@ impl TwoStringKiteSolver {
     }
 }
 
-    pub fn find_two_string_kites(board: &Board, single: bool) -> Option<Effects> {
+pub fn find_two_string_kites(board: &Board, single: bool) -> Option<Effects> {
     TwoStringKiteSolver.apply(board, single)
 }
 

@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use crate::game_match::model::GameMatch;
+use uuid::Uuid;
 
 pub struct MatchRepository {
     matches: Vec<GameMatch>,
@@ -7,7 +7,9 @@ pub struct MatchRepository {
 
 impl MatchRepository {
     pub fn new() -> Self {
-        Self { matches: Vec::new() }
+        Self {
+            matches: Vec::new(),
+        }
     }
 
     pub fn add_match(&mut self, m: GameMatch) {

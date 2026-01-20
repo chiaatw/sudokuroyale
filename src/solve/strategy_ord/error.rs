@@ -19,7 +19,6 @@ pub enum Error {
 }
 
 impl Error {
-    
     #[inline(always)]
     pub fn cell(&self) -> Option<Cell> {
         match *self {
@@ -35,7 +34,10 @@ impl Error {
     pub fn is_invalid(&self) -> bool {
         matches!(
             *self,
-            Error::AlreadySolved(_, _, _) | Error::NotCandidate(_, _) | Error::UnsolvableCell(_) | Error::UnsolvableHouse(_, _)
+            Error::AlreadySolved(_, _, _)
+                | Error::NotCandidate(_, _)
+                | Error::UnsolvableCell(_)
+                | Error::UnsolvableHouse(_, _)
         )
     }
 }
@@ -62,7 +64,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl std::error::Error for Error{}
+impl std::error::Error for Error {}
 
 #[cfg(test)]
 mod tests {

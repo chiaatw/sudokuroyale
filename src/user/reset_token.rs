@@ -1,5 +1,5 @@
+use chrono::{DateTime, Duration, Utc};
 use uuid::Uuid;
-use chrono::{DateTime, Utc, Duration};
 
 #[derive(Debug, Clone)]
 pub struct ResetToken {

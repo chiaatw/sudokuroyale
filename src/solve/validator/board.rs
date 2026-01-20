@@ -1,9 +1,7 @@
-use crate::layout::{Cell, CellSet, Known, KnownSet, Value, ValueLike};
 use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::{Cell, CellSet, Known, KnownSet, Value, ValueLike};
 
-use crate::solve::candidates::{
-    recompute_all_candidates, update_after_set_known, Candidates,
-};
+use crate::solve::candidates::{recompute_all_candidates, update_after_set_known, Candidates};
 
 /// Board state:
 /// - values: 81 cells row-major

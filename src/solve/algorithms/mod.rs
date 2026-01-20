@@ -22,6 +22,6 @@ pub mod skyscrapers;
 pub mod two_string_kites;
 pub mod unique_rectangles;
 pub mod wxyz_wings;
-pub mod xyz_wings;
 pub mod xy_chains;
+pub mod xyz_wings;
 pub mod y_wings;

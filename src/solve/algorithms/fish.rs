@@ -1,11 +1,11 @@
 use super::*;
 use itertools::Itertools;
 
-use crate::puzzle::{Action, Known, Board, Effects, Strategy, Verdict};
-use crate::layout::Shape;
+use crate::layout::cells::cell_set::CellSetIteratorUnion;
 use crate::layout::houses::house_set::HouseSetLike;
 use crate::layout::HouseSet;
-use crate::layout::cells::cell_set::CellSetIteratorUnion;
+use crate::layout::Shape;
+use crate::puzzle::{Action, Board, Effects, Known, Strategy, Verdict};
 // X-Wing solver wrapper for the engine
 pub struct XWingSolver;
 
@@ -68,9 +68,9 @@ pub fn find_jellyfish(board: &Board, single: bool) -> Option<Effects> {
 /// Generic Fish detection logic
 /// Handles X-Wing (size 2), Swordfish (size 3), Jellyfish (size 4)
 fn find_fish(board: &Board, single: bool, size: usize, strategy: Strategy) -> Option<Effects> {
-    let mut effects = Effects::new(); 
+    let mut effects = Effects::new();
 
-// First check rows, then columns if no single-action early exit
+    // First check rows, then columns if no single-action early exit
     if !check_houses(board, single, size, strategy, Shape::Row, &mut effects) {
         check_houses(board, single, size, strategy, Shape::Column, &mut effects);
     }
@@ -94,72 +94,74 @@ fn check_houses(
     for known in Known::iter() {
         let candidate_cells = board.candidate_cells(known);
 
-// Iterate over all combinations of houses of the given size
+        // Iterate over all combinations of houses of the given size
         for candidates in shape
             .house_iter()
             .map(|house| (house, house.shape().cells(house.coord()) & candidate_cells))
-// Only consider houses that have 2..=size candidates for this known
+            // Only consider houses that have 2..=size candidates for this known
             .filter(|(_, cells)| 2 <= cells.len() && cells.len() <= size)
             .map(|(house, cells)| (house, cells, house.crossing_houses(cells)))
             .combinations(size)
         {
-// Union of all crossing houses (the other orientation)
-        let crosses = candidates
-            .iter()
-            .map(|(_, _, crosses)| *crosses)
-            .fold(HouseSet::empty(Shape::Row), |acc, hs| acc | hs);
+            // Union of all crossing houses (the other orientation)
+            let crosses = candidates
+                .iter()
+                .map(|(_, _, crosses)| *crosses)
+                .fold(HouseSet::empty(Shape::Row), |acc, hs| acc | hs);
 
             if crosses.len() != size {
                 continue;
             }
 
-// Skip degenerate intermediate combinations for Swordfish and Jellyfish
-        if size > 2 && candidates
-            .iter()
-            .map(|(_, _, crosses)| *crosses)
-            .filter(|crosses| crosses.len() < 3)
-            .combinations(2)
-            .map(|pair| pair[0] | pair[1])
-            .any(|union| union.len() <= 2)
-        {
-            continue;
-        }
+            // Skip degenerate intermediate combinations for Swordfish and Jellyfish
+            if size > 2
+                && candidates
+                    .iter()
+                    .map(|(_, _, crosses)| *crosses)
+                    .filter(|crosses| crosses.len() < 3)
+                    .combinations(2)
+                    .map(|pair| pair[0] | pair[1])
+                    .any(|union| union.len() <= 2)
+            {
+                continue;
+            }
 
-        if size > 3 && candidates
-            .iter()
-            .map(|(_, _, crosses)| *crosses)
-            .filter(|crosses| crosses.len() < 4)
-            .combinations(3)
-            .map(|pair| pair[0] | pair[1] | pair[2])
-            .any(|union| union.len() <= 3)
-        {
-            continue;
-        }
+            if size > 3
+                && candidates
+                    .iter()
+                    .map(|(_, _, crosses)| *crosses)
+                    .filter(|crosses| crosses.len() < 4)
+                    .combinations(3)
+                    .map(|pair| pair[0] | pair[1] | pair[2])
+                    .any(|union| union.len() <= 3)
+            {
+                continue;
+            }
 
-        let main_cells = candidates.iter().map(|(_, cells, _)| *cells).union_cells();
-        let cross_cells = crosses.cells() & candidate_cells;
-        let erase = cross_cells - main_cells;
+            let main_cells = candidates.iter().map(|(_, cells, _)| *cells).union_cells();
+            let cross_cells = crosses.cells() & candidate_cells;
+            let erase = cross_cells - main_cells;
 
-        if erase.is_empty() {
-            continue;
-        }
+            if erase.is_empty() {
+                continue;
+            }
 
-// Construct the action to erase candidate cells and add clues
-        let mut action = Action::new(strategy);
-        action.erase_cells(erase, known);
+            // Construct the action to erase candidate cells and add clues
+            let mut action = Action::new(strategy);
+            action.erase_cells(erase, known);
 
-        candidates.iter().for_each(|(house, cells, _)| {
-            action.clue_cells_for_known(Verdict::Secondary, *cells, known);
-            action.clue_cells_for_known(
-                Verdict::Related,
-                house.cells() - main_cells - board.knowns(),
-                known,
-            );
-        });
+            candidates.iter().for_each(|(house, cells, _)| {
+                action.clue_cells_for_known(Verdict::Secondary, *cells, known);
+                action.clue_cells_for_known(
+                    Verdict::Related,
+                    house.cells() - main_cells - board.knowns(),
+                    known,
+                );
+            });
 
-// Early exit if only a single solution is required     
-        if effects.add_action(action) && single {       
-            return true;
+            // Early exit if only a single solution is required
+            if effects.add_action(action) && single {
+                return true;
             }
         }
     }
@@ -216,9 +218,21 @@ mod tests {
         let mut eff = Effects::new();
 
         // Optional: falls set_known bei dir existiert, ok; sonst Test entfernen.
-        board.set_known(crate::layout::cells::cell::cell!("A1"), crate::layout::values::known::known!("1"), &mut eff);
-        board.set_known(crate::layout::cells::cell::cell!("B2"), crate::layout::values::known::known!("2"), &mut eff);
-        board.set_known(crate::layout::cells::cell::cell!("C3"), crate::layout::values::known::known!("3"), &mut eff);
+        board.set_known(
+            crate::layout::cells::cell::cell!("A1"),
+            crate::layout::values::known::known!("1"),
+            &mut eff,
+        );
+        board.set_known(
+            crate::layout::cells::cell::cell!("B2"),
+            crate::layout::values::known::known!("2"),
+            &mut eff,
+        );
+        board.set_known(
+            crate::layout::cells::cell::cell!("C3"),
+            crate::layout::values::known::known!("3"),
+            &mut eff,
+        );
 
         assert!(!eff.has_errors());
 

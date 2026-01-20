@@ -1,10 +1,10 @@
-use itertools::Itertools;
 use super::*;
+use itertools::Itertools;
 
-use crate::puzzle::{Action, CellSet, Known, Board, Effects, Strategy, Verdict};
-use crate::layout::House;
 use crate::layout::cells::cell_set::CellSetIteratorUnion;
 use crate::layout::values::known_set::KnownIteratorUnion;
+use crate::layout::House;
+use crate::puzzle::{Action, Board, CellSet, Effects, Known, Strategy, Verdict};
 // Solver wrapper for Hidden Pair strategy
 pub struct HiddenPairSolver;
 
@@ -77,7 +77,7 @@ pub fn find_hidden_tuples(
     let mut effects = Effects::new();
 
     for house in House::iter() {
-// Collect all candidate sets for each known in the house
+        // Collect all candidate sets for each known in the house
         for candidates in Known::iter()
             .map(|k| (k, house.cells() & board.candidate_cells(k)))
             .filter(|(_, cs)| 2 <= cs.len() && cs.len() <= size)
@@ -86,8 +86,10 @@ pub fn find_hidden_tuples(
             let cell_sets: Vec<CellSet> = candidates.iter().map(|(_, cs)| *cs).collect();
             let tuple_cells = cell_sets.iter().copied().union_cells();
 
-// Skip degenerate tuples or invalid sizes
-            if tuple_cells.len() != size || is_degenerate(&cell_sets, size, 2) || is_degenerate(&cell_sets, size, 3)
+            // Skip degenerate tuples or invalid sizes
+            if tuple_cells.len() != size
+                || is_degenerate(&cell_sets, size, 2)
+                || is_degenerate(&cell_sets, size, 3)
             {
                 continue;
             }
@@ -95,13 +97,13 @@ pub fn find_hidden_tuples(
             let tuple_knowns = candidates.iter().map(|(k, _)| *k).union_knowns();
             let mut action = Action::new(strategy);
 
-// Apply candidate erasures outside of hidden tuple
+            // Apply candidate erasures outside of hidden tuple
             tuple_cells.iter().for_each(|c| {
                 let to_erase = board.candidates(c) - tuple_knowns;
                 action.erase_knowns(c, to_erase);
             });
 
-// Apply clues for knowns in the tuple
+            // Apply clues for knowns in the tuple
             tuple_knowns.iter().for_each(|k| {
                 action.clue_cells_for_known(
                     Verdict::Secondary,
@@ -110,12 +112,12 @@ pub fn find_hidden_tuples(
                 );
             });
 
-// Apply related clues for cells outside the tuple
+            // Apply related clues for cells outside the tuple
             (house.cells() - tuple_cells).iter().for_each(|c| {
                 action.clue_cell_for_knowns(Verdict::Related, c, tuple_knowns);
             });
 
-// Add action and early exit if only a single effect is desired
+            // Add action and early exit if only a single effect is desired
             if effects.add_action(action) && single {
                 return Some(effects);
             }
@@ -132,12 +134,12 @@ pub fn find_hidden_tuples(
 /// Determines whether a combination of candidate cell sets forms a degenerate tuple
 /// Degenerate tuples are subsets of smaller sizes that would conflict with the tuple logic
 pub fn is_degenerate(cell_sets: &[CellSet], size: usize, smaller_size: usize) -> bool {
-    size > smaller_size && cell_sets
-        .iter()
-        .combinations(smaller_size)
-        .any(|combo| combo.iter().map(|cs| **cs).union_cells().len() <= smaller_size)
+    size > smaller_size
+        && cell_sets
+            .iter()
+            .combinations(smaller_size)
+            .any(|combo| combo.iter().map(|cs| **cs).union_cells().len() <= smaller_size)
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -17,4 +17,8 @@ impl TimeControl {
     pub fn is_expired(&self) -> bool {
         self.remaining.is_zero()
     }
+
+    pub fn remaining(&self) -> Duration {
+        self.remaining
+    }
 }

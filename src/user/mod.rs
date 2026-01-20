@@ -1,10 +1,10 @@
+pub mod auth;
+pub mod error;
 pub mod model;
 pub mod repository;
-pub mod auth;
-pub mod validation;
-pub mod session;
-pub mod session_repository;
-pub mod error;
 pub mod reset_token;
 pub mod reset_token_repository;
 pub mod services;
+pub mod session;
+pub mod session_repository;
+pub mod validation;

@@ -1,12 +1,10 @@
 use super::*;
-use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
-use crate::layout::Rectangle;
-use crate::layout::values::known_set::KnownSetLike;
-use itertools::Itertools;
-use crate::layout::values::known_set::KnownSetIteratorUnion;
 use crate::layout::cells::cell_set::CellIteratorUnion;
-
-
+use crate::layout::values::known_set::KnownSetIteratorUnion;
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::Rectangle;
+use crate::puzzle::{Action, Board, Effects, KnownSet, Strategy, Verdict};
+use itertools::Itertools;
 
 /// Trait-based solver for the Avoidable Rectangle strategy
 pub struct AvoidableRectanglesSolver;
@@ -163,18 +161,16 @@ mod tests {
 
     use super::*;
 
-    use crate::layout::values::known::Known;
-
-#[allow(unused_macros)]
-macro_rules! knowns {
-    ($s:literal) => {{
-        let mut ks = KnownSet::empty();
-        for part in $s.split_whitespace() {
-            ks.add(Known::from_str(part));
-        }
-        ks
-    }};
-}
+    #[allow(unused_macros)]
+    macro_rules! knowns {
+        ($s:literal) => {{
+            let mut ks = KnownSet::empty();
+            for part in $s.split_whitespace() {
+                ks.add(Known::from_str(part));
+            }
+            ks
+        }};
+    }
 
     #[test]
     fn type_1() {
@@ -263,5 +259,4 @@ macro_rules! knowns {
         let got = solver.apply(&board, true).unwrap();
         assert!(!got.actions().is_empty());
     }
-
 }

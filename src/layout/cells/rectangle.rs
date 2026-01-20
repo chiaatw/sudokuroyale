@@ -2,8 +2,8 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::iter::FusedIterator;
 
-use crate::layout::{Coord, House};
 use crate::layout::houses::house_set::HouseSetLike;
+use crate::layout::{Coord, House};
 
 use super::{Cell, CellSet};
 
@@ -274,8 +274,28 @@ type CoordPair = (Coord, Coord);
 
 const BLOCKS: [[(House, House); 9]; 2] = {
     const BLOCKS: [[IndexPair; 9]; 2] = [
-        [(0, 1), (0, 2), (1, 2), (3, 4), (3, 5), (4, 5), (6, 7), (6, 8), (7, 8)],
-        [(0, 3), (0, 6), (3, 6), (1, 4), (1, 7), (4, 7), (2, 5), (2, 8), (5, 8)],
+        [
+            (0, 1),
+            (0, 2),
+            (1, 2),
+            (3, 4),
+            (3, 5),
+            (4, 5),
+            (6, 7),
+            (6, 8),
+            (7, 8),
+        ],
+        [
+            (0, 3),
+            (0, 6),
+            (3, 6),
+            (1, 4),
+            (1, 7),
+            (4, 7),
+            (2, 5),
+            (2, 8),
+            (5, 8),
+        ],
     ];
 
     const DEFAULT: House = House::block(Coord::new(0));
@@ -297,26 +317,62 @@ const BLOCKS: [[(House, House); 9]; 2] = {
 const CELL_COORDS: [[(CoordPair, CoordPair); 27]; 2] = {
     const COORDS: [[(IndexPair, IndexPair); 27]; 2] = [
         [
-            ((0, 3), (0, 3)), ((0, 3), (1, 4)), ((0, 3), (2, 5)),
-            ((0, 6), (0, 6)), ((0, 6), (1, 7)), ((0, 6), (2, 8)),
-            ((3, 6), (3, 6)), ((3, 6), (4, 7)), ((3, 6), (5, 8)),
-            ((1, 4), (0, 3)), ((1, 4), (1, 4)), ((1, 4), (2, 5)),
-            ((1, 7), (0, 6)), ((1, 7), (1, 7)), ((1, 7), (2, 8)),
-            ((4, 7), (3, 6)), ((4, 7), (4, 7)), ((4, 7), (5, 8)),
-            ((2, 5), (0, 3)), ((2, 5), (1, 4)), ((2, 5), (2, 5)),
-            ((2, 8), (0, 6)), ((2, 8), (1, 7)), ((2, 8), (2, 8)),
-            ((5, 8), (3, 6)), ((5, 8), (4, 7)), ((5, 8), (5, 8)),
+            ((0, 3), (0, 3)),
+            ((0, 3), (1, 4)),
+            ((0, 3), (2, 5)),
+            ((0, 6), (0, 6)),
+            ((0, 6), (1, 7)),
+            ((0, 6), (2, 8)),
+            ((3, 6), (3, 6)),
+            ((3, 6), (4, 7)),
+            ((3, 6), (5, 8)),
+            ((1, 4), (0, 3)),
+            ((1, 4), (1, 4)),
+            ((1, 4), (2, 5)),
+            ((1, 7), (0, 6)),
+            ((1, 7), (1, 7)),
+            ((1, 7), (2, 8)),
+            ((4, 7), (3, 6)),
+            ((4, 7), (4, 7)),
+            ((4, 7), (5, 8)),
+            ((2, 5), (0, 3)),
+            ((2, 5), (1, 4)),
+            ((2, 5), (2, 5)),
+            ((2, 8), (0, 6)),
+            ((2, 8), (1, 7)),
+            ((2, 8), (2, 8)),
+            ((5, 8), (3, 6)),
+            ((5, 8), (4, 7)),
+            ((5, 8), (5, 8)),
         ],
         [
-            ((0, 1), (0, 1)), ((0, 1), (3, 4)), ((0, 1), (6, 7)),
-            ((0, 2), (0, 2)), ((0, 2), (3, 5)), ((0, 2), (6, 8)),
-            ((1, 2), (1, 2)), ((1, 2), (4, 5)), ((1, 2), (7, 8)),
-            ((3, 4), (0, 1)), ((3, 4), (3, 4)), ((3, 4), (6, 7)),
-            ((3, 5), (0, 2)), ((3, 5), (3, 5)), ((3, 5), (6, 8)),
-            ((4, 5), (1, 2)), ((4, 5), (4, 5)), ((4, 5), (7, 8)),
-            ((6, 7), (0, 1)), ((6, 7), (3, 4)), ((6, 7), (6, 7)),
-            ((6, 8), (0, 2)), ((6, 8), (3, 5)), ((6, 8), (6, 8)),
-            ((7, 8), (1, 2)), ((7, 8), (4, 5)), ((7, 8), (7, 8)),
+            ((0, 1), (0, 1)),
+            ((0, 1), (3, 4)),
+            ((0, 1), (6, 7)),
+            ((0, 2), (0, 2)),
+            ((0, 2), (3, 5)),
+            ((0, 2), (6, 8)),
+            ((1, 2), (1, 2)),
+            ((1, 2), (4, 5)),
+            ((1, 2), (7, 8)),
+            ((3, 4), (0, 1)),
+            ((3, 4), (3, 4)),
+            ((3, 4), (6, 7)),
+            ((3, 5), (0, 2)),
+            ((3, 5), (3, 5)),
+            ((3, 5), (6, 8)),
+            ((4, 5), (1, 2)),
+            ((4, 5), (4, 5)),
+            ((4, 5), (7, 8)),
+            ((6, 7), (0, 1)),
+            ((6, 7), (3, 4)),
+            ((6, 7), (6, 7)),
+            ((6, 8), (0, 2)),
+            ((6, 8), (3, 5)),
+            ((6, 8), (6, 8)),
+            ((7, 8), (1, 2)),
+            ((7, 8), (4, 5)),
+            ((7, 8), (7, 8)),
         ],
     ];
 
@@ -328,7 +384,10 @@ const CELL_COORDS: [[(CoordPair, CoordPair); 27]; 2] = {
         let mut i = 0;
         while i < 27 {
             let ((a, b), (c, d)) = COORDS[hv][i];
-            out[hv][i] = ((Coord::new(a), Coord::new(b)), (Coord::new(c), Coord::new(d)));
+            out[hv][i] = (
+                (Coord::new(a), Coord::new(b)),
+                (Coord::new(c), Coord::new(d)),
+            );
             i += 1;
         }
         hv += 1;
@@ -339,41 +398,34 @@ const CELL_COORDS: [[(CoordPair, CoordPair); 27]; 2] = {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Cell;
-    use crate::CellSet;
 
-    #[test]
-    fn test_rectangle_new_basic() {
-        let tl = Cell::from_str("A1");
-        let br = Cell::from_str("B2");
-        let rect = Rectangle::new(tl, br);
+#[test]
+fn test_rectangle_new_basic() {
+    let tl = Cell::from_str("A1");
+    let br = Cell::from_str("B2");
+    let rect = Rectangle::new(tl, br);
 
-        assert_eq!(rect.tl_br().0, tl);
-        assert_eq!(rect.tl_br().1, br);
+    assert_eq!(rect.tl_br().0, tl);
+    assert_eq!(rect.tl_br().1, br);
 
-        if let Rectangle::Data { block_count, .. } = rect {
-            assert_eq!(block_count, 1); // A1-B2 liegt innerhalb eines Blocks
-        }
-    }
+    // A1-B2 liegt innerhalb eines Blocks
+    assert_eq!(rect.block_count(), 1);
+}
 
-    #[test]
-    fn test_rectangle_new_block_count() {
-        // Rechteck innerhalb eines Blocks
-        let rect1 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("B2"));
-        assert_eq!(matches!(rect1, Rectangle::Data { block_count: 1, .. }), true);
+#[test]
+fn test_rectangle_new_block_count() {
+    // Rechteck innerhalb eines Blocks
+    let rect1 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("B2"));
+    assert_eq!(rect1.block_count(), 1);
 
-        // Rechteck über 2 Blöcke horizontal
-        let rect2 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("A5"));
-        if let Rectangle::Data { block_count, .. } = rect2 {
-            assert_eq!(block_count, 2);
-        }
+    // Rechteck über 2 Blöcke horizontal
+    let rect2 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("A5"));
+    assert_eq!(rect2.block_count(), 2);
 
-        // Rechteck über 4 Blöcke
-        let rect3 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("E5"));
-        if let Rectangle::Data { block_count, .. } = rect3 {
-            assert_eq!(block_count, 4);
-        }
-    }
+    // Rechteck über 4 Blöcke
+    let rect3 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("E5"));
+    assert_eq!(rect3.block_count(), 4);
+}
 
     #[test]
     fn test_rectangle_from_cells() {

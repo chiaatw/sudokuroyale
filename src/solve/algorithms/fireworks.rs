@@ -1,11 +1,11 @@
 use super::hidden_tuples::is_degenerate;
 use super::*;
 
-use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
-use crate::layout::values::known_set::KnownSetLike;
-use itertools::Itertools;
-use crate::layout::values::known_set::KnownIteratorUnion;
 use crate::layout::cells::cell_set::CellSetIteratorUnion;
+use crate::layout::values::known_set::KnownIteratorUnion;
+use crate::layout::values::known_set::KnownSetLike;
+use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
+use itertools::Itertools;
 // Trait-based solver for the Fireworks strategy
 pub struct FireworksSolver;
 
@@ -58,10 +58,7 @@ pub fn find_fireworks(board: &Board, single: bool) -> Option<Effects> {
             })
             .combinations(3)
         {
-            let triple = combos
-                .iter()
-                .map(|(known, ..)| *known)
-                .union_knowns();
+            let triple = combos.iter().map(|(known, ..)| *known).union_knowns();
 
             if triple.len() != 3 {
                 continue;
@@ -98,11 +95,7 @@ pub fn find_fireworks(board: &Board, single: bool) -> Option<Effects> {
                 cells.iter().for_each(|cell| {
                     let knowns = board.candidates(cell);
                     action.erase_knowns(cell, knowns - triple);
-                    action.clue_cell_for_knowns(
-                        Verdict::Secondary,
-                        cell,
-                        triple & knowns,
-                    );
+                    action.clue_cell_for_knowns(Verdict::Secondary, cell, triple & knowns);
                 });
 
                 if effects.add_action(action) && single {
@@ -155,9 +148,21 @@ mod tests {
 
         // Falls set_known bei dir existiert (wie in anderen Dateien), ok.
         // Sonst diesen Test entfernen.
-        board.set_known(crate::layout::cells::cell::cell!("A1"), crate::layout::values::known::known!("1"), &mut eff);
-        board.set_known(crate::layout::cells::cell::cell!("B2"), crate::layout::values::known::known!("2"), &mut eff);
-        board.set_known(crate::layout::cells::cell::cell!("C3"), crate::layout::values::known::known!("3"), &mut eff);
+        board.set_known(
+            crate::layout::cells::cell::cell!("A1"),
+            crate::layout::values::known::known!("1"),
+            &mut eff,
+        );
+        board.set_known(
+            crate::layout::cells::cell::cell!("B2"),
+            crate::layout::values::known::known!("2"),
+            &mut eff,
+        );
+        board.set_known(
+            crate::layout::cells::cell::cell!("C3"),
+            crate::layout::values::known::known!("3"),
+            &mut eff,
+        );
 
         assert!(!eff.has_errors());
         assert!(find_fireworks(&board, false).is_none());

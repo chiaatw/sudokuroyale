@@ -1,5 +1,5 @@
-use crate::layout::{Cell, Known, KnownSet};
 use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::{Cell, Known, KnownSet};
 
 /// Candidate store: one KnownSet per cell.
 /// - For known/filled cells: candidates should be empty.

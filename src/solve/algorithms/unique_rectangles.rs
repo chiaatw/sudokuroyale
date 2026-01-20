@@ -2,15 +2,15 @@ use std::collections::{HashMap, HashSet};
 
 use super::naked_tuples;
 use super::*;
-use crate::puzzle::{Action, Cell, CellSet, Known, KnownSet, Board, Effects, Strategy, Verdict};
-use crate::layout::{House, HouseSet, Rectangle, Shape};
-use crate::layout::values::known_set::KnownSetLike;
-use itertools::Itertools;
+use crate::layout::cells::cell_set::CellIteratorUnion;
+use crate::layout::houses::house::HouseLike;
+use crate::layout::houses::house_set::HouseSetLike;
 use crate::layout::houses::shape::ShapeTrait;
 use crate::layout::values::known_set::KnownSetIteratorUnion;
-use crate::layout::cells::cell_set::CellIteratorUnion;
-use crate::layout::houses::house_set::HouseSetLike;
-use crate::layout::houses::house::HouseLike;
+use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::{House, HouseSet, Rectangle, Shape};
+use crate::puzzle::{Action, Board, Cell, CellSet, Effects, Known, KnownSet, Strategy, Verdict};
+use itertools::Itertools;
 
 pub struct UniqueRectangleSolver;
 
@@ -30,15 +30,15 @@ impl Solver for UniqueRectangleSolver {
 pub fn find_unique_rectangles(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
-    let bi_values = 
+    let bi_values =
         board
             .cells_with_n_candidates(2)
             .iter()
             .fold(HashMap::new(), |mut acc, cell| {
                 acc.entry(board.candidates(cell))
-                .or_insert(CellSet::empty())
-                .add(cell);
-            acc
+                    .or_insert(CellSet::empty())
+                    .add(cell);
+                acc
             });
 
     for (pair, cells) in bi_values.iter().filter(|(_, cells)| cells.len() >= 2) {
@@ -78,7 +78,7 @@ pub fn find_unique_rectangles(board: &Board, single: bool) -> Option<Effects> {
                 }
             } else if first.column() == second.column() {
                 if check_neighbors(
-                    board, 
+                    board,
                     single,
                     *pair,
                     first,
@@ -154,11 +154,11 @@ fn check_neighbors(
     let houses = if floor_left_block == floor_right.block() {
         HouseSet::full(shape).minus(floor_left_block.houses(shape))
     } else {
-    floor_left_block.houses(shape) - floor_left.house(shape)
+        floor_left_block.houses(shape) - floor_left.house(shape)
     };
 
     for house in houses {
-        if let Ok(candidate) = 
+        if let Ok(candidate) =
             Candidate::try_from_neighbors(board, pair, floor_left, floor_right, house)
         {
             if !found_type_ones.contains(&candidate.rectangle) {
@@ -208,7 +208,7 @@ struct Candidate {
     roof_left: Cell,
     roof_left_extras: KnownSet,
     roof_right: Cell,
-    roof_right_extras: KnownSet
+    roof_right_extras: KnownSet,
 }
 
 impl Candidate {

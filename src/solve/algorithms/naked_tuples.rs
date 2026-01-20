@@ -1,11 +1,11 @@
-use itertools::Itertools;
 use super::*;
+use itertools::Itertools;
 
-use crate::puzzle::{Action, KnownSet, Board, Effects, Strategy, Verdict};
-use crate::layout::House;
+use crate::layout::cells::cell_set::CellIteratorUnion;
 use crate::layout::values::known_set::KnownSetIteratorUnion;
 use crate::layout::values::known_set::KnownSetLike;
-use crate::layout::cells::cell_set::CellIteratorUnion;
+use crate::layout::House;
+use crate::puzzle::{Action, Board, Effects, KnownSet, Strategy, Verdict};
 
 // Solver for Naked Pair strategy
 pub struct NakedPairSolver;
@@ -55,13 +55,18 @@ impl Solver for NakedQuadSolver {
 /// Generic logic for detecting naked tuples in a house
 /// size: 2 for pairs, 3 for triples, 4 for quads
 /// Returns Effects representing candidate erasure and clues
-fn find_naked_tuples(board: &Board, single: bool, size: usize, strategy: Strategy) -> Option<Effects> {
+fn find_naked_tuples(
+    board: &Board,
+    single: bool,
+    size: usize,
+    strategy: Strategy,
+) -> Option<Effects> {
     let mut effects = Effects::new();
 
     for house in House::iter() {
         let house_cells = house.cells();
 
-// Generate all combinations of cells in the house that could form a naked tuple
+        // Generate all combinations of cells in the house that could form a naked tuple
         for candidates in house_cells
             .iter()
             .map(|cell| (cell, board.candidates(cell)))
@@ -71,8 +76,10 @@ fn find_naked_tuples(board: &Board, single: bool, size: usize, strategy: Strateg
             let known_sets = candidates.iter().map(|(_, ks)| *ks).collect_vec();
             let tuple_knowns = known_sets.iter().copied().union_knowns();
 
-// Skip if the combined knowns don't match the tuple size or are degenerate
-            if tuple_knowns.len() != size || is_degenerate(&known_sets, size, 2) || is_degenerate(&known_sets, size, 3)
+            // Skip if the combined knowns don't match the tuple size or are degenerate
+            if tuple_knowns.len() != size
+                || is_degenerate(&known_sets, size, 2)
+                || is_degenerate(&known_sets, size, 3)
             {
                 continue;
             }
@@ -81,7 +88,7 @@ fn find_naked_tuples(board: &Board, single: bool, size: usize, strategy: Strateg
             let erase_cells = house_cells - tuple_cells;
             let mut action = Action::new(strategy);
 
-// Erase knowns outside of the naked tuple and mark clues
+            // Erase knowns outside of the naked tuple and mark clues
             tuple_knowns.iter().for_each(|k| {
                 action.erase_cells(erase_cells & board.candidate_cells(k), k);
                 action.clue_cells_for_known(
@@ -91,7 +98,7 @@ fn find_naked_tuples(board: &Board, single: bool, size: usize, strategy: Strateg
                 );
             });
 
-// Provide related clues for cells in the tuple
+            // Provide related clues for cells in the tuple
             tuple_cells.iter().for_each(|c| {
                 action.clue_cell_for_knowns(
                     Verdict::Related,
@@ -100,7 +107,7 @@ fn find_naked_tuples(board: &Board, single: bool, size: usize, strategy: Strateg
                 );
             });
 
-// Add action and optionally return early if only a single effect is desired
+            // Add action and optionally return early if only a single effect is desired
             if effects.add_action(action) && single {
                 return Some(effects);
             }
@@ -114,14 +121,15 @@ fn find_naked_tuples(board: &Board, single: bool, size: usize, strategy: Strateg
     }
 }
 
-/// Determine whether a set of candidate sets forms a degenerate tuple 
+/// Determine whether a set of candidate sets forms a degenerate tuple
 /// Degenerate tuples are subsets of smaller sizes that conflict with the tuple logic
 pub fn is_degenerate(known_sets: &[KnownSet], size: usize, smaller_size: usize) -> bool {
-    size > smaller_size && known_sets
-        .iter()
-        .combinations(smaller_size)
-        .map(|sets| sets.into_iter().copied().union_knowns())
-        .any(|set| set.len() <= smaller_size)
+    size > smaller_size
+        && known_sets
+            .iter()
+            .combinations(smaller_size)
+            .map(|sets| sets.into_iter().copied().union_knowns())
+            .any(|set| set.len() <= smaller_size)
 }
 
 pub fn find_naked_pairs(board: &Board, single: bool) -> Option<Effects> {

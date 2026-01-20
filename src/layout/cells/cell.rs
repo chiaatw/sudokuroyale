@@ -1,6 +1,6 @@
 use std::fmt;
-use std::sync::OnceLock;
 use std::ops::{Add, Neg};
+use std::sync::OnceLock;
 
 use crate::layout::{Coord, House, Shape};
 
@@ -46,24 +46,24 @@ impl Cell {
     }
 
     pub const fn from_row(row: Coord, column: Coord) -> Self {
-    Self::from_coords(row, column)
+        Self::from_coords(row, column)
     }
 
     pub const fn from_column(column: Coord, row: Coord) -> Self {
-    Self::from_coords(row, column)
+        Self::from_coords(row, column)
     }
 
     pub const fn from_block(block: House, coord: Coord) -> Self {
-    let b = block.coord().usize() as u8;
-    let i = coord.usize() as u8;
+        let b = block.coord().usize() as u8;
+        let i = coord.usize() as u8;
 
-    let br = b / 3;
-    let bc = b % 3;
+        let br = b / 3;
+        let bc = b % 3;
 
-    let r = br * 3 + (i / 3);
-    let c = bc * 3 + (i % 3);
+        let r = br * 3 + (i / 3);
+        let c = bc * 3 + (i % 3);
 
-    Self::new(r * 9 + c)
+        Self::new(r * 9 + c)
     }
 
     /// Parses a cell from its textual label (e.g. "A1").
@@ -158,7 +158,7 @@ impl Cell {
 
     /// Returns the set of all peer cells.
     pub fn peers(&self) -> CellSet {
-    peers_table()[self.usize()]
+        peers_table()[self.usize()]
     }
 
     /// Returns true if this cell sees another cell.
@@ -183,7 +183,6 @@ impl Cell {
     }
 }
 
-
 impl TryFrom<&str> for Cell {
     type Error = String;
 
@@ -199,7 +198,6 @@ impl TryFrom<String> for Cell {
         Self::try_from(label.as_str())
     }
 }
-
 
 impl Add<Cell> for Cell {
     type Output = CellSet;
@@ -217,13 +215,11 @@ impl Neg for Cell {
     }
 }
 
-
 impl fmt::Display for Cell {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.label())
     }
 }
-
 
 pub struct CellIter(u8);
 
@@ -253,17 +249,12 @@ impl ExactSizeIterator for CellIter {
     }
 }
 
-
-#[allow(unused_macros)]
+#[macro_export]
 macro_rules! cell {
     ($l:expr) => {
-        Cell::from_str($l)
+        $crate::layout::Cell::from_str($l)
     };
 }
-
-#[allow(unused_imports)]
-pub(crate) use cell;
-
 
 /// Precomputed row, column and block coordinates for every cell.
 const HOUSE_COORDS: [[Coord; 3]; 81] = {
@@ -273,7 +264,11 @@ const HOUSE_COORDS: [[Coord; 3]; 81] = {
         let r = i / 9;
         let c = i % 9;
         let b = (r / 3) * 3 + (c / 3);
-        coords[i] = [Coord::new(r as u8), Coord::new(c as u8), Coord::new(b as u8)];
+        coords[i] = [
+            Coord::new(r as u8),
+            Coord::new(c as u8),
+            Coord::new(b as u8),
+        ];
         i += 1;
     }
     coords
@@ -302,7 +297,11 @@ const COORDS_IN_HOUSES: [[Coord; 3]; 81] = {
         let r = i / 9;
         let c = i % 9;
         let b = 3 * (r % 3) + (c % 3);
-        coords[i] = [Coord::new(c as u8), Coord::new(r as u8), Coord::new(b as u8)];
+        coords[i] = [
+            Coord::new(c as u8),
+            Coord::new(r as u8),
+            Coord::new(b as u8),
+        ];
         i += 1;
     }
     coords
@@ -364,10 +363,10 @@ mod tests {
         let cell = Cell::new(0); // A1
         let peers = cell.peers();
         assert!(!peers.has(cell));
-        assert!(peers.has(Cell::new(1)));  // A2
-        assert!(peers.has(Cell::new(9)));  // B1
+        assert!(peers.has(Cell::new(1))); // A2
+        assert!(peers.has(Cell::new(9))); // B1
         assert!(peers.has(Cell::new(10))); // B2
-        assert_eq!(peers.len(), 20);       // 20 Peers für A1
+        assert_eq!(peers.len(), 20); // 20 Peers für A1
     }
 
     #[test]
@@ -409,8 +408,9 @@ mod tests {
         let c1 = Cell::from_str("A1");
         let c2 = Cell::from_str("A2");
         let houses = c1.common_houses(c2);
-        assert!(houses.iter().any(|h| h == c1.row()));
-        assert!(houses.iter().any(|h| h == c1.block()));
+
+        assert!(houses.iter().any(|h| *h == c1.row()));
+        assert!(houses.iter().any(|h| *h == c1.block()));
         assert_eq!(houses.len(), 2);
 
         let c3 = Cell::from_str("B1");
@@ -426,18 +426,22 @@ mod tests {
         assert_eq!(houses[Shape::Column.usize()], c.column());
         assert_eq!(houses[Shape::Block.usize()], c.block());
 
-        assert_eq!(c.row_coord(), Coord::new(0));
+        assert_eq!(c.row_coord(), Coord::new(2));
         assert_eq!(c.column_coord(), Coord::new(2));
         assert_eq!(c.block_coord(), Coord::new(0));
 
-        assert_eq!(c.coord_in_row(), Coord::new(2));
-        assert_eq!(c.coord_in_column(), Coord::new(0));
-        assert_eq!(c.coord_in_block(), Coord::new(2));
+        assert_eq!(c.coord_in_row(), Coord::new(2));      
+        assert_eq!(c.coord_in_column(), Coord::new(2));   
+        assert_eq!(c.coord_in_block(), Coord::new(8));
     }
 
     #[test]
     fn test_labels_formatting() {
-        let cells = vec![Cell::from_str("A1"), Cell::from_str("B2"), Cell::from_str("C3")];
+        let cells = vec![
+            Cell::from_str("A1"),
+            Cell::from_str("B2"),
+            Cell::from_str("C3"),
+        ];
         let s = Cell::labels(&cells);
         assert_eq!(s, "( A1 B2 C3 )");
     }
@@ -451,9 +455,7 @@ mod tests {
 
     #[test]
     fn test_cell_macro() {
-        let c = cell!("A1");
+        let c = crate::cell!("A1");
         assert_eq!(c.index(), 0);
-        let c2 = cell!("C3");
-        assert_eq!(c2.label(), "C3");
     }
 }

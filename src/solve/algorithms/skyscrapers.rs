@@ -1,7 +1,7 @@
 use super::*;
 
-use crate::puzzle::{Action, Cell, Known, Board, Effects, Strategy, Verdict};
 use crate::layout::{House, HouseSet, Shape};
+use crate::puzzle::{Action, Board, Cell, Effects, Known, Strategy, Verdict};
 use itertools::Itertools;
 // Solver wrapper for the Skyscraper strategy
 pub struct SkyscraperSolver;
@@ -22,9 +22,21 @@ impl SkyscraperSolver {
     fn find_skyscrapers(&self, board: &Board, single: bool) -> Option<Effects> {
         let mut effects = Effects::new();
 
-// Check rows first, then columns
-        if !self.check_houses(board, single, House::all_rows(), Shape::Column, &mut effects) {
-            self.check_houses(board, single, House::all_columns(), Shape::Row, &mut effects);
+        // Check rows first, then columns
+        if !self.check_houses(
+            board,
+            single,
+            House::all_rows(),
+            Shape::Column,
+            &mut effects,
+        ) {
+            self.check_houses(
+                board,
+                single,
+                House::all_columns(),
+                Shape::Row,
+                &mut effects,
+            );
         }
 
         if effects.has_actions() {
@@ -45,14 +57,14 @@ impl SkyscraperSolver {
         for known in Known::iter() {
             let candidate_cells = board.candidate_cells(known);
 
-// Closure for checking a candidate skyscraper
+            // Closure for checking a candidate skyscraper
             let mut check_candidate = |f1: Cell, c1: Cell, f2: Cell, c2: Cell| -> bool {
                 if c1.house(cross) == c2.house(cross) {
-// degenerate X-Wing
+                    // degenerate X-Wing
                     return false;
                 }
                 if (candidate_cells & f1.house(cross).cells()).len() == 2 {
-// degenerate Singles Chain
+                    // degenerate Singles Chain
                     return false;
                 }
 

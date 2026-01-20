@@ -1,9 +1,9 @@
-use std::fmt;
 use once_cell::sync::Lazy;
 use std::array;
+use std::fmt;
 
-use crate::layout::{Cell, CellSet, Coord};
 use crate::layout::houses::house::House;
+use crate::layout::{Cell, CellSet, Coord};
 
 #[derive(Clone, Copy, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Shape {
@@ -35,18 +35,16 @@ impl Iterator for HouseIter {
             Some(h)
         } else {
             None
-            }
         }
     }
+}
 
-
-
-pub trait ShapeTrait{
+pub trait ShapeTrait {
     fn label(&self) -> &str;
     fn index(&self) -> usize;
 
     fn cells(&self, house: Coord) -> CellSet; //returns all cells of one house
-    fn cell_at(&self, house: Coord, index: usize) -> Cell; //returns a single cell of a house    
+    fn cell_at(&self, house: Coord, index: usize) -> Cell; //returns a single cell of a house
     fn house(&self, coord: Coord) -> House; //Returns the House struct: Row/Column/Block + Coordinate
 
     fn is_row(&self) -> bool;
@@ -55,8 +53,8 @@ pub trait ShapeTrait{
 
     fn house_iter(&self) -> HouseIter; //Returns an iterator over all houses of this shape
 
-    fn iter() -> ShapeIter 
-    where 
+    fn iter() -> ShapeIter
+    where
         Self: Sized; //Returns an iterator over all shape types
 }
 
@@ -77,9 +75,9 @@ impl ShapeCells for Shape {
                     Shape::Column => Cell::new(house_u8 + 9 * coord_u8),
                     Shape::Block => Cell::new(
                         (house_u8 / 3) * 27
-                        + (house_u8 % 3) * 3
-                        + (coord_u8 / 3) * 9
-                        + (coord_u8 % 3),
+                            + (house_u8 % 3) * 3
+                            + (coord_u8 / 3) * 9
+                            + (coord_u8 % 3),
                     ),
                 };
             }
@@ -93,7 +91,6 @@ impl ShapeCells for Shape {
 }
 
 impl ShapeTrait for Shape {
-
     fn label(&self) -> &str {
         match self {
             Shape::Row => "Row",
@@ -128,7 +125,7 @@ impl ShapeTrait for Shape {
     fn house_iter(&self) -> HouseIter {
         HouseIter::new(*self)
     }
-    fn iter() -> ShapeIter 
+    fn iter() -> ShapeIter
     where
         Self: Sized,
     {
@@ -136,27 +133,27 @@ impl ShapeTrait for Shape {
     }
 }
 
-    impl From<char> for Shape {
-        fn from(c: char) -> Self {
-            match c {
-                'R' => Shape::Row,
-                'C' => Shape::Column,
-                'B' => Shape::Block,
-                _ => panic!("Invalid character for Shape"),
-            }
+impl From<char> for Shape {
+    fn from(c: char) -> Self {
+        match c {
+            'R' => Shape::Row,
+            'C' => Shape::Column,
+            'B' => Shape::Block,
+            _ => panic!("Invalid character for Shape"),
         }
     }
+}
 
-    impl Shape {
-        pub const fn new(index: u8) -> Self {
-            match index {
-                0 => Shape::Row,
-                1 => Shape::Column,
-                2 => Shape::Block,
-                _ => panic!("Invalid Shape index"),
-            }
+impl Shape {
+    pub const fn new(index: u8) -> Self {
+        match index {
+            0 => Shape::Row,
+            1 => Shape::Column,
+            2 => Shape::Block,
+            _ => panic!("Invalid Shape index"),
         }
-        pub const fn usize(self) -> usize {
+    }
+    pub const fn usize(self) -> usize {
         self as usize
     }
 
@@ -223,17 +220,21 @@ impl ExactSizeIterator for ShapeIter {
     }
 }
 
-pub static CELLS: Lazy<[[[Cell; 9]; 9]; 3]> = Lazy::new(|| [
-    ShapeCells::cells(&Shape::Row),
-    ShapeCells::cells(&Shape::Column),
-    ShapeCells::cells(&Shape::Block),
-]);
+pub static CELLS: Lazy<[[[Cell; 9]; 9]; 3]> = Lazy::new(|| {
+    [
+        ShapeCells::cells(&Shape::Row),
+        ShapeCells::cells(&Shape::Column),
+        ShapeCells::cells(&Shape::Block),
+    ]
+});
 
-pub static CELL_SETS: Lazy<[[CellSet; 9]; 3]> = Lazy::new(|| [
-    Shape::Row.cell_sets(),
-    Shape::Column.cell_sets(),
-    Shape::Block.cell_sets(),
-]);
+pub static CELL_SETS: Lazy<[[CellSet; 9]; 3]> = Lazy::new(|| {
+    [
+        Shape::Row.cell_sets(),
+        Shape::Column.cell_sets(),
+        Shape::Block.cell_sets(),
+    ]
+});
 
 #[cfg(test)]
 mod tests {
@@ -277,31 +278,44 @@ mod tests {
     }
 
     #[test]
-    fn cells_row_column_block() {
-        let row_cells = Shape::Row.cells();
-        let col_cells = Shape::Column.cells();
-        let block_cells = Shape::Block.cells();
+    fn cell_at_correct() {
+        // Row 1, index 5 → 9 * 1 + 5 = 14
+        let c = Shape::Row.cell(Coord::new(1), Coord::new(5));
+        assert_eq!(c.index(), 14);
 
-        // Row: first row should be 0..8
+        // Column 2, index 3 → 2 + 9 * 3 = 29
+        let c = Shape::Column.cell(Coord::new(2), Coord::new(3));
+        assert_eq!(c.index(), 29);
+    }
+
+    #[test]
+    fn cells_row_column_block_first_house() {
+        // Row 0: cells 0..8
         for i in 0..9 {
-            assert_eq!(row_cells[0][i].0, i as u8);
+            let cell = Shape::Row.cell(Coord::new(0), Coord::new(i));
+            assert_eq!(cell.index(), i as u8);
         }
-        // Column: first column should be multiples of 9
+
+        // Column 0: cells 0,9,18,...
         for i in 0..9 {
-            assert_eq!(col_cells[0][i].0, (i * 9) as u8);
+            let cell = Shape::Column.cell(Coord::new(0), Coord::new(i));
+            assert_eq!(cell.index(), (i * 9) as u8);
         }
-        // Block: first block first row
-        assert_eq!(block_cells[0][0].0, 0);
-        assert_eq!(block_cells[0][1].0, 1);
-        assert_eq!(block_cells[0][2].0, 2);
+
+        // Block 0: first row of first block
+        assert_eq!(Shape::Block.cell(Coord::new(0), Coord::new(0)).index(), 0);
+        assert_eq!(Shape::Block.cell(Coord::new(0), Coord::new(1)).index(), 1);
+        assert_eq!(Shape::Block.cell(Coord::new(0), Coord::new(2)).index(), 2);
     }
 
     #[test]
     fn cell_sets_length() {
         let row_sets = Shape::Row.cell_sets();
         assert_eq!(row_sets.len(), 9);
+
         let col_sets = Shape::Column.cell_sets();
         assert_eq!(col_sets.len(), 9);
+
         let block_sets = Shape::Block.cell_sets();
         assert_eq!(block_sets.len(), 9);
     }
@@ -309,14 +323,14 @@ mod tests {
     #[test]
     fn house_and_house_iter() {
         let house = Shape::Row.house(Coord::new(3));
-        assert_eq!(house.coord.0, 3);
-        assert!(house.shape.is_row());
+        assert_eq!(house.coord().index(), 3);
+        assert!(house.shape().is_row());
 
         let mut iter = Shape::Row.house_iter();
         for i in 0..9 {
             let h = iter.next().unwrap();
-            assert_eq!(h.coord.0, i);
-            assert!(h.shape.is_row());
+            assert_eq!(h.coord().index(), i);
+            assert!(h.shape().is_row());
         }
         assert!(iter.next().is_none());
     }
@@ -328,16 +342,6 @@ mod tests {
         assert_eq!(iter.next(), Some(Shape::Column));
         assert_eq!(iter.next(), Some(Shape::Block));
         assert_eq!(iter.next(), None);
-    }
-
-    #[test]
-    fn cell_at_correct() {
-        // Row 1, index 5 → Cell should be 9*1 + 5 = 14
-        let c = Shape::Row.cell_at(Coord::new(1), 5);
-        assert_eq!(c.0, 14);
-        // Column 2, index 3 → Cell should be 2 + 9*3 = 29
-        let c = Shape::Column.cell_at(Coord::new(2), 3);
-        assert_eq!(c.0, 29);
     }
 
     #[test]
@@ -360,33 +364,20 @@ mod tests {
     }
 
     #[test]
-    fn display_debug() {
-        let s = format!("{}", Shape::Row);
-        assert_eq!(s, "Row");
-        let d = format!("{:?}", Shape::Block);
-        assert_eq!(d, "Shape::Box");
+    fn display_and_debug() {
+        assert_eq!(format!("{}", Shape::Row), "Row");
+        assert_eq!(format!("{:?}", Shape::Block), "Shape::Box");
     }
 
     #[test]
     fn coord_and_cell_debug() {
         let coord = Coord::new(7);
-        let c = Cell::new(42);
+        let cell = Cell::new(42);
+
         let coord_dbg = format!("{:?}", coord);
-        let cell_dbg = format!("{:?}", c);
+        let cell_dbg = format!("{:?}", cell);
+
         assert!(coord_dbg.contains("7"));
         assert!(cell_dbg.contains("42"));
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

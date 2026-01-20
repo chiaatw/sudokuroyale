@@ -9,23 +9,23 @@ impl Options {
     const SOLVE_HIDDEN_SINGLES: u8 = 1 << 2;
     const SOLVE_INTERSECTION_REMOVALS: u8 = 1 << 3;
 
-// No options set
+    // No options set
     pub const fn none() -> Self {
         Self(0)
     }
 
-// only stop on errors
+    // only stop on errors
     pub const fn errors() -> Self {
         Self(Self::STOP_ON_ERROR)
     }
 
-// all options enabled
+    // all options enabled
     pub const fn all() -> Self {
         Self(
             Self::STOP_ON_ERROR
-            | Self::SOLVE_NAKED_SINGLES
-            | Self::SOLVE_HIDDEN_SINGLES
-            | Self::SOLVE_INTERSECTION_REMOVALS
+                | Self::SOLVE_NAKED_SINGLES
+                | Self::SOLVE_HIDDEN_SINGLES
+                | Self::SOLVE_INTERSECTION_REMOVALS,
         )
     }
 
@@ -102,16 +102,16 @@ impl Options {
         self
     }
 
-// Determines if a strategy should be applied given the current options
+    // Determines if a strategy should be applied given the current options
     #[inline]
     pub fn should_apply(&self, strategy: Strategy) -> bool {
         match strategy {
             Strategy::Peer | Strategy::BruteForce => true,
             Strategy::NakedSingle => self.solve_naked_singles(),
             Strategy::HiddenSingle => self.solve_hidden_singles(),
-            Strategy::PointingPair
-            | Strategy::PointingTriple
-            | Strategy::BoxLineReduction => self.solve_intersection_removals(),
+            Strategy::PointingPair | Strategy::PointingTriple | Strategy::BoxLineReduction => {
+                self.solve_intersection_removals()
+            }
             _ => false,
         }
     }
@@ -214,5 +214,4 @@ mod test {
         assert!(options.solve_hidden_singles());
         assert!(options.solve_intersection_removals());
     }
-
 }

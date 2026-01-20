@@ -1,12 +1,12 @@
-use uuid::Uuid;
 use chrono::Utc;
+use uuid::Uuid;
 
 use crate::game_match::model::{GameMatch, MatchStatus};
 use crate::game_match::repository::MatchRepository;
 
 use crate::user::repository::UserRepository;
-use crate::user::session_repository::SessionRepository;
 use crate::user::services::get_user_from_session;
+use crate::user::session_repository::SessionRepository;
 
 pub fn create_match(
     users: &UserRepository,
@@ -50,11 +50,7 @@ pub fn join_match(
     true
 }
 
-pub fn leave_match_by_user(
-    repo: &mut MatchRepository,
-    user_id: &Uuid,
-    match_id: &Uuid,
-) -> bool {
+pub fn leave_match_by_user(repo: &mut MatchRepository, user_id: &Uuid, match_id: &Uuid) -> bool {
     // 1) Match mut holen
     let m = match repo.find_by_id_mut(match_id) {
         Some(m) => m,
@@ -76,7 +72,6 @@ pub fn leave_match_by_user(
 
     false
 }
-
 
 pub fn start_match_by_user(
     match_repo: &mut MatchRepository,

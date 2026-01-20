@@ -1,7 +1,7 @@
+use crate::user::model::User;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
-use crate::user::model::User;
-use chrono::{NaiveDateTime, DateTime, Utc};
 
 pub struct UserRepository {
     pool: PgPool,
@@ -25,7 +25,7 @@ impl UserRepository {
             user.username,
             user.email,
             user.password_hash,
-            user.created_at.naive_utc(), 
+            user.created_at.naive_utc(),
         )
         .execute(&self.pool)
         .await?;
@@ -122,6 +122,3 @@ impl UserRepository {
         Ok(())
     }
 }
-
-
- 

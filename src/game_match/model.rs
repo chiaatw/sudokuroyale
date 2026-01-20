@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use chrono::{DateTime, Utc};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MatchStatus {

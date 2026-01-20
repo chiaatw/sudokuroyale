@@ -9,7 +9,7 @@ pub fn validate_username(username: &str) -> Result<(), &'static str> {
         return Err("Username must be at between 3 and 20 characters long");
     }
 
-    if !name.chars().all(|c| c.is_alphanumeric() || c == '_' ) {
+    if !name.chars().all(|c| c.is_alphanumeric() || c == '_') {
         return Err("Username may only contain letter, numbers and underscores");
     }
 
@@ -23,8 +23,7 @@ pub fn validate_email(email: &str) -> Result<(), &'static str> {
         return Err("Email cannot be empty");
     }
 
-    let pattern = regex::Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-        .expect("Invalid regex");
+    let pattern = regex::Regex::new(r"^[^@\s]+@[^@\s]+\.[^@\s]+$").expect("Invalid regex");
 
     if !pattern.is_match(e) {
         return Err("Email format is invalid");
