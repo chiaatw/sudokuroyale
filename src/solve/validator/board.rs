@@ -93,6 +93,10 @@ impl Board {
     /// Set a known digit into a cell and update candidates incrementally.
     /// (No rule validation here; validator handles that.)
     pub fn set_known(&mut self, cell: Cell, known: Known) {
+        // IMPORTANT: also write the cell value. Candidate updates rely on the board
+        // reflecting the newly-known digit (and other code/validators read `cells`).
+        self.cells[cell.usize()] = Value::from(known);
+
         let mut candidates = std::mem::take(&mut self.candidates);
         update_after_set_known(self, &mut candidates, cell, known);
         self.candidates = candidates;

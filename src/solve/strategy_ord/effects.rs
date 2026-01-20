@@ -268,22 +268,23 @@ impl fmt::Display for Effects {
 mod tests {
     use super::*;
     use crate::layout::{Cell, Known};
-    use crate::puzzle::{Action, Board, Strategy, Change, Error};
 
     fn cell(i: usize) -> Cell {
         Cell::new(i as u8)
     }
 
     fn known(n: u8) -> Known {
-        Known::from(n)
+        // FIX: bei dir ist Known::new(..) korrekt
+        Known::new(n)
     }
 
-    fn action_set(cell: Cell, known: Known) -> Action {
-        Action::new_set(Strategy::NakedSingle, cell, known)
+    fn action_set(c: Cell, k: Known) -> Action {
+        Action::new_set(Strategy::NakedSingle, c, k)
     }
 
-    fn action_erase(cell: Cell, known: Known) -> Action {
-        Action::new_erase(Strategy::LockedCandidates, cell, known)
+    fn action_erase(c: Cell, k: Known) -> Action {
+        // FIX: LockedCandidates gibt es nicht in deinem Strategy-Enum
+        Action::new_erase(Strategy::IntersectionRemoval, c, k)
     }
 
     #[test]
@@ -335,7 +336,7 @@ mod tests {
     fn add_set_and_erase_shortcuts() {
         let mut effects = Effects::new();
         effects.add_set(Strategy::NakedSingle, cell(0), known(1));
-        effects.add_erase(Strategy::LockedCandidates, cell(1), known(2));
+        effects.add_erase(Strategy::IntersectionRemoval, cell(1), known(2));
 
         assert_eq!(effects.actions().len(), 2);
         assert!(effects.actions()[0].sets(cell(0), known(1)));
@@ -346,7 +347,7 @@ mod tests {
     fn affecting_cell_and_known_filters_actions() {
         let mut effects = Effects::new();
         effects.add_set(Strategy::NakedSingle, cell(0), known(1));
-        effects.add_erase(Strategy::LockedCandidates, cell(1), known(2));
+        effects.add_erase(Strategy::IntersectionRemoval, cell(1), known(2));
 
         let cell_effects = effects.affecting_cell(cell(0));
         assert_eq!(cell_effects.actions().len(), 1);
@@ -361,7 +362,7 @@ mod tests {
     fn without_action_removes_action_by_index() {
         let mut effects = Effects::new();
         effects.add_set(Strategy::NakedSingle, cell(0), known(1));
-        effects.add_erase(Strategy::LockedCandidates, cell(1), known(2));
+        effects.add_erase(Strategy::IntersectionRemoval, cell(1), known(2));
 
         let new_effects = effects.without_action(0);
         assert_eq!(new_effects.actions().len(), 1);
@@ -374,7 +375,7 @@ mod tests {
         effects1.add_set(Strategy::NakedSingle, cell(0), known(1));
 
         let mut effects2 = Effects::new();
-        effects2.add_erase(Strategy::LockedCandidates, cell(1), known(2));
+        effects2.add_erase(Strategy::IntersectionRemoval, cell(1), known(2));
 
         effects1.take_actions(effects2);
         assert_eq!(effects1.actions().len(), 2);
@@ -441,5 +442,12 @@ mod tests {
         assert!(output.contains("Errors:"));
         assert!(output.contains("Actions:"));
         assert!(output.contains(&cell(1).to_string()));
+    }
+
+    // Optional: ensure our local helper functions compile (not strictly necessary)
+    #[test]
+    fn helpers_compile() {
+        let _ = action_set(cell(0), known(1));
+        let _ = action_erase(cell(1), known(2));
     }
 }

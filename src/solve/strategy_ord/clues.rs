@@ -165,11 +165,12 @@ mod tests {
     use crate::layout::{Cell, CellSet, Known};
 
     fn cell(i: usize) -> Cell {
-        Cell::new(i)
+        Cell::new(i as u8)
     }
 
     fn known(n: u8) -> Known {
-        Known::from(n)
+        // FIX: bei dir ist Known::new(...) korrekt, nicht Known::from(u8)
+        Known::new(n)
     }
 
     #[test]
@@ -189,7 +190,10 @@ mod tests {
 
         let collected = clues.collect();
         assert_eq!(collected.len(), 1);
-        assert_eq!(collected.get(&cell(0)).unwrap().get(&known(1)), Some(&Verdict::Set));
+        assert_eq!(
+            collected.get(&cell(0)).unwrap().get(&known(1)),
+            Some(&Verdict::Set)
+        );
     }
 
     #[test]
@@ -201,7 +205,10 @@ mod tests {
         let collected = clues.collect();
         assert_eq!(collected.len(), 3);
         for c in [cell(0), cell(1), cell(2)] {
-            assert_eq!(collected.get(&c).unwrap().get(&known(2)), Some(&Verdict::Erase));
+            assert_eq!(
+                collected.get(&c).unwrap().get(&known(2)),
+                Some(&Verdict::Erase)
+            );
         }
     }
 
@@ -215,8 +222,14 @@ mod tests {
 
         let collected = clues.collect();
         for c in [cell(3), cell(4)] {
-            assert_eq!(collected.get(&c).unwrap().get(&known(1)), Some(&Verdict::Primary));
-            assert_eq!(collected.get(&c).unwrap().get(&known(2)), Some(&Verdict::Primary));
+            assert_eq!(
+                collected.get(&c).unwrap().get(&known(1)),
+                Some(&Verdict::Primary)
+            );
+            assert_eq!(
+                collected.get(&c).unwrap().get(&known(2)),
+                Some(&Verdict::Primary)
+            );
         }
     }
 
@@ -265,7 +278,7 @@ mod tests {
     fn verdict_color_char_returns_string() {
         let c = 'X';
         assert_eq!(Verdict::None.color_char(c), "X".to_string());
-        // We can't reliably test ANSI codes without colored crate support, but should return nonempty
+        // ANSI-Farben nicht stabil testbar, aber String sollte nicht leer sein
         assert!(!Verdict::Set.color_char(c).is_empty());
         assert!(!Verdict::Erase.color_char(c).is_empty());
         assert!(!Verdict::Primary.color_char(c).is_empty());
@@ -279,7 +292,13 @@ mod tests {
 
         let collected = clues.collect();
         assert_eq!(collected.get(&cell(0)).unwrap().len(), 2);
-        assert_eq!(collected.get(&cell(0)).unwrap().get(&known(1)), Some(&Verdict::Related));
-        assert_eq!(collected.get(&cell(0)).unwrap().get(&known(2)), Some(&Verdict::Related));
+        assert_eq!(
+            collected.get(&cell(0)).unwrap().get(&known(1)),
+            Some(&Verdict::Related)
+        );
+        assert_eq!(
+            collected.get(&cell(0)).unwrap().get(&known(2)),
+            Some(&Verdict::Related)
+        );
     }
 }

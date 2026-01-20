@@ -283,10 +283,9 @@ impl fmt::Display for Action {
 mod tests {
     use super::*;
     use crate::layout::{Cell, CellSet, Known, KnownSet};
-    use crate::puzzle::{Board, Strategy, Verdict};
 
     fn cell(i: usize) -> Cell {
-        Cell::new(i)
+        Cell::new(i as u8)
     }
 
     #[test]
@@ -299,7 +298,7 @@ mod tests {
     #[test]
     fn new_set_creates_set_entry() {
         let c = cell(0);
-        let k = Known::from(1);
+        let k = Known::new(1);
 
         let action = Action::new_set(Strategy::NakedSingle, c, k);
 
@@ -312,7 +311,7 @@ mod tests {
     #[test]
     fn new_erase_creates_erase_entry() {
         let c = cell(10);
-        let k = Known::from(5);
+        let k = Known::new(5);
 
         let action = Action::new_erase(Strategy::HiddenSingle, c, k);
 
@@ -324,9 +323,12 @@ mod tests {
 
     #[test]
     fn erase_cells_erases_all_cells() {
-        let mut action = Action::new(Strategy::LockedCandidates);
-        let cells: CellSet = [cell(0), cell(1), cell(2)].into();
-        let k = Known::from(3);
+        // "LockedCandidates" existiert nicht in deinem Strategy-Enum
+        let mut action = Action::new(Strategy::IntersectionRemoval);
+
+        // CellSet kann nicht aus Array via Into gebaut werden -> CellSet::of
+        let cells: CellSet = CellSet::of(&[cell(0), cell(1), cell(2)]);
+        let k = Known::new(3);
 
         action.erase_cells(cells, k);
 
@@ -337,9 +339,9 @@ mod tests {
 
     #[test]
     fn erase_knowns_erases_all_knowns() {
-        let mut action = Action::new(Strategy::LockedCandidates);
+        let mut action = Action::new(Strategy::IntersectionRemoval);
         let c = cell(4);
-        let knowns = KnownSet::from_iter([Known::from(1), Known::from(2)]);
+        let knowns = KnownSet::from_iter([Known::new(1), Known::new(2)]);
 
         action.erase_knowns(c, knowns);
 
@@ -351,27 +353,27 @@ mod tests {
     #[test]
     fn collect_sets_is_sorted() {
         let mut action = Action::new(Strategy::NakedSingle);
-        action.set(cell(5), Known::from(2));
-        action.set(cell(1), Known::from(1));
-        action.set(cell(1), Known::from(3));
+        action.set(cell(5), Known::new(2));
+        action.set(cell(1), Known::new(1));
+        action.set(cell(1), Known::new(3));
 
         let collected = action.collect_sets();
 
         assert_eq!(
             collected,
             vec![
-                (cell(1), Known::from(1)),
-                (cell(1), Known::from(3)),
-                (cell(5), Known::from(2)),
+                (cell(1), Known::new(1)),
+                (cell(1), Known::new(3)),
+                (cell(5), Known::new(2)),
             ]
         );
     }
 
     #[test]
     fn collect_erases_is_sorted() {
-        let mut action = Action::new(Strategy::LockedCandidates);
-        action.erase(cell(2), Known::from(3));
-        action.erase(cell(0), Known::from(1));
+        let mut action = Action::new(Strategy::IntersectionRemoval);
+        action.erase(cell(2), Known::new(3));
+        action.erase(cell(0), Known::new(1));
 
         let collected = action.collect_erases();
 
@@ -382,24 +384,25 @@ mod tests {
     #[test]
     fn affects_known_works_for_set_and_erase() {
         let mut action = Action::new(Strategy::NakedSingle);
-        let k1 = Known::from(4);
-        let k2 = Known::from(7);
+        let k1 = Known::new(4);
+        let k2 = Known::new(7);
 
         action.set(cell(0), k1);
         action.erase(cell(1), k2);
 
         assert!(action.affects_known(k1));
         assert!(action.affects_known(k2));
-        assert!(!action.affects_known(Known::from(9)));
+        assert!(!action.affects_known(Known::new(9)));
     }
 
     #[test]
     fn clues_are_recorded() {
         let mut action = Action::new(Strategy::XWing);
         let c = cell(8);
-        let k = Known::from(6);
+        let k = Known::new(6);
 
-        action.clue_cell_for_known(Verdict::Good, c, k);
+        // "Good" gibt es nicht -> nimm einen existierenden Verdict
+        action.clue_cell_for_known(Verdict::Primary, c, k);
 
         assert!(action.has_clues());
         assert!(!action.clues().is_empty());
@@ -408,8 +411,8 @@ mod tests {
     #[test]
     fn display_and_debug_do_not_panic() {
         let mut action = Action::new(Strategy::NakedSingle);
-        action.set(cell(0), Known::from(1));
-        action.erase(cell(1), Known::from(2));
+        action.set(cell(0), Known::new(1));
+        action.erase(cell(1), Known::new(2));
 
         let _ = format!("{}", action);
         let _ = format!("{:?}", action);
@@ -421,12 +424,13 @@ mod tests {
         let mut effects = Effects::new();
 
         let c = cell(0);
-        let k = Known::from(1);
+        let k = Known::new(1);
 
         let action = Action::new_set(Strategy::NakedSingle, c, k);
         let change = action.apply(&mut board, &mut effects);
 
-        assert!(change.is_some());
+        // Change ist ein Enum, kein Option -> changed() oder != None
+        assert!(change.changed());
         assert!(board.is_known(c));
         assert_eq!(board.known(c), Some(k));
     }

@@ -11,15 +11,13 @@ pub use errors::{HouseKind, ValidationError};
 
 // Public API
 pub use cells::validate_cells;
-pub use peers::validate_peers;
+pub use peers::{validate_clear_move, validate_place_move};
 pub use givens::validate_givens;
 pub use deadliness::validate_deadliness;
-
 
 /// Runs all validator passes
 pub fn validate(board: &Board) -> Result<(), ValidationError> {
     validate_cells(board)?;
-    validate_peers(board)?;
     validate_givens(board)?;
     validate_deadliness(board)?;
     Ok(())

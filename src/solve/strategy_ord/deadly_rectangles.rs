@@ -68,20 +68,23 @@ mod tests {
 
     fn test_find(givens: bool) {
         for rectangle in Rectangle::iter() {
-            let tl = rectangle.top_left;
-            let tr = rectangle.top_right;
-            let bl = rectangle.bottom_left;
-            let br = rectangle.bottom_right;
+            // FIX: Rectangle corners are methods, not fields
+            let tl = rectangle.top_left();
+            let tr = rectangle.top_right();
+            let bl = rectangle.bottom_left();
+            let br = rectangle.bottom_right();
 
             let mut board = Board::new();
             let mut effects = Effects::new();
 
             board.set_known(tl, known!("1"), &mut effects);
+
             if givens {
                 board.set_given(tr, known!("2"), &mut effects);
             } else {
                 board.set_known(tr, known!("2"), &mut effects);
             }
+
             board.set_known(br, known!("1"), &mut effects);
             board.set_known(bl, known!("2"), &mut effects);
 
@@ -118,12 +121,14 @@ mod tests {
         ];
 
         fn test(givens: bool, rectangle: Rectangle) {
+            // FIX: Rectangle corners are methods, not fields
             let cells = [
-                rectangle.top_left,
-                rectangle.top_right,
-                rectangle.bottom_right,
-                rectangle.bottom_left,
+                rectangle.top_left(),
+                rectangle.top_right(),
+                rectangle.bottom_right(),
+                rectangle.bottom_left(),
             ];
+
             let want = Rectangle::new(cells[0], cells[2]);
 
             for i in 0..4 {

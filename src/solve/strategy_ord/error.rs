@@ -67,22 +67,24 @@ impl std::error::Error for Error{}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::{Cell, House, Rectangle, Known};
+    use crate::layout::{Cell, Known};
 
     fn cell(i: usize) -> Cell {
-        Cell::new(i)
+        Cell::new(i as u8)
     }
 
     fn known(n: u8) -> Known {
-        Known::from(n)
+        Known::new(n)
     }
 
-    fn house(idx: usize) -> House {
-        House::new(idx)
+    fn some_house() -> House {
+        // robust: nehme irgendein gültiges House aus einer echten Cell
+        cell(0).houses().into_iter().next().unwrap()
     }
 
-    fn rectangle(idx: usize) -> Rectangle {
-        Rectangle::new(idx)
+    fn some_rectangle() -> Rectangle {
+        // robust: nehme irgendein gültiges Rectangle aus dem Iterator
+        Rectangle::iter().next().unwrap()
     }
 
     #[test]
@@ -98,8 +100,8 @@ mod tests {
 
     #[test]
     fn cell_returns_none_for_non_cell_errors() {
-        let e1 = Error::UnsolvableHouse(house(0), known(1));
-        let e2 = Error::DeadlyRectangle(rectangle(0));
+        let e1 = Error::UnsolvableHouse(some_house(), known(1));
+        let e2 = Error::DeadlyRectangle(some_rectangle());
 
         assert_eq!(e1.cell(), None);
         assert_eq!(e2.cell(), None);
@@ -110,7 +112,7 @@ mod tests {
         let e1 = Error::NotCandidate(cell(0), known(1));
         let e2 = Error::AlreadySolved(cell(1), known(2), known(3));
         let e3 = Error::UnsolvableCell(cell(2));
-        let e4 = Error::UnsolvableHouse(house(0), known(1));
+        let e4 = Error::UnsolvableHouse(some_house(), known(1));
 
         assert!(e1.is_invalid());
         assert!(e2.is_invalid());
@@ -120,17 +122,20 @@ mod tests {
 
     #[test]
     fn is_invalid_returns_false_for_non_invalid_error() {
-        let e = Error::DeadlyRectangle(rectangle(0));
+        let e = Error::DeadlyRectangle(some_rectangle());
         assert!(!e.is_invalid());
     }
 
     #[test]
     fn display_formats_correctly() {
+        let h = some_house();
+        let r = some_rectangle();
+
         let e1 = Error::NotCandidate(cell(0), known(1));
         let e2 = Error::AlreadySolved(cell(1), known(2), known(3));
         let e3 = Error::UnsolvableCell(cell(2));
-        let e4 = Error::UnsolvableHouse(house(0), known(1));
-        let e5 = Error::DeadlyRectangle(rectangle(0));
+        let e4 = Error::UnsolvableHouse(h, known(1));
+        let e5 = Error::DeadlyRectangle(r);
 
         let s1 = format!("{}", e1);
         let s2 = format!("{}", e2);
@@ -147,9 +152,9 @@ mod tests {
 
         assert!(s3.contains(&cell(2).to_string()));
 
-        assert!(s4.contains(&house(0).to_string()));
+        assert!(s4.contains(&h.to_string()));
         assert!(s4.contains(&known(1).to_string()));
 
-        assert!(s5.contains(&rectangle(0).to_string()));
+        assert!(s5.contains(&r.to_string()));
     }
 }

@@ -141,7 +141,8 @@ mod tests {
     }
 
     fn known(n: u8) -> Known {
-        Known::from(n)
+        // In deinem Code ist Known::new(..) die korrekte Konstruktion
+        Known::new(n)
     }
 
     fn changer_default() -> Changer {
@@ -149,7 +150,7 @@ mod tests {
     }
 
     fn changer_stop_on_error() -> Changer {
-    Changer::new(Options::errors())
+        Changer::new(Options::errors())
     }
 
     /* ---------------- set_known ---------------- */
@@ -181,7 +182,7 @@ mod tests {
 
         let result = changer.set_known(&board, Strategy::NakedSingle, cell(0), known(1));
 
-        matches!(result, ChangeResult::None);
+        assert!(matches!(result, ChangeResult::None));
     }
 
     #[test]
@@ -195,10 +196,10 @@ mod tests {
         let result = changer.set_known(&board, Strategy::NakedSingle, cell(0), known(2));
 
         match result {
-            ChangeResult::Invalid(before, after, action, effects) => {
+            ChangeResult::Invalid(before, after, action, err_effects) => {
                 assert!(before.is_known(cell(0)));
                 assert!(after.is_known(cell(0)));
-                assert!(!effects.is_empty());
+                assert!(!err_effects.is_empty());
                 assert_eq!(action.strategy(), Strategy::NakedSingle);
             }
             _ => panic!("expected ChangeResult::Invalid"),
@@ -230,8 +231,13 @@ mod tests {
         let board = Board::new();
         let changer = changer_default();
 
-        let result =
-            changer.remove_candidate(&board, Strategy::LockedCandidates, cell(2), known(4));
+        // LockedCandidates existiert nicht -> IntersectionRemoval (oder eine andere Strategie, die bei dir existiert)
+        let result = changer.remove_candidate(
+            &board,
+            Strategy::IntersectionRemoval,
+            cell(2),
+            known(4),
+        );
 
         match result {
             ChangeResult::Valid(after, _) => {
@@ -249,10 +255,14 @@ mod tests {
 
         board.remove_candidate(cell(2), known(5), &mut effects);
 
-        let result =
-            changer.remove_candidate(&board, Strategy::LockedCandidates, cell(2), known(5));
+        let result = changer.remove_candidate(
+            &board,
+            Strategy::IntersectionRemoval,
+            cell(2),
+            known(5),
+        );
 
-        matches!(result, ChangeResult::None);
+        assert!(matches!(result, ChangeResult::None));
     }
 
     /* ---------------- apply_all ---------------- */
@@ -305,6 +315,6 @@ mod tests {
 
         let result = changer.apply_all(&mut board, &effects);
 
-        matches!(result, ChangeResult::None);
+        assert!(matches!(result, ChangeResult::None));
     }
 }

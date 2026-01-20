@@ -58,7 +58,10 @@ mod tests {
     #[test]
     fn pseudo_cell_new_sets_pseudo_and_cells() {
         let cells: CellSet = Cell::new(1) + Cell::new(2) + Cell::new(3);
-        let knowns: KnownSet = KnownSet::from_iter([Known::from(1), Known::from(2)]);
+
+        // FIX: Known::from(int) -> Known::new(u8)
+        let knowns: KnownSet = KnownSet::from_iter([Known::new(1), Known::new(2)]);
+
         let p = PseudoCell::new(cells, knowns);
 
         // The first cell becomes the pseudo cell
@@ -82,7 +85,10 @@ mod tests {
     #[test]
     fn pseudo_cell_from_trait_for_cellset() {
         let cells: CellSet = Cell::new(4) + Cell::new(5);
-        let knowns: KnownSet = KnownSet::from_iter([Known::from(3)]);
+
+        // FIX: Known::from(int) -> Known::new(u8)
+        let knowns: KnownSet = KnownSet::from_iter([Known::new(3)]);
+
         let p = PseudoCell::new(cells, knowns);
 
         let cs: CellSet = p.into();
@@ -92,7 +98,10 @@ mod tests {
     #[test]
     fn pseudo_cell_from_trait_for_cell() {
         let cells: CellSet = Cell::new(7) + Cell::new(8);
-        let knowns: KnownSet = KnownSet::from_iter([Known::from(4)]);
+
+        // FIX: Known::from(int) -> Known::new(u8)
+        let knowns: KnownSet = KnownSet::from_iter([Known::new(4)]);
+
         let p = PseudoCell::new(cells, knowns);
 
         let c: Cell = p.into();
