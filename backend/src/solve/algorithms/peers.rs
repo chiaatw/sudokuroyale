@@ -1,8 +1,8 @@
 use super::*;
 
-use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
-use crate::layout::CellSet;
 use crate::layout::values::known_set::KnownSetLike;
+use crate::layout::CellSet;
+use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
 // Solver wrapper for the Peer (simple elimination) strategy
 
 pub struct PeerSolver;
@@ -52,7 +52,6 @@ mod peer_tests {
     use crate::cell;
     use crate::layout::values::known::known;
     use crate::layout::values::known_set::KnownSetLike;
-
 
     #[test]
     fn no_knowns_returns_none() {

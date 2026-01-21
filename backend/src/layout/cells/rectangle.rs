@@ -399,33 +399,33 @@ const CELL_COORDS: [[(CoordPair, CoordPair); 27]; 2] = {
 mod tests {
     use super::*;
 
-#[test]
-fn test_rectangle_new_basic() {
-    let tl = Cell::from_str("A1");
-    let br = Cell::from_str("B2");
-    let rect = Rectangle::new(tl, br);
+    #[test]
+    fn test_rectangle_new_basic() {
+        let tl = Cell::from_str("A1");
+        let br = Cell::from_str("B2");
+        let rect = Rectangle::new(tl, br);
 
-    assert_eq!(rect.tl_br().0, tl);
-    assert_eq!(rect.tl_br().1, br);
+        assert_eq!(rect.tl_br().0, tl);
+        assert_eq!(rect.tl_br().1, br);
 
-    // A1-B2 liegt innerhalb eines Blocks
-    assert_eq!(rect.block_count(), 1);
-}
+        // A1-B2 liegt innerhalb eines Blocks
+        assert_eq!(rect.block_count(), 1);
+    }
 
-#[test]
-fn test_rectangle_new_block_count() {
-    // Rechteck innerhalb eines Blocks
-    let rect1 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("B2"));
-    assert_eq!(rect1.block_count(), 1);
+    #[test]
+    fn test_rectangle_new_block_count() {
+        // Rechteck innerhalb eines Blocks
+        let rect1 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("B2"));
+        assert_eq!(rect1.block_count(), 1);
 
-    // Rechteck über 2 Blöcke horizontal
-    let rect2 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("A5"));
-    assert_eq!(rect2.block_count(), 2);
+        // Rechteck über 2 Blöcke horizontal
+        let rect2 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("A5"));
+        assert_eq!(rect2.block_count(), 2);
 
-    // Rechteck über 4 Blöcke
-    let rect3 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("E5"));
-    assert_eq!(rect3.block_count(), 4);
-}
+        // Rechteck über 4 Blöcke
+        let rect3 = Rectangle::new(Cell::from_str("A1"), Cell::from_str("E5"));
+        assert_eq!(rect3.block_count(), 4);
+    }
 
     #[test]
     fn test_rectangle_from_cells() {

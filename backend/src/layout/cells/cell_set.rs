@@ -485,14 +485,22 @@ static FALSE: bool = false;
 impl Index<Bit> for CellSet {
     type Output = bool;
     fn index(&self, bit: Bit) -> &bool {
-        if self.has(bit.cell()) { &TRUE } else { &FALSE }
+        if self.has(bit.cell()) {
+            &TRUE
+        } else {
+            &FALSE
+        }
     }
 }
 
 impl Index<Cell> for CellSet {
     type Output = bool;
     fn index(&self, cell: Cell) -> &bool {
-        if self.has(cell) { &TRUE } else { &FALSE }
+        if self.has(cell) {
+            &TRUE
+        } else {
+            &FALSE
+        }
     }
 }
 
@@ -709,7 +717,10 @@ mod tests {
         let set = cells!("D3 G5 H2");
         let got: Vec<_> = set.iter().collect();
 
-        assert_eq!(got, vec![crate::cell!("D3"), crate::cell!("G5"), crate::cell!("H2")]);
+        assert_eq!(
+            got,
+            vec![crate::cell!("D3"), crate::cell!("G5"), crate::cell!("H2")]
+        );
     }
 
     #[test]

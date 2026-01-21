@@ -430,8 +430,8 @@ mod tests {
         assert_eq!(c.column_coord(), Coord::new(2));
         assert_eq!(c.block_coord(), Coord::new(0));
 
-        assert_eq!(c.coord_in_row(), Coord::new(2));      
-        assert_eq!(c.coord_in_column(), Coord::new(2));   
+        assert_eq!(c.coord_in_row(), Coord::new(2));
+        assert_eq!(c.coord_in_column(), Coord::new(2));
         assert_eq!(c.coord_in_block(), Coord::new(8));
     }
 
