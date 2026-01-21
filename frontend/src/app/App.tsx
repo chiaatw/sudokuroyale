@@ -8,12 +8,12 @@ import { ResultPage } from '@/app/components/ResultPage';
 export default function App() {
   return (
     <div className="size-full">
-      {/* <LoginRegisterPage /> */}
+      <LoginRegisterPage />
       {/* <MatchLobby /> */}
       {/* <JoinMatch /> */}
       {/* <WaitingPage /> */}
       {/* <GamePage /> */}
-      <ResultPage />
+      {/* <ResultPage /> */}
     </div>
   );
 }
