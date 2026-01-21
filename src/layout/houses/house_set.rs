@@ -530,15 +530,15 @@ mod tests {
         let r2 = House::row(Coord::from(1));
 
         let mut set = HouseSet::empty(Shape::Row);
-        set.add(r1);
+        HouseSet::add(&mut set, r1);
         assert!(set.has(r1));
         assert_eq!(set.len(), 1);
 
-        set.add(r2);
+        HouseSet::add(&mut set, r2);
         assert!(set.has(r2));
         assert_eq!(set.len(), 2);
 
-        set.remove(r1);
+        HouseSet::remove(&mut set, r1);
         assert!(!set.has(r1));
         assert_eq!(set.len(), 1);
     }

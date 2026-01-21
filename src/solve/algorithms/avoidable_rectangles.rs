@@ -156,7 +156,7 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
 
 #[cfg(test)]
 mod tests {
-    use crate::layout::cells::cell::cell;
+    use crate::cell;
     use crate::layout::values::known::known;
 
     use super::*;

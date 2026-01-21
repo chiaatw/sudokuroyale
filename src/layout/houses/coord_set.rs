@@ -61,11 +61,21 @@ impl CoordSet {
         let mut i = 0;
 
         while i < bytes.len() {
-            let c = bytes[i] as char;
-            debug_assert!('1' <= c && c <= '9');
-            bits |= 1 << (c as Size - b'1');
+            let b = bytes[i];
+            match b {
+                b'1'..=b'9' => {
+                    bits |= 1u16 << (b - b'1');
+                }
+                b' ' | b'\t' | b'\r' | b'\n' | b',' | b'|' => {
+                    // ignorieren (Trennzeichen)
+                }
+                _ => {
+                    debug_assert!(false, "invalid coord label byte");
+                }
+            }
             i += 1;
         }
+
         CoordSet::Bits(bits)
     }
 
@@ -233,7 +243,7 @@ impl CoordSet {
 
 impl From<&str> for CoordSet {
     fn from(labels: &str) -> Self {
-        labels.split(' ').map(Coord::from).union_coords()
+        labels.split_whitespace().map(Coord::from).union_coords()
     }
 }
 

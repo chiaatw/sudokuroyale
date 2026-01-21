@@ -381,6 +381,18 @@ impl From<&str> for CellSet {
     }
 }
 
+impl From<String> for CellSet {
+    fn from(labels: String) -> Self {
+        Self::from(labels.as_str())
+    }
+}
+
+impl From<&String> for CellSet {
+    fn from(labels: &String) -> Self {
+        Self::from(labels.as_str())
+    }
+}
+
 impl IntoIterator for CellSet {
     type Item = Cell;
     type IntoIter = CellIter;
@@ -467,29 +479,20 @@ impl FromIterator<CellSet> for CellSet {
     }
 }
 
+static TRUE: bool = true;
+static FALSE: bool = false;
+
 impl Index<Bit> for CellSet {
     type Output = bool;
-
-    /// Returns true if the cell represented by `bit` is a member of this set.
     fn index(&self, bit: Bit) -> &bool {
-        if self.has(bit.cell()) {
-            &true
-        } else {
-            &false
-        }
+        if self.has(bit.cell()) { &TRUE } else { &FALSE }
     }
 }
 
 impl Index<Cell> for CellSet {
     type Output = bool;
-
-    /// Returns true if `cell` is a member of this set.
     fn index(&self, cell: Cell) -> &bool {
-        if self.has(cell) {
-            &true
-        } else {
-            &false
-        }
+        if self.has(cell) { &TRUE } else { &FALSE }
     }
 }
 
@@ -617,9 +620,6 @@ macro_rules! cells {
     }};
 }
 
-#[allow(unused_imports)]
-pub(crate) use cells;
-
 pub struct CellIter {
     iter: BitIter,
 }
@@ -730,9 +730,9 @@ mod tests {
         let c1 = Cell::new(0);
         let c2 = Cell::new(10);
 
-        set.add(c1);
+        CellSet::add(&mut set, c1);
         assert!(set.has(c1));
-        set.add(c2);
+        CellSet::add(&mut set, c2);
         assert!(set.has(c2));
         assert_eq!(set.len(), 2);
 
@@ -852,7 +852,7 @@ mod tests {
         let set = CellSet::empty().with(Cell::new(0)).with(Cell::new(1));
         assert!(set.share_row());
         assert!(!set.share_column());
-        assert!(!set.share_block());
+        assert!(set.share_block());
         assert!(set.share_house(Shape::Row));
         assert!(!set.share_house(Shape::Column));
 
@@ -869,7 +869,7 @@ mod tests {
         let set = CellSet::empty().with(cell);
         let peers = set.peers();
         assert!(!peers.has(cell));
-        assert_eq!(peers.len(), Cell::COUNT as usize - 1);
+        assert_eq!(peers.len(), 20);
     }
 
     #[test]

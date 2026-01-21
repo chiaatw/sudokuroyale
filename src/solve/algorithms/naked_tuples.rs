@@ -148,8 +148,8 @@ pub fn find_naked_quads(board: &Board, single: bool) -> Option<Effects> {
 mod tests {
     use super::*;
 
-    use crate::layout::cells::cell::cell;
-    use crate::layout::cells::cell_set::cells;
+    use crate::cell;
+    use crate::cells;
     use crate::layout::values::known::Known;
     use crate::layout::values::known_set::{KnownSet, KnownSetLike};
 

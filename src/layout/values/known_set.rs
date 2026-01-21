@@ -445,9 +445,9 @@ mod tests {
     fn knownset_add_remove() {
         let mut set = KnownSet::empty();
         let k = Known::new(4);
-        set.add(k);
+        KnownSetLike::add(&mut set, k);
         assert!(set.has(k));
-        set.remove(k);
+        KnownSetLike::remove(&mut set, k);
         assert!(!set.has(k));
     }
 
@@ -472,8 +472,8 @@ mod tests {
 
     #[test]
     fn knownset_inverted() {
-        let set = KnownSet::empty();
-        set.add(Known::new(1));
+        let mut set = KnownSet::empty();
+        <KnownSet as KnownSetLike>::add(&mut set, Known::new(1));
         let inv = !set;
         assert!(!inv.has(Known::new(1)));
         assert!(inv.has(Known::new(2)));

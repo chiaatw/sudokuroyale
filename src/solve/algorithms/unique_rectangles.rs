@@ -526,7 +526,7 @@ fn sort_by_column(first: Cell, second: Cell) -> (Cell, Cell) {
 mod tests {
     use super::*;
 
-    use crate::layout::cells::cell::cell;
+    use crate::cell;
     use crate::layout::values::known::known;
 
     #[test]

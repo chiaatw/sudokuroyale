@@ -259,7 +259,7 @@ impl Colors {
 mod singles_chain_tests {
     use super::*;
 
-    use crate::layout::cells::cell_set::cells;
+    use crate::cells;
     use crate::layout::values::known::Known;
     use crate::layout::values::known_set::{KnownSet, KnownSetLike};
 
@@ -274,6 +274,7 @@ mod singles_chain_tests {
     }
 
     // helper: reduziere Kandidaten einer Zelle auf genau {k}
+    #[allow(dead_code)]
     fn keep_only(board: &mut Board, eff: &mut Effects, c: Cell, k: Known) {
         let keep = {
             let mut ks = KnownSet::empty();

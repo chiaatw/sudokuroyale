@@ -145,8 +145,8 @@ pub fn is_degenerate(cell_sets: &[CellSet], size: usize, smaller_size: usize) ->
 mod tests {
     use super::*;
 
-    use crate::layout::cells::cell::cell;
-    use crate::layout::cells::cell_set::cells;
+    use crate::cell;
+    use crate::cells;
     use crate::layout::values::known::Known;
     use crate::layout::values::known_set::{KnownSet, KnownSetLike};
 

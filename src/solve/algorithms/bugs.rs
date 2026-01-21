@@ -92,7 +92,7 @@ mod tests {
         // irgendein Given/Known setzen (wenn möglich)
         // (falls set_known nicht existiert, nimm set_given oder lass es weg)
         board.set_known(
-            crate::layout::cells::cell::cell!("A1"),
+            crate::cell!("A1"),
             crate::layout::values::known::known!("1"),
             &mut eff,
         );

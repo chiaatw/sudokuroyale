@@ -81,17 +81,17 @@ mod hidden_single_tests {
         // Optional: falls set_known bei dir existiert (wie in anderen Dateien), ok.
         // Sonst diesen Test entfernen.
         board.set_known(
-            crate::layout::cells::cell::cell!("A1"),
+            crate::cell!("A1"),
             crate::layout::values::known::known!("1"),
             &mut eff,
         );
         board.set_known(
-            crate::layout::cells::cell::cell!("B2"),
+            crate::cell!("B2"),
             crate::layout::values::known::known!("2"),
             &mut eff,
         );
         board.set_known(
-            crate::layout::cells::cell::cell!("C3"),
+            crate::cell!("C3"),
             crate::layout::values::known::known!("3"),
             &mut eff,
         );

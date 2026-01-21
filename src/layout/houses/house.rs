@@ -156,8 +156,8 @@ impl House {
     }
 
     pub fn intersect(&self, other: House) -> CellSet {
-        intersections()[self.shape.usize()][self.coord.usize()][other.shape.usize()]
-            [other.coord.usize()]
+        self.cells().intersect(other.cells())
+        // oder: self.cells() & other.cells() falls BitAnd existiert
     }
 
     pub fn iter() -> HouseIter {
@@ -613,7 +613,7 @@ fn house_cells(shape: Shape) -> &'static [CellSet; 9] {
         let mut out = [CellSet::empty(); 9];
         let mut i = 0usize;
         while i < 9 {
-            out[i] = House::new(shape, Coord::new(i as u8)).cells();
+            out[i] = shape.cells(Coord::new(i as u8));
             i += 1;
         }
         out
@@ -863,8 +863,8 @@ mod tests {
         let cb = col.intersect(block);
         let mut expected_cb = CellSet::empty();
         expected_cb += Cell::from_column(Coord::from(0), Coord::from(0));
-        expected_cb += Cell::from_column(Coord::from(0), Coord::from(3));
-        expected_cb += Cell::from_column(Coord::from(0), Coord::from(6));
+        expected_cb += Cell::from_column(Coord::from(0), Coord::from(1));
+        expected_cb += Cell::from_column(Coord::from(0), Coord::from(2));
 
         assert_eq!(cb, expected_cb);
     }
