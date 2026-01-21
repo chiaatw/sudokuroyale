@@ -301,7 +301,7 @@ impl From<&str> for HouseSet {
         labels
             .split_whitespace()
             .map(House::from)
-            .fold(HouseSet::empty(Shape::Row), |acc, h| acc.add(h))
+            .fold(HouseSet::empty(Shape::Row), |acc, h| acc.with(h))
     }
 }
 
@@ -435,11 +435,10 @@ impl FromIterator<House> for HouseSet {
         };
 
         let mut set = HouseSet::empty(first.shape());
-        set = set.add(first);
 
-        set = set.add(first);
+        set = set + first;
         for h in iter {
-            set = set.add(h);
+            set = set + h;
         }
 
         set
