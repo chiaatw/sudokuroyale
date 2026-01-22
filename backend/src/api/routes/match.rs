@@ -1,7 +1,7 @@
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
-use serde::{Deserialize, Serialize};
+use crate::AuthUser;
 use std::sync::Mutex;
 
 use crate::game_match::repository::MatchRepository;
@@ -9,14 +9,11 @@ use crate::game_match::services::start_match_by_user;
 use crate::game_match::services::{create_match, join_match};
 use crate::user::repository::UserRepository;
 use crate::user::session_repository::SessionRepository;
-use crate::AuthUser;
 use rocket::http::CookieJar;
 use uuid::Uuid;
-
-#[derive(Serialize)]
-pub struct CreateMatchResponse {
-    pub match_id: String,
-}
+use crate::api::dto::r#match::{CreateMatchResponse, JoinMatchRequest, JoinMatchResponse,
+     MatchInfoResponse, LeaveMatchRequest, LeaveMatchResponse, StartMatchRequest, StartMatchResponse,
+};
 
 #[post("/match/create")]
 pub fn create_match_route(
@@ -48,16 +45,6 @@ pub fn create_match_route(
     }))
 }
 
-#[derive(Deserialize)]
-pub struct JoinMatchRequest {
-    pub match_id: String,
-}
-
-#[derive(Serialize)]
-pub struct JoinMatchResponse {
-    pub ok: bool,
-}
-
 #[post("/match/join", data = "<req>")]
 pub fn join_match_route(
     req: Json<JoinMatchRequest>,
@@ -86,14 +73,6 @@ pub fn join_match_route(
     Ok(Json(JoinMatchResponse { ok }))
 }
 
-#[derive(Serialize)]
-pub struct MatchInfoResponse {
-    pub match_id: String,
-    pub status: String,
-    pub player1_id: String,
-    pub player2_id: Option<String>,
-}
-
 #[get("/match/<match_id>")]
 pub fn get_match_route(
     match_id: &str,
@@ -114,16 +93,6 @@ pub fn get_match_route(
     }))
 }
 
-#[derive(Deserialize)]
-pub struct LeaveMatchRequest {
-    pub match_id: String,
-}
-
-#[derive(Serialize)]
-pub struct LeaveMatchResponse {
-    pub ok: bool,
-}
-
 #[post("/match/leave", data = "<req>")]
 pub fn leave_match_route(
     auth: AuthUser,
@@ -139,19 +108,9 @@ pub fn leave_match_route(
     Ok(Json(LeaveMatchResponse { ok }))
 }
 
-#[derive(Deserialize)]
-pub struct StartMatchRequest {
-    pub match_id: String,
-}
-
-#[derive(Serialize)]
-pub struct StartMatchResponse {
-    pub ok: bool,
-}
-
 #[post("/match/start", data = "<req>")]
 pub fn start_match_route(
-    auth: crate::AuthUser,
+    auth: AuthUser,
     req: Json<StartMatchRequest>,
     matches: &State<Mutex<MatchRepository>>,
 ) -> Result<Json<StartMatchResponse>, Status> {
