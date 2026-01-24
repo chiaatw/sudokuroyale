@@ -71,14 +71,13 @@ pub enum LoseReasonDto {
     Timeout,
     TooManyMistakes,
     OpponentWon,
-    // ggf. erweitern nach deinem core
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GameViewDto {
     pub revision: u64,
-    pub state: String, // oder enum dto, wenn du willst
+    pub state: String, 
     pub givens: Vec<u8>,  // length 81
     pub current: Vec<u8>, // length 81
     pub mistakes_left: u8,
