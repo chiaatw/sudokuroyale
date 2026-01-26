@@ -1,0 +1,12 @@
+C:\Users\clbre\Documents\sudokuroyale\target\debug\deps\state-2fca764b035db399.d: C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\lib.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\ident_hash.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\cell.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\init.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\shim.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\type_map.rs
+
+C:\Users\clbre\Documents\sudokuroyale\target\debug\deps\libstate-2fca764b035db399.rlib: C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\lib.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\ident_hash.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\cell.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\init.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\shim.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\type_map.rs
+
+C:\Users\clbre\Documents\sudokuroyale\target\debug\deps\libstate-2fca764b035db399.rmeta: C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\lib.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\ident_hash.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\cell.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\init.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\shim.rs C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\type_map.rs
+
+C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\lib.rs:
+C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\ident_hash.rs:
+C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\cell.rs:
+C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\init.rs:
+C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\shim.rs:
+C:\Users\clbre\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\state-0.6.0\src\type_map.rs:

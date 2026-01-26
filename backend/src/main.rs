@@ -27,10 +27,11 @@ use crate::user::services::request_password_reset;
 use crate::user::services::reset_password;
 use crate::user::session_repository::SessionRepository;
 
-#[derive(Serialize)]
-struct HealthResponse {
-    status: &'static str,
-}
+use crate::api::dto::user::{
+    HealthResponse, RegisterRequest, LoginRequest, ChangePasswordRequest,
+    RequestResetRequest, ResetPasswordRequest, RegisterResponse, LoginResponse, MeResponse
+};
+use crate::api::dto::error::ApiError;
 
 #[get("/health")]
 fn health(
@@ -45,42 +46,11 @@ fn health(
     Json(HealthResponse { status: "ok" })
 }
 
-#[derive(Deserialize)]
-struct RegisterRequest {
-    username: String,
-    email: String,
-    password: String,
-}
-#[derive(Deserialize)]
-struct ChangePasswordRequest {
-    old_password: String,
-    new_password: String,
-}
-#[derive(Serialize)]
-struct RegisterResponse {
-    message: &'static str,
-}
-#[derive(Serialize)]
-struct ErrorResponse {
-    error: String,
-}
-
-#[derive(Deserialize)]
-struct RequestResetRequest {
-    email: String,
-}
-
-#[derive(Deserialize)]
-struct ResetPasswordRequest {
-    token: String,
-    new_password: String,
-}
-
 #[post("/register", data = "<req>")]
 fn register(
     req: Json<RegisterRequest>,
     users: &State<Mutex<UserRepository>>,
-) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+) -> Result<Json<RegisterResponse>, (Status, Json<ApiError>)> {
     let mut users = users.lock().unwrap();
 
     match register_user(&mut users, &req.username, &req.email, &req.password) {
@@ -91,18 +61,13 @@ fn register(
     }
 }
 
-#[derive(Serialize)]
-struct LoginResponse {
-    message: &'static str,
-}
-
 #[post("/login", data = "<req>")]
 fn login(
-    req: Json<RegisterRequest>,
+    req: Json<LoginRequest>,
     users: &State<Mutex<UserRepository>>,
     sessions: &State<Mutex<SessionRepository>>,
     cookies: &CookieJar<'_>,
-) -> Result<Json<LoginResponse>, (Status, Json<ErrorResponse>)> {
+) -> Result<Json<LoginResponse>, (Status, Json<ApiError>)> {
     let users_guard = users.lock().unwrap();
     let mut sessions_guard = sessions.lock().unwrap();
 
@@ -128,15 +93,8 @@ fn login(
     }
 }
 
-#[derive(Serialize)]
-struct MeResponse {
-    id: String,
-    username: String,
-    email: String,
-}
-
-struct AuthUser {
-    user_id: uuid::Uuid,
+pub struct AuthUser {
+    pub user_id: uuid::Uuid,
 }
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for AuthUser {
@@ -174,22 +132,26 @@ async fn me(
     users: &State<Mutex<UserRepository>>,
     sessions: &State<Mutex<SessionRepository>>,
     cookies: &CookieJar<'_>,
-) -> Result<Json<MeResponse>, (Status, Json<ErrorResponse>)> {
+) -> Result<Json<MeResponse>, (Status, Json<ApiError>)> {
     let session_cookie = cookies.get("session_id").ok_or_else(|| {
         (
             Status::Unauthorized,
-            Json(ErrorResponse {
-                error: "not authenticated".to_string(),
-            }),
+            Json(ApiError {
+                code: "unauthorized".into(),
+                message: "not authenticated".into(),
+                details: None,
+            })
         )
     })?;
 
     let session_id = uuid::Uuid::parse_str(session_cookie.value()).map_err(|_| {
         (
             Status::Unauthorized,
-            Json(ErrorResponse {
-                error: "invalid session id".to_string(),
-            }),
+            Json(ApiError {
+                code: "unauthorized".into(),
+                message: "not authenticated".into(),
+                details: None,
+            })
         )
     })?;
 
@@ -204,9 +166,11 @@ async fn me(
         })),
         None => Err((
             Status::Unauthorized,
-            Json(ErrorResponse {
-                error: "invalid session".to_string(),
-            }),
+            Json(ApiError {
+                code: "unauthorized".into(),
+                message: "not authenticated".into(),
+                details: None,
+            })
         )),
     }
 }
@@ -215,14 +179,16 @@ async fn me(
 fn logout(
     sessions: &State<Mutex<SessionRepository>>,
     cookies: &CookieJar<'_>,
-) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+) -> Result<Json<RegisterResponse>, (Status, Json<ApiError>)> {
     // 1) Cookie lesen
     let session_cookie = cookies.get("session_id").ok_or_else(|| {
         (
             Status::Unauthorized,
-            Json(ErrorResponse {
-                error: "not authenticated".to_string(),
-            }),
+            Json(ApiError {
+                code: "unauthorized".into(),
+                message: "not authenticated".into(),
+                details: None,
+            })
         )
     })?;
 
@@ -230,9 +196,11 @@ fn logout(
     let session_id = uuid::Uuid::parse_str(session_cookie.value()).map_err(|_| {
         (
             Status::Unauthorized,
-            Json(ErrorResponse {
-                error: "invalid session id".to_string(),
-            }),
+            Json(ApiError {
+                code: "unauthorized".into(),
+                message: "not authenticated".into(),
+                details: None,
+            })
         )
     })?;
 
@@ -254,7 +222,7 @@ fn change_password_endpoint(
     req: Json<ChangePasswordRequest>,
     users: &State<Mutex<UserRepository>>,
     sessions: &State<Mutex<SessionRepository>>,
-) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+) -> Result<Json<RegisterResponse>, (Status, Json<ApiError>)> {
     let sessions_guard = sessions.lock().unwrap();
     let mut users_guard = users.lock().unwrap();
 
@@ -277,7 +245,7 @@ fn request_reset(
     req: Json<RequestResetRequest>,
     users: &State<Mutex<UserRepository>>,
     tokens: &State<Mutex<ResetTokenRepository>>,
-) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+) -> Result<Json<RegisterResponse>, (Status, Json<ApiError>)> {
     let users_guard = users.lock().unwrap();
     let mut tokens_guard = tokens.lock().unwrap();
 
@@ -293,15 +261,17 @@ fn reset_password_endpoint(
     req: Json<ResetPasswordRequest>,
     users: &State<Mutex<UserRepository>>,
     tokens: &State<Mutex<ResetTokenRepository>>,
-) -> Result<Json<RegisterResponse>, (Status, Json<ErrorResponse>)> {
+) -> Result<Json<RegisterResponse>, (Status, Json<ApiError>)> {
     let mut users_guard = users.lock().unwrap();
     let mut tokens_guard = tokens.lock().unwrap();
     let token_id = uuid::Uuid::parse_str(&req.token).map_err(|_| {
         (
             Status::BadRequest,
-            Json(ErrorResponse {
-                error: "invalid reset token".to_string(),
-            }),
+            Json(ApiError {
+                code: "invalid_reset_token".into(),
+                message: "invalid reset token".into(),
+                details: None,
+            })
         )
     })?;
 
@@ -319,40 +289,48 @@ fn reset_password_endpoint(
 }
 
 #[catch(401)]
-fn unauthorized(_req: &Request) -> Json<ErrorResponse> {
-    Json(ErrorResponse {
-        error: "unauthorized".to_string(),
+fn unauthorized(_req: &Request) -> Json<ApiError> {
+    Json(ApiError {
+        code: "unauthorized".into(),
+        message: "not authenticated".into(),
+        details: None,
     })
 }
 
 #[catch(404)]
-fn not_found(_req: &Request) -> Json<ErrorResponse> {
-    Json(ErrorResponse {
-        error: "not found".to_string(),
+fn not_found(_req: &Request) -> Json<ApiError> {
+    Json(ApiError {
+        code: "not_found".into(),
+        message: "not found".into(),
+        details: None,
     })
 }
 
 #[catch(500)]
-fn internal_error(_req: &Request) -> Json<ErrorResponse> {
-    Json(ErrorResponse {
-        error: "internal server error".to_string(),
+fn internal_error(_req: &Request) -> Json<ApiError> {
+    Json(ApiError {
+        code: "internal_error".into(),
+        message: "internal server error".into(),
+        details: None,
     })
 }
 
-impl From<AuthError> for (Status, Json<ErrorResponse>) {
+impl From<AuthError> for (Status, Json<ApiError>) {
     fn from(err: AuthError) -> Self {
-        let status = match err {
-            AuthError::InvalidUsername | AuthError::InvalidEmail | AuthError::InvalidPassword => {
-                Status::BadRequest
-            }
-            AuthError::UsernameExists => Status::Conflict,
-            _ => Status::Unauthorized,
+        let (status, code) = match err {
+            AuthError::InvalidUsername => (Status::BadRequest, "invalid_username"),
+            AuthError::InvalidEmail => (Status::BadRequest, "invalid_email"),
+            AuthError::InvalidPassword => (Status::BadRequest, "invalid_password"),
+            AuthError::UsernameExists => (Status::Conflict, "username_exists"),
+            _ => (Status::Unauthorized, "unauthorized"),
         };
 
         (
             status,
-            Json(ErrorResponse {
-                error: err.to_string(),
+            Json(ApiError {
+                code: code.into(),
+                message: err.to_string(),
+                details: None,
             }),
         )
     }
@@ -387,6 +365,6 @@ async fn rocket() -> _ {
                 reset_password_endpoint
             ],
         )
-        .mount("/", api::routes())
+        .mount("/", api::routes::routes())
         .register("/", catchers![unauthorized, not_found, internal_error])
 }

@@ -1,0 +1,1 @@
+Map<Filter<std::collections::hash_map::Iter<'_, KnownSet, cell_set::CellSet>, {closure@src\solve\algorithms\wxyz_wings.rs:115:33: 115:42}>, {closure@src\solve\algorithms\wxyz_wings.rs:116:30: 116:42}>

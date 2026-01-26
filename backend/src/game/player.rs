@@ -1,4 +1,6 @@
+use crate::game::puzzle::Puzzle;
 use crate::game::time::TimeControl;
+use crate::layout::Grid;
 use std::time::Duration;
 
 pub const MAX_MISTAKES: u8 = 3;
@@ -11,13 +13,15 @@ pub enum PlayerId {
 
 #[derive(Debug, Clone)]
 pub struct PlayerState {
-    pub mistakes: u8,
+    pub current: Grid,
+    mistakes: u8,
     pub time: TimeControl,
 }
 
 impl PlayerState {
-    pub fn new(time_limit: Duration) -> Self {
+    pub fn new(puzzle: &Puzzle, time_limit: Duration) -> Self {
         Self {
+            current: puzzle.givens().clone(),
             mistakes: 0,
             time: TimeControl::new(time_limit),
         }
@@ -31,6 +35,6 @@ impl PlayerState {
     }
 
     pub fn mistakes_left(&self) -> u8 {
-        MAX_MISTAKES - self.mistakes
+        MAX_MISTAKES.saturating_sub(self.mistakes)
     }
 }
