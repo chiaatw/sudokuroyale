@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Copy, X, Loader2 } from 'lucide-react';
 
 interface WaitingPageProps {
-  onLeave?: () => void;
+  onLeave: () => void;
+  onStartGame: () => void;
 }
 
-export function WaitingPage({ onLeave }: WaitingPageProps) {
+export function WaitingPage({ onLeave, onStartGame }: WaitingPageProps) {
   const [matchCode] = useState('XYZ789'); // Mock match code
   const [copied, setCopied] = useState(false);
 
@@ -80,13 +81,21 @@ export function WaitingPage({ onLeave }: WaitingPageProps) {
 
           {/* Leave Match Button */}
           <button
-            onClick={handleLeave}
+            onClick={onLeave}
             className="w-full bg-red-500/20 hover:bg-red-500/30 border border-red-400/50 text-red-200 hover:text-red-100 font-semibold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-2"
           >
             <X className="w-5 h-5" />
             <span>Match verlassen</span>
           </button>
         </div>
+
+        {/* Test Button */}
+        <button
+        onClick={onStartGame}
+        className="w-full mt-4 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold py-3 px-8 rounded-xl transition-all"
+      > 
+        (Demo) Spiel starten
+      </button>
 
         {/* Additional Info */}
         <div className="mt-6 text-center text-white/70 text-sm">

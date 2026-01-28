@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { User, Lock, Mail, UserPlus, LogIn } from 'lucide-react';
 
-export function LoginRegisterPage() {
+interface LoginRegisterPageProps {
+  onSuccess: () => void;
+}
+
+export function LoginRegisterPage({ onSuccess }: LoginRegisterPageProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -13,10 +17,12 @@ export function LoginRegisterPage() {
       console.log('Login:', { email, password });
       // Mock login logic
       alert(`Login erfolgreich als ${email}`);
+      onSuccess();
     } else {
       console.log('Register:', { email, username, password });
       // Mock register logic
       alert(`Registrierung erfolgreich! Willkommen ${username}`);
+      onSuccess();
     }
   };
 

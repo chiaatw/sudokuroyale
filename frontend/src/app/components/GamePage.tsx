@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Clock, User, X } from 'lucide-react';
 
+interface GamePageProps {
+  onFinishWin: () => void;
+  onFinishLose: () => void;
+}
 interface PlayerInfo {
   name: string;
   errors: number;
 }
 
-export function GamePage() {
+export function GamePage({ onFinishWin, onFinishLose }: GamePageProps) {
   const [player1] = useState<PlayerInfo>({ name: 'Du', errors: 0 });
   const [player2] = useState<PlayerInfo>({ name: 'Gegner', errors: 1 });
   const [timer, setTimer] = useState(0);
