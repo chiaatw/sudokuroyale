@@ -38,7 +38,8 @@ pub async fn register_user(
         username: username.to_string(),
         email: email.to_string(),
         password_hash,
-        created_at: chrono::Utc::now().naive_utc(),
+        created_at: chrono::Utc::now(),
+
     };
 
     repo.add_user(&user)
@@ -106,7 +107,7 @@ pub async fn get_user_from_session<'a>(
 
 pub async fn change_password(
     session_repo: &SessionRepository,
-    user_repo: &mut UserRepository,
+    user_repo: &UserRepository,
     session_id: &Uuid,
     old_password: &str,
     new_password: &str,
