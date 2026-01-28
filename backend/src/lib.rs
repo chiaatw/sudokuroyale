@@ -10,6 +10,6 @@ pub mod solve;
 pub mod io;
 pub mod puzzle;
 // Domain
-//pub mod game_match;
+pub mod game_match;
 pub mod user;
 pub use crate::constants::symbols;
