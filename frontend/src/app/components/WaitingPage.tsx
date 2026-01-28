@@ -89,14 +89,6 @@ export function WaitingPage({ onLeave, onStartGame }: WaitingPageProps) {
           </button>
         </div>
 
-        {/* Test Button */}
-        <button
-        onClick={onStartGame}
-        className="w-full mt-4 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold py-3 px-8 rounded-xl transition-all"
-      > 
-        (Demo) Spiel starten
-      </button>
-
         {/* Additional Info */}
         <div className="mt-6 text-center text-white/70 text-sm">
           <p>Das Spiel startet automatisch, sobald der zweite Spieler beitritt</p>
