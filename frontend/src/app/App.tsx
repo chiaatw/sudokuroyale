@@ -1,19 +1,32 @@
-import { LoginRegisterPage } from '@/app/components/LoginRegisterPage';
-import { MatchLobby } from '@/app/components/MatchLobby';
-import { JoinMatch } from '@/app/components/JoinMatch';
-import { WaitingPage } from '@/app/components/WaitingPage';
-import { GamePage } from '@/app/components/GamePage';
-import { ResultPage } from '@/app/components/ResultPage';
+import { Routes, Route, Navigate } from "react-router-dom";
+
+import { LoginRegisterPage } from "./components/LoginRegisterPage";
+import { MatchLobby } from "./components/MatchLobby";
+import { JoinMatch } from "./components/JoinMatch";
+import { WaitingPage } from "./components/WaitingPage";
+import { GamePage } from "./components/GamePage";
+import { ResultPage } from "./components/ResultPage";
+import { ResultPageLoser } from "./components/ResultPageLoser";
 
 export default function App() {
   return (
     <div className="size-full">
-      <LoginRegisterPage />
-      {/* <MatchLobby /> */}
-      {/* <JoinMatch /> */}
-      {/* <WaitingPage /> */}
-      {/* <GamePage /> */}
-      {/* <ResultPage /> */}
+      <Routes>
+        {/* Start */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Pages */}
+        <Route path="/login" element={<LoginRegisterPage />} />
+        <Route path="/lobby" element={<MatchLobby />} />
+        <Route path="/join" element={<JoinMatch />} />
+        <Route path="/waiting" element={<WaitingPage />} />
+        <Route path="/game" element={<GamePage />} />
+        <Route path="/result/win" element={<ResultPage />} />
+        <Route path="/result/lose" element={<ResultPageLoser />} />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     </div>
   );
 }

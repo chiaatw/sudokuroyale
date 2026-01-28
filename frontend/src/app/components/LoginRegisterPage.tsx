@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { User, Lock, Mail, UserPlus, LogIn } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
-interface LoginRegisterPageProps {
-  onSuccess: () => void;
-}
-
-export function LoginRegisterPage({ onSuccess }: LoginRegisterPageProps) {
+export function LoginRegisterPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,12 +16,12 @@ export function LoginRegisterPage({ onSuccess }: LoginRegisterPageProps) {
       console.log('Login:', { email, password });
       // Mock login logic
       alert(`Login erfolgreich als ${email}`);
-      onSuccess();
+      navigate("/lobby");
     } else {
       console.log('Register:', { email, username, password });
       // Mock register logic
       alert(`Registrierung erfolgreich! Willkommen ${username}`);
-      onSuccess();
+      navigate("/lobby");
     }
   };
 
