@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Clock, User, X } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
-interface GamePageProps {
-  onFinishWin: () => void;
-  onFinishLose: () => void;
-}
+
 interface PlayerInfo {
   name: string;
   errors: number;
 }
 
-export function GamePage({ onFinishWin, onFinishLose }: GamePageProps) {
+export function GamePage() {
   const [player1] = useState<PlayerInfo>({ name: 'Du', errors: 0 });
   const [player2] = useState<PlayerInfo>({ name: 'Gegner', errors: 1 });
   const [timer, setTimer] = useState(0);
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
+
+  const navigate = useNavigate();
 
   // Mock Sudoku grid (0 means empty cell)
   const [grid, setGrid] = useState<number[][]>([
@@ -193,6 +193,24 @@ export function GamePage({ onFinishWin, onFinishLose }: GamePageProps) {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+            {/* TEMP: Test Buttons (später löschen) */}
+      <div className="max-w-4xl w-full mx-auto mt-3">
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => navigate("/result/win")}
+            className="bg-green-500/20 hover:bg-green-500/30 border border-green-400/50 text-green-200 font-semibold py-3 rounded-xl transition-all"
+          >
+            Test: Win
+          </button>
+
+          <button
+            onClick={() => navigate("/result/lose")}
+            className="bg-red-500/20 hover:bg-red-500/30 border border-red-400/50 text-red-200 font-semibold py-3 rounded-xl transition-all"
+          >
+            Test: Lose
+          </button>
         </div>
       </div>
     </div>
