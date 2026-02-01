@@ -24,6 +24,7 @@ use crate::user::repository::UserRepository;
 use crate::user::reset_token_repository::ResetTokenRepository;
 use crate::user::services::*;
 use crate::user::session_repository::SessionRepository;
+use crate::game_match::repository::MatchRepository;
 
 use uuid::Uuid;
 
@@ -265,6 +266,7 @@ async fn rocket() -> _ {
         .manage(Mutex::new(UserRepository::new(pool.clone())))
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
+        .manage(Mutex::new(MatchRepository::new()))
         .mount(
             "/",
             routes![health, register, login, me, logout],
