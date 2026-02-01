@@ -5,6 +5,7 @@ pub mod constants;
 pub mod game;
 pub mod layout;
 pub mod solve;
+pub mod match_state;
 
 // Facades
 pub mod io;
