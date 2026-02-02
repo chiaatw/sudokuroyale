@@ -4,35 +4,16 @@ use uuid::Uuid;
 use crate::game_match::model::{GameMatch, MatchStatus};
 use crate::game_match::repository::MatchRepository;
 
-use crate::user::repository::UserRepository;
-use crate::user::services::get_user_from_session;
-use crate::user::session_repository::SessionRepository;
-
-pub fn create_match(
-    users: &UserRepository,
-    sessions: &SessionRepository,
-    match_repo: &mut MatchRepository,
-    session_id: &Uuid,
-) -> Option<Uuid> {
-    let user = get_user_from_session(sessions, users, session_id)?;
-    let m = GameMatch::new(user.id);
+/// Neues Match erstellen – synchron, bekommt user_id direkt.
+/// (Auth & Session wird in der Route gemacht via AuthUser)
+pub fn create_match(match_repo: &mut MatchRepository, user_id: &Uuid) -> Uuid {
+    let m = GameMatch::new(*user_id);
     let match_id = m.id;
     match_repo.add_match(m);
-    Some(match_id)
+    match_id
 }
 
-pub fn join_match(
-    users: &UserRepository,
-    sessions: &SessionRepository,
-    match_repo: &mut MatchRepository,
-    session_id: &Uuid,
-    match_id: &Uuid,
-) -> bool {
-    let user = match get_user_from_session(sessions, users, session_id) {
-        Some(u) => u,
-        None => return false,
-    };
-
+pub fn join_match(match_repo: &mut MatchRepository, user_id: &Uuid, match_id: &Uuid) -> bool {
     let m = match match_repo.find_by_id_mut(match_id) {
         Some(m) => m,
         None => return false,
@@ -41,29 +22,28 @@ pub fn join_match(
     if m.status != MatchStatus::Waiting {
         return false;
     }
-    if m.player1_id == user.id {
+    if m.player1_id == *user_id {
         return false;
     }
 
-    m.player2_id = Some(user.id);
+    m.player2_id = Some(*user_id);
     m.status = MatchStatus::Ready;
     true
 }
 
 pub fn leave_match_by_user(repo: &mut MatchRepository, user_id: &Uuid, match_id: &Uuid) -> bool {
-    // 1) Match mut holen
     let m = match repo.find_by_id_mut(match_id) {
         Some(m) => m,
         None => return false,
     };
 
-    // 2) Wenn Player1 geht -> löschen
+    // Player1 geht -> Match löschen
     if m.player1_id == *user_id {
         let id = m.id;
         return repo.remove_match(&id);
     }
 
-    // 3) Wenn Player2 geht -> player2 entfernen + status zurück
+    // Player2 geht -> slot freimachen
     if m.player2_id == Some(*user_id) {
         m.player2_id = None;
         m.status = MatchStatus::Waiting;
@@ -73,33 +53,24 @@ pub fn leave_match_by_user(repo: &mut MatchRepository, user_id: &Uuid, match_id:
     false
 }
 
-pub fn start_match_by_user(
-    match_repo: &mut MatchRepository,
-    user_id: &Uuid,
-    match_id: &Uuid,
-) -> bool {
-    // Match holen
+pub fn start_match_by_user(match_repo: &mut MatchRepository, user_id: &Uuid, match_id: &Uuid) -> bool {
+    // Fürs MVP setzt das nur Running.
+    // Nächster Schritt danach: auf GameSession umstellen + session.start_game(...)
     let m = match match_repo.find_by_id_mut(match_id) {
         Some(m) => m,
         None => return false,
     };
 
-    // Nur Player1 darf starten
     if m.player1_id != *user_id {
         return false;
     }
-
-    // Player2 muss da sein
     if m.player2_id.is_none() {
         return false;
     }
-
-    // Muss READY sein (das ist sauberer als "nicht running/finished")
     if m.status != MatchStatus::Ready {
         return false;
     }
 
-    // Start!
     m.status = MatchStatus::Running;
     m.started_at = Some(Utc::now());
     true

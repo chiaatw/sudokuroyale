@@ -1,6 +1,7 @@
 mod api;
 mod game_match;
 mod user;
+mod match_state;
 
 #[macro_use]
 extern crate rocket;
