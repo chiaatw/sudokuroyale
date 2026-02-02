@@ -1,11 +1,11 @@
 pub mod error;
-pub mod user;
-pub mod r#match;
 pub mod game;
+pub mod r#match;
+pub mod user;
 pub mod ws;
 
 pub use error::*;
-pub use user::*;
-pub use r#match::*;
 pub use game::*;
+pub use r#match::*;
+pub use user::*;
 pub use ws::*;

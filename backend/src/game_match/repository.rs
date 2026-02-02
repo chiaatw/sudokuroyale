@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
-use crate::match_state::GameSession;
 use crate::game_match::model::GameMatch;
+use crate::match_state::GameSession;
 
 pub struct MatchRepository {
     sessions: Vec<GameSession>,

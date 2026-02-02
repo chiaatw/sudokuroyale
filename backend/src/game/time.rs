@@ -20,7 +20,7 @@ impl TimeControl {
     /// Startet die Uhr. Vorher läuft sie nicht.
     /// Wenn mehrfach aufgerufen: setzt die Deadline neu
     pub fn start(&mut self, now: Instant) {
-        if self.deadline.is_none(){
+        if self.deadline.is_none() {
             self.deadline = Some(now + self.limit);
         }
     }
@@ -53,5 +53,4 @@ impl TimeControl {
     pub fn has_started(&self) -> bool {
         self.deadline.is_some()
     }
-
 }

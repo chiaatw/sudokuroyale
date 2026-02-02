@@ -3,9 +3,9 @@ use std::time::{Duration, Instant};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use crate::game::Game;
-use crate::game::player::PlayerId;
 use crate::game::puzzle::Puzzle;
+use crate::game::Game;
+use crate::game::PlayerId;
 use crate::game_match::model::{GameMatch, MatchStatus};
 
 /// Laufender Match-Zustand (= Lobby-Meta + optional laufendes Spiel)

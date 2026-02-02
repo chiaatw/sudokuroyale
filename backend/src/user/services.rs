@@ -39,7 +39,6 @@ pub async fn register_user(
         email: email.to_string(),
         password_hash,
         created_at: chrono::Utc::now(),
-
     };
 
     repo.add_user(&user)
@@ -49,9 +48,8 @@ pub async fn register_user(
     Ok(())
 }
 
-pub async fn login_user(
+pub async fn authenticate_user(
     repo: &UserRepository,
-    session_repo: &mut SessionRepository,
     username: &str,
     password: &str,
 ) -> AuthResult<Uuid> {
@@ -67,17 +65,30 @@ pub async fn login_user(
         return Err(AuthError::InvalidPasswordLogin);
     }
 
+    Ok(user.id)
+}
+
+pub fn create_session_for_user(session_repo: &mut SessionRepository, user_id: Uuid) -> Uuid {
     let session = Session {
         id: Uuid::new_v4(),
-        user_id: user.id,
+        user_id,
         created_at: Utc::now(),
         expires_at: Utc::now() + Duration::hours(24),
     };
 
     let session_id = session.id;
     session_repo.add_session(session);
+    session_id
+}
 
-    Ok(session_id)
+pub async fn login_user(
+    repo: &UserRepository,
+    session_repo: &mut SessionRepository,
+    username: &str,
+    password: &str,
+) -> AuthResult<Uuid> {
+    let user_id = authenticate_user(repo, username, password).await?;
+    Ok(create_session_for_user(session_repo, user_id))
 }
 
 pub fn is_logged_in(session_repo: &SessionRepository, session_id: &Uuid) -> bool {

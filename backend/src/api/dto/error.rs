@@ -8,4 +8,3 @@ pub struct ApiError {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<serde_json::Value>,
 }
-

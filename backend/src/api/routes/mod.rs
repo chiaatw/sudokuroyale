@@ -1,3 +1,4 @@
+use rocket::routes;
 use rocket::Route;
 
 pub mod r#match;

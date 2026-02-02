@@ -53,7 +53,11 @@ pub fn leave_match_by_user(repo: &mut MatchRepository, user_id: &Uuid, match_id:
     false
 }
 
-pub fn start_match_by_user(match_repo: &mut MatchRepository, user_id: &Uuid, match_id: &Uuid) -> bool {
+pub fn start_match_by_user(
+    match_repo: &mut MatchRepository,
+    user_id: &Uuid,
+    match_id: &Uuid,
+) -> bool {
     // Fürs MVP setzt das nur Running.
     // Nächster Schritt danach: auf GameSession umstellen + session.start_game(...)
     let m = match match_repo.find_by_id_mut(match_id) {

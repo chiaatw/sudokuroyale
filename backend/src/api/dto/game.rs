@@ -35,11 +35,26 @@ pub struct ApplyMoveResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum MoveOutcomeDto {
-    Applied { revision: u64, applied: AppliedMoveDto },
-    Rejected { reason: RejectReasonDto, revision: u64 },
-    Penalty { reason: PenaltyReasonDto, mistakes_left: u8, revision: u64 },
-    Won { revision: u64 },
-    Lost { revision: u64, reason: LoseReasonDto },
+    Applied {
+        revision: u64,
+        applied: AppliedMoveDto,
+    },
+    Rejected {
+        reason: RejectReasonDto,
+        revision: u64,
+    },
+    Penalty {
+        reason: PenaltyReasonDto,
+        mistakes_left: u8,
+        revision: u64,
+    },
+    Won {
+        revision: u64,
+    },
+    Lost {
+        revision: u64,
+        reason: LoseReasonDto,
+    },
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -77,7 +92,7 @@ pub enum LoseReasonDto {
 #[serde(rename_all = "camelCase")]
 pub struct GameViewDto {
     pub revision: u64,
-    pub state: String, 
+    pub state: String,
     pub givens: Vec<u8>,  // length 81
     pub current: Vec<u8>, // length 81
     pub mistakes_left: u8,
