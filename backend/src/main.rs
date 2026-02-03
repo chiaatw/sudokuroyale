@@ -6,7 +6,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 
 use sqlx::PgPool;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 use sudokuroyale::api::dto::error::ApiError;
@@ -57,7 +57,7 @@ fn health(
     users: &State<UserRepository>,
     sessions: &State<Mutex<SessionRepository>>,
     tokens: &State<Mutex<ResetTokenRepository>>,
-    matches: &State<Mutex<MatchRepository>>,
+    matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Json<HealthResponse> {
     let _ = users;
     
@@ -230,8 +230,9 @@ async fn rocket() -> _ {
         // In-Memory: mit Mutex
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
-        .manage(Mutex::new(MatchRepository::new()))
+        .manage(Arc::new(Mutex::new(MatchRepository::new())))
         .mount("/", routes![health, register, login, me, logout])
         // API aus der Library (Match-Routes etc.)
+        .manage(Arc::new(sudokuroyale::api::ws_hub::WsHub::new(64)))
         .mount("/", sudokuroyale::api::routes::routes())
 }

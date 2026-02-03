@@ -2,8 +2,14 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 use rocket::{get, post};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use uuid::Uuid;
+
+use rocket::futures::{SinkExt, StreamExt};
+use rocket_ws::{WebSocket, Channel, Message};
+
+use crate::api::ws_hub::WsHub;
+use crate::api::dto::ws::WsServerEvent;
 
 use crate::auth::AuthUser;
 
@@ -29,7 +35,7 @@ use crate::game_match::services::{
 #[post("/match/create")]
 pub fn create_match_route(
     auth: AuthUser,
-    matches: &State<Mutex<MatchRepository>>,
+    matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Result<Json<CreateMatchResponse>, Status> {
     let mut matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
     let match_id = create_match(&mut matches_guard, &auth.user_id);
@@ -43,7 +49,7 @@ pub fn create_match_route(
 pub fn join_match_route(
     auth: AuthUser,
     req: Json<JoinMatchRequest>,
-    matches: &State<Mutex<MatchRepository>>,
+    matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Result<Json<JoinMatchResponse>, Status> {
     let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
     let mut matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
@@ -56,7 +62,7 @@ pub fn join_match_route(
 #[get("/match/<match_id>")]
 pub fn get_match_route(
     match_id: &str,
-    matches: &State<Mutex<MatchRepository>>,
+    matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Result<Json<MatchInfoResponse>, Status> {
     let match_uuid = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
     let matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
@@ -77,10 +83,10 @@ pub fn get_match_route(
 pub fn leave_match_route(
     auth: AuthUser,
     req: Json<LeaveMatchRequest>,
-    matches: &State<Mutex<MatchRepository>>,
+    matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Result<Json<LeaveMatchResponse>, Status> {
     let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
-    let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
+    let mut repo = matches.inner().lock().map_err(|_| Status::InternalServerError)?;
 
     let ok = leave_match_by_user(&mut repo, &auth.user_id, &match_id);
 
@@ -91,7 +97,7 @@ pub fn leave_match_route(
 pub fn start_match_route(
     auth: AuthUser,
     req: Json<StartMatchRequest>,
-    matches: &State<Mutex<MatchRepository>>,
+    matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Result<Json<StartMatchResponse>, Status> {
     let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
     let mut matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
@@ -105,10 +111,10 @@ pub fn start_match_route(
 pub fn get_match_state_route(
     auth: AuthUser,
     match_id: &str,
-    matches: &State<Mutex<MatchRepository>>,
+    matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Result<Json<GameViewDto>, Status> {
     let match_id = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
-    let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
+    let mut repo = matches.inner().lock().map_err(|_| Status::InternalServerError)?;
 
     let view = get_match_state_for_user(&mut repo, &auth.user_id, &match_id)
         .ok_or(Status::NotFound)?;
@@ -121,27 +127,54 @@ pub fn apply_move_route(
     auth: AuthUser,
     match_id: &str,
     req: Json<ApplyMoveRequest>,
-    matches: &State<Mutex<MatchRepository>>,
+    matches: &State<Arc<Mutex<MatchRepository>>>,
+    hub: &State<Arc<WsHub>>,
 ) -> Result<Json<ApplyMoveResponse>, Status> {
     let match_id = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
 
     // MoveDto -> Move (domain)
     let mv = move_dto_to_domain(&req.mv).ok_or(Status::BadRequest)?;
 
-    let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
+    let mut repo = matches.inner().lock().map_err(|_| Status::InternalServerError)?;
 
-    let (outcome, view) = apply_move_for_user(&mut repo, &auth.user_id, &match_id, req.expected_revision, mv)
-        .ok_or(Status::NotFound)?;
+    let (outcome, view) = apply_move_for_user(
+        &mut repo,
+        &auth.user_id,
+        &match_id,
+        req.expected_revision,
+        mv,
+    )
+    .ok_or(Status::NotFound)?;
 
     // Revision mismatch => 409 Conflict
     if matches_revision_mismatch(&outcome) {
         return Err(Status::Conflict);
     }
 
+    // dto view nur einmal bauen
+    let dto_view = game_view_to_dto(view);
+
+    // Alles, was in tokio::spawn geht, muss 'static sein: Arc + owned values
+    let hub_for_ws = hub.inner().clone();          // Arc<WsHub>
+    let dto_view_for_ws = dto_view.clone();        // GameViewDto (Clone)
+    let match_id_for_ws = match_id;                // Uuid (Copy/Clone-safe)
+
+    tokio::spawn(async move {
+        hub_for_ws
+            .publish(
+                match_id_for_ws,
+                WsServerEvent::RevisionChanged {
+                    revision: dto_view_for_ws.revision,
+                    view: dto_view_for_ws,
+                },
+            )
+            .await;
+    });
+
     Ok(Json(ApplyMoveResponse {
         outcome: move_outcome_to_dto(outcome),
-        view: Some(game_view_to_dto(view)),
-        replay: false, // später: move_id dedupe möglich
+        view: Some(dto_view),
+        replay: false,
     }))
 }
 
@@ -233,4 +266,99 @@ fn move_outcome_to_dto(outcome: MoveOutcome) -> MoveOutcomeDto {
             },
         },
     }
+}
+
+
+#[get("/match/<match_id>/ws")]
+pub fn match_ws_route(
+    auth: AuthUser,
+    match_id: &str,
+    ws: WebSocket,
+    hub: &State<Arc<WsHub>>,
+    matches: &State<Arc<Mutex<MatchRepository>>>,
+) -> Result<Channel<'static>, Status> {
+    let match_id = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
+    
+
+    // WICHTIG: Arc-Klone ziehen, damit die Closure nur 'static Dinge capturt
+    let hub = hub.inner().clone();
+    let matches = matches.inner().clone();
+
+    // Wenn AuthUser nicht Clone ist, nimm nur user_id raus:
+    let user_id = auth.user_id;
+
+    Ok(ws.channel(move |mut stream| {
+        let hub = hub.clone();
+        let matches = matches.clone();
+
+        Box::pin(async move {
+            // 1) Snapshot erzeugen
+            let domain_view = {
+                let mut repo = matches.lock().map_err(|_| {
+                    rocket_ws::result::Error::Io(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "match repo lock poisoned",
+                    ))
+                })?;
+
+                get_match_state_for_user(&mut repo, &user_id, &match_id)
+                    .ok_or_else(|| rocket_ws::result::Error::ConnectionClosed)?
+            };
+
+            // 2) Snapshot senden
+            let snapshot = WsServerEvent::Snapshot {
+                view: game_view_to_dto(domain_view),
+            };
+            stream
+                .send(Message::Text(serde_json::to_string(&snapshot).unwrap()))
+                .await?;
+
+            // 3) Subscribe auf Room
+            let mut rx = hub.subscribe(match_id).await;
+
+            // 4) Events weiterleiten + Verbindung offen halten
+            loop {
+                tokio::select! {
+                    msg = stream.next() => {
+                        match msg {
+                            None => break,
+                            Some(Ok(_)) => { /* ignore */ }
+                            Some(Err(e)) => return Err(e),
+                        }
+                    }
+
+                    ev = rx.recv() => {
+                        match ev {
+                            Ok(ev) => {
+                                stream.send(Message::Text(serde_json::to_string(&ev).unwrap())).await?;
+                            }
+                            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
+                                // Snapshot neu senden (robust)
+                                let domain_view = {
+                                    let mut repo = matches.lock().map_err(|_| {
+                                        rocket_ws::result::Error::Io(std::io::Error::new(
+                                            std::io::ErrorKind::Other,
+                                            "match repo lock poisoned",
+                                        ))
+                                    })?;
+
+                                    get_match_state_for_user(&mut repo, &user_id, &match_id)
+                                        .ok_or_else(|| rocket_ws::result::Error::ConnectionClosed)?
+                                };
+
+                                let snapshot = WsServerEvent::Snapshot {
+                                    view: game_view_to_dto(domain_view),
+                                };
+
+                                stream.send(Message::Text(serde_json::to_string(&snapshot).unwrap())).await?;
+                            }
+                            Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+                        }
+                    }
+                }
+            }
+
+            Ok(())
+        })
+    }))
 }

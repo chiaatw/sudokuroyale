@@ -13,5 +13,6 @@ pub fn routes() -> Vec<Route> {
         r#match::start_match_route,
         r#match::get_match_state_route,
         r#match::apply_move_route,
+        r#match::match_ws_route,
     ]
 }
