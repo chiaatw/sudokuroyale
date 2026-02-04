@@ -77,8 +77,14 @@ impl Finder {
                 Resolution::Canceled(..) => break,
                 Resolution::Solved(_, actions, _) => {
                     // FAIRNESS: require uniqueness on the candidate puzzle
-                    if !self.has_unique_solution_via_bf(&next) {
-                        continue;
+                    // Uniqueness ist teuer -> erst prüfen, wenn wir nahe am Ziel sind
+                    let k = next.known_count();
+
+                    // z.B. prüfe nur wenn wir schon fast bei target clues sind (target + 2 Puffer)
+                    if k <= self.clues + 2 {
+                        if !self.has_unique_solution_via_bf(&next) {
+                            continue;
+                        }
                     }
 
                     if next.known_count() < fewest_clues {

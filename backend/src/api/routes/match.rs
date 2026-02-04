@@ -28,8 +28,12 @@ use crate::game::r#move::Move;
 use crate::layout::{Cell, Value};
 
 use crate::game_match::repository::MatchRepository;
+use crate::game_match::model::MatchStatus;
+use std::time::{Duration, Instant};
+use chrono::Utc;
+
 use crate::game_match::services::{
-    create_match, join_match, leave_match_by_user, start_match_by_user, get_match_state_for_user, apply_move_for_user
+    create_match, join_match, leave_match_by_user, get_match_state_for_user, apply_move_for_user, generate_puzzle_mvp
 };
 
 #[post("/match/create")]
@@ -99,12 +103,78 @@ pub fn start_match_route(
     req: Json<StartMatchRequest>,
     matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Result<Json<StartMatchResponse>, Status> {
+    eprintln!("start_route: ENTER");
+
     let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
-    let mut matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
 
-    let ok = start_match_by_user(&mut matches_guard, &auth.user_id, &match_id);
+    // -------- Phase A: kurz locken & validieren --------
+    {
+        eprintln!("start_route: before lock (validate)");
+        let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
+        eprintln!("start_route: after lock (validate)");
 
-    Ok(Json(StartMatchResponse { ok }))
+        let session = repo
+            .find_session_by_id_mut(&match_id)
+            .ok_or(Status::NotFound)?;
+
+        eprintln!(
+        "start_route: meta status={:?} p1={} p2={:?} authed={}",
+        session.meta.status,
+        session.meta.player1_id,
+        session.meta.player2_id,
+        auth.user_id
+        );
+
+        if session.meta.player1_id != auth.user_id {
+            eprintln!("start_route: reject not player1");
+            return Ok(Json(StartMatchResponse { ok: false }));
+        }
+        if session.meta.player2_id.is_none() {
+            eprintln!("start_route: reject no player2");
+            return Ok(Json(StartMatchResponse { ok: false }));
+        }
+        if session.meta.status != MatchStatus::Ready {
+            eprintln!("start_route: reject status not Ready");
+            return Ok(Json(StartMatchResponse { ok: false }));
+        }
+        // lock wird hier automatisch gedroppt
+    }
+
+    // -------- Phase B: Puzzle generieren OHNE lock --------
+    eprintln!("start_route: generating puzzle (no lock)");
+
+    let puzzle_opt = generate_puzzle_mvp(); // implementieren (siehe unten)
+    let puzzle = match puzzle_opt {
+        Some(p) => p,
+        None => return Ok(Json(StartMatchResponse { ok: false })),
+    };
+
+    // -------- Phase C: kurz locken & starten --------
+    {
+        eprintln!("start_route: before lock (start_game)");
+        let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
+        eprintln!("start_route: after lock (start_game)");
+
+        let session = repo
+            .find_session_by_id_mut(&match_id)
+            .ok_or(Status::NotFound)?;
+
+        // Status kann sich geändert haben (race) -> nochmal prüfen
+        if session.meta.status != MatchStatus::Ready {
+            return Ok(Json(StartMatchResponse { ok: false }));
+        }
+
+        let time_limit = Duration::from_secs(6 * 60);
+        let now = Instant::now();
+
+        let ok = session.start_game(puzzle, time_limit, now);
+        eprintln!("start_route: start_game returned {}", ok);
+        if ok {
+            session.meta.started_at = Some(Utc::now());
+        }
+        eprintln!("start_route: done ok={}", ok);
+        return Ok(Json(StartMatchResponse { ok }));
+    }
 }
 
 #[get("/match/<match_id>/state")]
@@ -278,7 +348,7 @@ pub fn match_ws_route(
     matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Result<Channel<'static>, Status> {
     let match_id = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
-    
+
 
     // WICHTIG: Arc-Klone ziehen, damit die Closure nur 'static Dinge capturt
     let hub = hub.inner().clone();

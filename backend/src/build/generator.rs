@@ -4,12 +4,12 @@ use rand::seq::SliceRandom;
 use crate::io::{show_progress, Cancelable};
 use crate::layout::{Cell, Known, KnownSet};
 use crate::puzzle::{Board, ChangeResult, Changer, Strategy};
-use crate::solve::strategy_ord::algorithms::find_intersection_removals;
+use crate::layout::values::known_set::KnownSetLike;
+/* use crate::solve::strategy_ord::algorithms::find_intersection_removals; */
 
 /// Generates a complete puzzle solution.
 pub struct Generator {
     rng: ThreadRng,
-    shuffle: bool,
     bar: bool,
 }
 
@@ -17,30 +17,24 @@ impl Generator {
     pub fn new(shuffle: bool, bar: bool) -> Generator {
         Generator {
             rng: rand::thread_rng(),
-            shuffle,
             bar,
         }
     }
 
-    /// GUI-friendly: caller supplies a Cancelable they can trigger (button, timeout, etc.)
     pub fn generate(&mut self, changer: &Changer, cancelable: &Cancelable) -> Option<Board> {
-        let cells = self.all_cells();
+        let mut stack: Vec<Entry> = Vec::with_capacity(81);
 
-        let mut stack = Vec::with_capacity(81);
+        let start = Board::new();
+        let first = self.pick_next_cell(&start)?;
         stack.push(Entry {
-            board: Board::new(),
-            cell: cells[0],
+            board: start,
+            cell: first,
             candidates: self.shuffle_candidates(KnownSet::full()),
         });
 
-        while let Some(Entry {
-            board,
-            cell,
-            mut candidates,
-        }) = stack.pop()
-        {
+        while let Some(Entry { board, cell, mut candidates }) = stack.pop() {
             if self.bar {
-                let filled = stack.len().min(81);
+                let filled = board.known_count().min(81);
                 show_progress(filled, 81);
             }
 
@@ -48,56 +42,82 @@ impl Generator {
                 return Some(board);
             }
 
-            if candidates.is_empty() {
-                continue;
-            }
-
-            let known = candidates.pop().unwrap();
-            let mut clone = match changer.set_known(&board, Strategy::BruteForce, cell, known) {
-                ChangeResult::None => return None,
-                ChangeResult::Valid(after, _) => after,
-                ChangeResult::Invalid(..) => continue,
+            // keine Kandidaten mehr -> backtrack
+            let known = match candidates.pop() {
+                Some(k) => k,
+                None => continue,
             };
 
-            if let Some(effects) = find_intersection_removals(&clone, false) {
-                if effects.apply_all(&mut clone).is_some() {
+            // wir probieren "known" in dieser Zelle
+            let next_board = match changer.set_known(&board, Strategy::BruteForce, cell, known) {
+                ChangeResult::None => return None,           // das ist eher "hard fail"
+                ChangeResult::Invalid(..) => {
+                    // andere Kandidaten derselben Zelle probieren
+                    stack.push(Entry { board, cell, candidates });
                     continue;
                 }
+                ChangeResult::Valid(after, _) => after,
+            };
+
+            // ✅ Intersection removals erstmal AUS (später wieder rein, wenn Generator stabil)
+            // if let Some(effects) = find_intersection_removals(&next_board, false) {
+            //     if effects.apply_all(&mut next_board).is_some() {
+            //         stack.push(Entry { board, cell, candidates });
+            //         continue;
+            //     }
+            // }
+
+            // solved?
+            if next_board.known_count() == 81 {
+                return Some(next_board);
+            }
+
+            // Wichtig: aktuellen Zustand mit restlichen Kandidaten zurückpushen
+            stack.push(Entry { board, cell, candidates });
+
+            // nächste Zelle (MRV)
+            let next_cell = match self.pick_next_cell(&next_board) {
+                Some(c) => c,
+                None => continue, // dead end
+            };
+
+            let next_cands = next_board.candidates(next_cell);
+            if next_cands.len() == 0 {
+                continue; // dead end
             }
 
             stack.push(Entry {
-                board,
-                cell,
-                candidates,
+                board: next_board,
+                cell: next_cell,
+                candidates: self.shuffle_candidates(next_cands),
             });
-
-            loop {
-                if stack.len() == 81 || cancelable.is_canceled() {
-                    return Some(clone);
-                }
-
-                let next = cells[stack.len()];
-                if !clone.is_known(next) {
-                    stack.push(Entry {
-                        board: clone,
-                        cell: next,
-                        candidates: self.shuffle_candidates(clone.candidates(next)),
-                    });
-                    break;
-                }
-
-                stack.push(Entry {
-                    board: clone,
-                    cell: next,
-                    candidates: vec![],
-                });
-            }
         }
 
         None
     }
 
-    fn all_cells(&mut self) -> Vec<Cell> {
+    fn pick_next_cell(&mut self, board: &Board) -> Option<Cell> {
+        let mut best: Option<(Cell, usize)> = None;
+
+        for cell in board.unknowns().iter() {
+            let n = board.candidates(cell).len();
+            if n == 0 {
+                return None; // dead end
+            }
+            match best {
+                None => best = Some((cell, n)),
+                Some((_, best_n)) if n < best_n => best = Some((cell, n)),
+                _ => {}
+            }
+            if n == 1 {
+                break;
+            }
+        }
+
+        best.map(|(c, _)| c)
+    }
+
+/*     fn all_cells(&mut self) -> Vec<Cell> {
         let mut cells: Vec<Cell> = Vec::with_capacity(81);
         for i in 0..81 {
             cells.push(Cell::new(i));
@@ -106,7 +126,7 @@ impl Generator {
             cells.shuffle(&mut self.rng);
         }
         cells
-    }
+    } */
 
     fn shuffle_candidates(&mut self, candidates: KnownSet) -> Vec<Known> {
         let mut shuffled = candidates.iter().collect::<Vec<Known>>();
@@ -145,12 +165,12 @@ mod tests {
         );
     }
 
-    #[test]
+/*     #[test]
     fn test_all_cells_length_is_81() {
         let mut generator = Generator::new(false, false);
         let cells = generator.all_cells();
         assert_eq!(cells.len(), 81);
-    }
+    } */
 
     #[test]
     fn test_shuffle_candidates_is_permutation() {

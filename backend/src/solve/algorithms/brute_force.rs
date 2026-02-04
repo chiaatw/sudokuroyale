@@ -86,10 +86,7 @@ impl BruteForceSolver {
         stack.push(Entry::new(*board));
 
         while !stack.is_empty() {
-            let stack_len = stack.len();
             let entry = stack.last_mut().unwrap();
-
-            println!("stack size {}\n", stack_len);
 
             if entry.candidates.is_empty() {
                 if self.log {

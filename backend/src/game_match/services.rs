@@ -36,6 +36,14 @@ pub fn join_match(match_repo: &mut MatchRepository, user_id: &Uuid, match_id: &U
         None => return false,
     };
 
+    eprintln!("start_match: user_id={user_id} match_id={match_id}");
+    eprintln!(
+        "start_match: meta status={:?}, p1={}, p2={:?}",
+        session.meta.status,
+        session.meta.player1_id,
+        session.meta.player2_id
+    );
+
     let m = &mut session.meta;
 
     if m.status != MatchStatus::Waiting {
@@ -96,7 +104,53 @@ fn board_to_grid(board: &Board) -> Grid {
     grid
 }
 
-/// Startet ein Sudoku-Race: erzeugt Lösung + Givens (28 clues) und ruft session.start_game(...)
+pub(crate) fn generate_puzzle_mvp() -> Option<GamePuzzle> {
+    eprintln!("gen: start");
+    let t0 = std::time::Instant::now();
+
+    let changer = Changer::new(Options::errors());
+    let cancelable = Cancelable::new();
+
+    let mut solved_opt: Option<Board> = None;
+
+    for attempt in 1..=50 {
+        eprintln!("gen: attempt {}", attempt);
+        let mut gen = Generator::new(true, false);
+
+        let t1 = std::time::Instant::now();
+        let out = gen.generate(&changer, &cancelable);
+        eprintln!("gen: attempt {} finished in {:?} (out={})",
+            attempt, t1.elapsed(), if out.is_some() { "Some" } else { "None" }
+        );
+
+        if let Some(b) = out {
+            let k = b.known_count();
+            eprintln!("gen: known_count={}", k);
+            if k == 81 {
+                solved_opt = Some(b);
+                break;
+            }
+        }
+    }
+
+    let solved = match solved_opt {
+        Some(b) => b,
+        None => {
+            eprintln!("gen: FAIL no solved board after 50 attempts, total {:?}", t0.elapsed());
+            return None;
+        }
+    };
+
+    eprintln!("gen: got solved board in {:?}", t0.elapsed());
+
+    // --- jetzt erstmal Finder komplett aus, nur um Generator zu verifizieren ---
+    let givens_grid = board_to_grid(&solved);
+    let solution_grid = board_to_grid(&solved);
+
+    eprintln!("gen: returning puzzle (givens=solved) total {:?}", t0.elapsed());
+    Some(GamePuzzle::new(givens_grid, solution_grid))
+}
+
 pub fn start_match_by_user(
     match_repo: &mut MatchRepository,
     user_id: &Uuid,
@@ -119,45 +173,68 @@ pub fn start_match_by_user(
         return false;
     }
 
-    // 3) Lösung generieren (vollständig)
-    let changer = Changer::new(Options::errors());
-    let cancelable = Cancelable::new();
+    // 3) Lösung generieren – mit Retries
+    let mut solved_opt: Option<Board> = None;
 
-    let mut gen = Generator::new(true, false);
-    let solved: Board = match gen.generate(&changer, &cancelable) {
-        Some(b) if b.known_count() == 81 => b,
-        _ => return false,
+    for attempt in 0..50 {
+        let changer = Changer::new(Options::errors());
+        let cancelable = Cancelable::new();
+        let mut gen = Generator::new(true, false);
+
+        match gen.generate(&changer, &cancelable) {
+            Some(b) if b.known_count() == 81 => {
+                eprintln!("start_match: solved board on attempt {}", attempt + 1);
+                solved_opt = Some(b);
+                break;
+            }
+            Some(b) => {
+                eprintln!(
+                    "start_match: attempt {} incomplete board (known_count={})",
+                    attempt + 1,
+                    b.known_count()
+                );
+            }
+            None => {
+                eprintln!("start_match: generator returned None on attempt {}", attempt + 1);
+            }
+        }
+    }
+
+    let solved = match solved_opt {
+        Some(b) => b,
+        None => return false,
     };
 
     // WICHTIG: Solution behalten, bevor Finder das Board "verbraucht"
     let solved_clone = solved.clone();
 
-    // 4) Givens finden: 28 clues, max 2 Sekunden Suche (Server-friendly)
-    let mut finder = Finder::new(28, 5, false);
+    // 4) Givens finden: Ziel 28 clues (kann höher enden, wenn Finder früher stoppt)
+    let mut finder = Finder::new(40, 5, false);
+    eprintln!("start_match: starting finder...");
     let (givens_board, _effects) = finder.backtracking_find(solved);
+    eprintln!("start_match: finder finished");
 
-    // Sicherheitscheck: wirklich <= 28 clues erreicht?
-    // Finder kann früher stoppen (time limit etc.), dann wären es >28.
-    // Für "Medium" ist >28 nicht schlimm, aber wenn du exakt willst: check.
-    // Ich mache hier "<= 28 oder Abbruch".
-    if givens_board.known_count() > 28 {
+    let clues = givens_board.known_count();
+    eprintln!("start_match: givens clues={}", clues);
+
+    // Guard: kaputte Ergebnisse verhindern
+    if clues < 17 || clues > 81 {
+        eprintln!("start_match: clues guard failed");
         return false;
     }
 
-    // 5) Puzzle bauen: givens + solution passen garantiert zusammen
+    // 5) Puzzle bauen: givens + solution passen zusammen
     let givens_grid = board_to_grid(&givens_board);
     let solution_grid = board_to_grid(&solved_clone);
-
     let puzzle = GamePuzzle::new(givens_grid, solution_grid);
 
     // 6) Start Game in Session
     let time_limit = Duration::from_secs(6 * 60); // 6 Minuten
     let now = Instant::now();
 
-    // session.start_game setzt status + started_at + touch
     let ok = session.start_game(puzzle, time_limit, now);
+    eprintln!("start_match: session.start_game ok={}", ok);
 
-    // optional: started_at wird in start_game gesetzt, aber wenn du doppelt sicher willst:
     if ok {
         session.meta.started_at = Some(Utc::now());
     }
