@@ -65,7 +65,7 @@ impl GameSession {
         game.start(now);
 
         self.game = Some(game);
-        self.meta.status = MatchStatus::Running;
+        self.meta.status = MatchStatus::InProgress;
         self.meta.started_at = Some(Utc::now());
         self.touch();
         true

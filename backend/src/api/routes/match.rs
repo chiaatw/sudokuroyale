@@ -1,5 +1,5 @@
 use rocket::http::Status;
-use rocket::serde::json::Json;
+use rocket::serde::json::{Json, Error as JsonError};
 use rocket::State;
 use rocket::{get, post};
 use std::sync::{Arc, Mutex};
@@ -199,10 +199,19 @@ pub fn get_match_state_route(
 pub fn apply_move_route(
     auth: AuthUser,
     match_id: &str,
-    req: Json<ApplyMoveRequest>,
+    req: Result<Json<ApplyMoveRequest>, JsonError<'_>>,
     matches: &State<Arc<Mutex<MatchRepository>>>,
     hub: &State<Arc<WsHub>>,
 ) -> Result<Json<ApplyMoveResponse>, Status> {
+
+    let req = match req {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("JSON parse error in /move: {e}");
+            return Err(Status::UnprocessableEntity);
+        }
+    };
+
     let match_id = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
 
     // MoveDto -> Move (domain)
@@ -341,6 +350,20 @@ fn move_outcome_to_dto(outcome: MoveOutcome) -> MoveOutcomeDto {
     }
 }
 
+fn snapshot_event(
+    match_id: Uuid,
+    meta: &crate::game_match::model::GameMatch,
+    view: Option<GameViewDto>,
+) -> WsServerEvent {
+    WsServerEvent::Snapshot {
+        match_id,
+        status: meta.status,
+        player1_id: meta.player1_id,
+        player2_id: meta.player2_id,
+        started_at: meta.started_at,
+        view,
+    }
+}
 
 #[get("/match/<match_id>/ws")]
 pub fn match_ws_route(
@@ -352,12 +375,9 @@ pub fn match_ws_route(
 ) -> Result<Channel<'static>, Status> {
     let match_id = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
 
-
-    // WICHTIG: Arc-Klone ziehen, damit die Closure nur 'static Dinge capturt
+    // Arc-Klone ziehen, damit die Closure nur 'static Dinge captured
     let hub = hub.inner().clone();
     let matches = matches.inner().clone();
-
-    // Wenn AuthUser nicht Clone ist, nimm nur user_id raus:
     let user_id = auth.user_id;
 
     Ok(ws.channel(move |mut stream| {
@@ -365,71 +385,78 @@ pub fn match_ws_route(
         let matches = matches.clone();
 
         Box::pin(async move {
-            // 1) Snapshot erzeugen
-            let domain_view = {
-                let mut repo = matches.lock().map_err(|_| {
-                    rocket_ws::result::Error::Io(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        "match repo lock poisoned",
-                    ))
-                })?;
+            // ----- Helper: Snapshot (Lobby-fähig) bauen -----
+            let build_snapshot = || async {
+                let (meta_clone, view_opt) = {
+                    let mut repo = matches.lock().map_err(|_| {
+                        rocket_ws::result::Error::Io(std::io::Error::new(
+                            std::io::ErrorKind::Other,
+                            "match repo lock poisoned",
+                        ))
+                    })?;
 
-                get_match_state_for_user(&mut repo, &user_id, &match_id)
-                    .ok_or_else(|| rocket_ws::result::Error::ConnectionClosed)?
+                    let session = repo
+                        .find_session_by_id_mut(&match_id)
+                        .ok_or_else(|| rocket_ws::result::Error::ConnectionClosed)?;
+
+                    let meta_clone = session.meta.clone();
+
+                    // view ist optional: None wenn game noch nicht gestartet ist (Lobby)
+                    let view_opt = get_match_state_for_user(&mut repo, &user_id, &match_id)
+                        .map(game_view_to_dto);
+
+                    (meta_clone, view_opt)
+                };
+
+                Ok::<WsServerEvent, rocket_ws::result::Error>(
+                    snapshot_event(match_id, &meta_clone, view_opt),
+                )
             };
 
-            // 2) Snapshot senden
-            let snapshot = WsServerEvent::Snapshot {
-                view: game_view_to_dto(domain_view),
-            };
+            // 1) Initial Snapshot senden (auch im Lobby-State)
+            let snapshot = build_snapshot().await?;
             stream
                 .send(Message::Text(serde_json::to_string(&snapshot).unwrap()))
                 .await?;
 
-            // 3) Subscribe auf Room
-            let mut rx = hub.subscribe(match_id).await;
+            // 2) Subscribe auf Room (Receiver)
+            {
+                let mut rx = hub.subscribe(match_id).await;
 
-            // 4) Events weiterleiten + Verbindung offen halten
-            loop {
-                tokio::select! {
-                    msg = stream.next() => {
-                        match msg {
-                            None => break,
-                            Some(Ok(_)) => { /* ignore */ }
-                            Some(Err(e)) => return Err(e),
+                // 3) Events weiterleiten + Verbindung offen halten
+                loop {
+                    tokio::select! {
+                        msg = stream.next() => {
+                            match msg {
+                                None => break,                    // client disconnected
+                                Some(Ok(_)) => { /* ignore client messages */ }
+                                Some(Err(e)) => return Err(e),
+                            }
                         }
-                    }
 
-                    ev = rx.recv() => {
-                        match ev {
-                            Ok(ev) => {
-                                stream.send(Message::Text(serde_json::to_string(&ev).unwrap())).await?;
+                        ev = rx.recv() => {
+                            match ev {
+                                Ok(ev) => {
+                                    stream
+                                        .send(Message::Text(serde_json::to_string(&ev).unwrap()))
+                                        .await?;
+                                }
+                                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
+                                    // Wenn der Client hinterherhinkt: Snapshot neu senden
+                                    let snapshot = build_snapshot().await?;
+                                    stream
+                                        .send(Message::Text(serde_json::to_string(&snapshot).unwrap()))
+                                        .await?;
+                                }
+                                Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
                             }
-                            Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
-                                // Snapshot neu senden (robust)
-                                let domain_view = {
-                                    let mut repo = matches.lock().map_err(|_| {
-                                        rocket_ws::result::Error::Io(std::io::Error::new(
-                                            std::io::ErrorKind::Other,
-                                            "match repo lock poisoned",
-                                        ))
-                                    })?;
-
-                                    get_match_state_for_user(&mut repo, &user_id, &match_id)
-                                        .ok_or_else(|| rocket_ws::result::Error::ConnectionClosed)?
-                                };
-
-                                let snapshot = WsServerEvent::Snapshot {
-                                    view: game_view_to_dto(domain_view),
-                                };
-
-                                stream.send(Message::Text(serde_json::to_string(&snapshot).unwrap())).await?;
-                            }
-                            Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
                         }
                     }
                 }
-            }
+            } // rx wird hier gedroppt
+
+            // Cleanup nach Disconnect
+            hub.cleanup_room_if_unused(match_id).await;
 
             Ok(())
         })

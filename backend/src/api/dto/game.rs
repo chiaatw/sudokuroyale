@@ -17,9 +17,8 @@ pub enum MoveDto {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApplyMoveRequest {
-    pub player_id: PlayerIdDto,
     pub expected_revision: u64,
-    pub move_id: String,
+    pub move_id: Option<String>,
     pub mv: MoveDto,
 }
 

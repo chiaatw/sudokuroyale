@@ -1,11 +1,12 @@
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum MatchStatus {
     Waiting,
     Ready,
-    Running,
     InProgress,
     Finished,
 }
