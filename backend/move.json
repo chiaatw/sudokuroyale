@@ -1,0 +1,5 @@
+{
+  "expectedRevision": 1,
+  "moveId": "wrong_free",
+  "mv": { "type": "place", "cell": 1, "value": 3 }
+}
