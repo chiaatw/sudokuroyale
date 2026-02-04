@@ -104,10 +104,11 @@ fn check_houses(
             .combinations(size)
         {
             // Union of all crossing houses (the other orientation)
+            let cross_shape = candidates[0].2.shape(); // Shape der crossing houses (Row oder Column)
             let crosses = candidates
                 .iter()
                 .map(|(_, _, crosses)| *crosses)
-                .fold(HouseSet::empty(Shape::Row), |acc, hs| acc | hs);
+                .fold(HouseSet::empty(cross_shape), |acc, hs| acc | hs);
 
             if crosses.len() != size {
                 continue;

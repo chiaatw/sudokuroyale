@@ -169,8 +169,11 @@ pub fn start_match_route(
 
         let ok = session.start_game(puzzle, time_limit, now);
         eprintln!("start_route: start_game returned {}", ok);
+
         if ok {
             session.meta.started_at = Some(Utc::now());
+            session.meta.status = MatchStatus::InProgress; // falls du das Enum hast
+            session.touch();
         }
         eprintln!("start_route: done ok={}", ok);
         return Ok(Json(StartMatchResponse { ok }));

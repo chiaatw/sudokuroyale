@@ -14,7 +14,7 @@ pub struct Generator {
 }
 
 impl Generator {
-    pub fn new(shuffle: bool, bar: bool) -> Generator {
+    pub fn new(_shuffle: bool, bar: bool) -> Generator {
         Generator {
             rng: rand::thread_rng(),
             bar,
@@ -50,7 +50,10 @@ impl Generator {
 
             // wir probieren "known" in dieser Zelle
             let next_board = match changer.set_known(&board, Strategy::BruteForce, cell, known) {
-                ChangeResult::None => return None,           // das ist eher "hard fail"
+                ChangeResult::None => {
+                    stack.push(Entry { board, cell, candidates });
+                    continue;
+                }        // das ist eher "hard fail"
                 ChangeResult::Invalid(..) => {
                     // andere Kandidaten derselben Zelle probieren
                     stack.push(Entry { board, cell, candidates });

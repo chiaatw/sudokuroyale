@@ -6,6 +6,7 @@ pub enum MatchStatus {
     Waiting,
     Ready,
     Running,
+    InProgress,
     Finished,
 }
 

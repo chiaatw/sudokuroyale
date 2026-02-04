@@ -1,33 +1,34 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 
-pub struct Cancelable {}
+#[derive(Clone)]
+pub struct Cancelable {
+    flag: Arc<AtomicBool>,
+}
 
 impl Cancelable {
     pub fn new() -> Self {
-        Self {}
+        Self { flag: Arc::new(AtomicBool::new(false)) }
     }
 
     pub fn cancel(&self) {
-        SIGNAL.store(true, Ordering::Relaxed);
+        self.flag.store(true, Ordering::Relaxed);
     }
 
     pub fn is_canceled(&self) -> bool {
-        SIGNAL.load(Ordering::Relaxed)
+        self.flag.load(Ordering::Relaxed)
     }
 
     pub fn clear(&self) {
-        SIGNAL.store(false, Ordering::Relaxed)
+        self.flag.store(false, Ordering::Relaxed)
     }
 }
 
 pub fn create_signal() -> Cancelable {
-    ctrlc::set_handler(|| SIGNAL.store(true, Ordering::Relaxed))
-        .expect("Error setting Ctrl-C handler");
-
-    Cancelable::new()
+    let c = Cancelable::new();
+    let c2 = c.clone();
+    ctrlc::set_handler(move || c2.cancel()).expect("Error setting Ctrl-C handler");
+    c
 }
-
-static SIGNAL: AtomicBool = AtomicBool::new(false);
 
 #[cfg(test)]
 mod tests {

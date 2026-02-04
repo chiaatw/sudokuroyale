@@ -106,49 +106,65 @@ fn board_to_grid(board: &Board) -> Grid {
 
 pub(crate) fn generate_puzzle_mvp() -> Option<GamePuzzle> {
     eprintln!("gen: start");
-    let t0 = std::time::Instant::now();
+    let t0 = Instant::now();
 
     let changer = Changer::new(Options::errors());
-    let cancelable = Cancelable::new();
 
-    let mut solved_opt: Option<Board> = None;
-
-    for attempt in 1..=50 {
+    // Gesamt-Retries: erst solved finden, dann Finder anwenden
+    for attempt in 1..=120 {
         eprintln!("gen: attempt {}", attempt);
+
+        // pro Attempt eigener cancelable (robust gegen “sticky” cancel)
+        let cancelable = Cancelable::new();
+
+        // 1) solved board erzeugen
         let mut gen = Generator::new(true, false);
-
-        let t1 = std::time::Instant::now();
-        let out = gen.generate(&changer, &cancelable);
-        eprintln!("gen: attempt {} finished in {:?} (out={})",
-            attempt, t1.elapsed(), if out.is_some() { "Some" } else { "None" }
-        );
-
-        if let Some(b) = out {
-            let k = b.known_count();
-            eprintln!("gen: known_count={}", k);
-            if k == 81 {
-                solved_opt = Some(b);
-                break;
+        let solved = match gen.generate(&changer, &cancelable) {
+            Some(b) if b.known_count() == 81 => b,
+            Some(b) => {
+                eprintln!(
+                    "gen: generator returned incomplete board (known_count={})",
+                    b.known_count()
+                );
+                continue;
             }
+            None => {
+                eprintln!("gen: generator returned None");
+                continue;
+            }
+        };
+
+        // Lösung sichern bevor Finder `solved` moved
+        let solution = solved.clone();
+
+        // 2) Finder: aus solved -> givens (Puzzle)
+        // Wenn 28 zu aggressiv ist: testweise 30/32 setzen oder Finder-Parameter lockern.
+        let mut finder = Finder::new(28, 5, false);
+        eprintln!("gen: starting finder...");
+        let (givens_board, _effects) = finder.backtracking_find(solved);
+
+        let clues = givens_board.known_count();
+        eprintln!("gen: finder clues={}", clues);
+
+        // 3) Guards: kaputte Ergebnisse verwerfen und weiter versuchen
+        if clues < 17 || clues > 81 {
+            eprintln!("gen: guard failed (clues={}), retrying", clues);
+            continue;
         }
+
+        // Optional: wenn du “ungefähr 28” willst, aber nicht zu viele:
+        // if clues > 40 { continue; }
+
+        // 4) Puzzle bauen
+        let givens_grid = board_to_grid(&givens_board);
+        let solution_grid = board_to_grid(&solution);
+
+        eprintln!("gen: returning REAL puzzle total {:?}", t0.elapsed());
+        return Some(GamePuzzle::new(givens_grid, solution_grid));
     }
 
-    let solved = match solved_opt {
-        Some(b) => b,
-        None => {
-            eprintln!("gen: FAIL no solved board after 50 attempts, total {:?}", t0.elapsed());
-            return None;
-        }
-    };
-
-    eprintln!("gen: got solved board in {:?}", t0.elapsed());
-
-    // --- jetzt erstmal Finder komplett aus, nur um Generator zu verifizieren ---
-    let givens_grid = board_to_grid(&solved);
-    let solution_grid = board_to_grid(&solved);
-
-    eprintln!("gen: returning puzzle (givens=solved) total {:?}", t0.elapsed());
-    Some(GamePuzzle::new(givens_grid, solution_grid))
+    eprintln!("gen: FAIL after retries total {:?}", t0.elapsed());
+    None
 }
 
 pub fn start_match_by_user(
@@ -209,7 +225,7 @@ pub fn start_match_by_user(
     let solved_clone = solved.clone();
 
     // 4) Givens finden: Ziel 28 clues (kann höher enden, wenn Finder früher stoppt)
-    let mut finder = Finder::new(40, 5, false);
+    let mut finder = Finder::new(28, 5, false);
     eprintln!("start_match: starting finder...");
     let (givens_board, _effects) = finder.backtracking_find(solved);
     eprintln!("start_match: finder finished");
