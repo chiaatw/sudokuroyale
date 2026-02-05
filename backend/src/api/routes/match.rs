@@ -21,6 +21,7 @@ use crate::api::dto::game::{
 use crate::api::dto::r#match::{
     CreateMatchResponse, JoinMatchRequest, JoinMatchResponse, LeaveMatchRequest,
     LeaveMatchResponse, MatchInfoResponse, StartMatchRequest, StartMatchResponse,
+    snapshot_from_meta
 };
 
 use crate::game::outcome::{MoveOutcome, AppliedMove, RejectReason, PenaltyReason};
@@ -54,14 +55,41 @@ pub fn join_match_route(
     auth: AuthUser,
     req: Json<JoinMatchRequest>,
     matches: &State<Arc<Mutex<MatchRepository>>>,
+    hub: &State<Arc<WsHub>>,
 ) -> Result<Json<JoinMatchResponse>, Status> {
     let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
-    let mut matches_guard = matches.lock().map_err(|_| Status::InternalServerError)?;
+        let hub = hub.inner().clone();
 
-    let ok = join_match(&mut matches_guard, &auth.user_id, &match_id);
+        // lock kurz halten: join + snapshot bauen
+        let (ok, snapshot_opt) = {
+            let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
 
-    Ok(Json(JoinMatchResponse { ok }))
-}
+            let ok = join_match(&mut repo, &auth.user_id, &match_id);
+
+            let snapshot_opt = if ok {
+                let session = repo
+                    .find_session_by_id_mut(&match_id)
+                    .ok_or(Status::NotFound)?;
+                let meta = session.meta.clone();
+
+                // MVP: view None (Lobby-Update). Clients holen /state wenn gestartet.
+                Some(snapshot_from_meta(match_id, &meta, None))
+            } else {
+                None
+            };
+
+            (ok, snapshot_opt)
+        };
+
+        // publish ohne lock
+        if let Some(snapshot) = snapshot_opt {
+            tokio::spawn(async move {
+                hub.publish(match_id, snapshot).await;
+            });
+        }
+
+        Ok(Json(JoinMatchResponse { ok }))
+    }
 
 #[get("/match/<match_id>")]
 pub fn get_match_route(
@@ -88,13 +116,38 @@ pub fn leave_match_route(
     auth: AuthUser,
     req: Json<LeaveMatchRequest>,
     matches: &State<Arc<Mutex<MatchRepository>>>,
+    hub: &State<Arc<WsHub>>,
 ) -> Result<Json<LeaveMatchResponse>, Status> {
     let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
-    let mut repo = matches.inner().lock().map_err(|_| Status::InternalServerError)?;
+        let hub = hub.inner().clone();
 
-    let ok = leave_match_by_user(&mut repo, &auth.user_id, &match_id);
+        let (ok, snapshot_opt) = {
+            let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
 
-    Ok(Json(LeaveMatchResponse { ok }))
+            let ok = leave_match_by_user(&mut repo, &auth.user_id, &match_id);
+
+            // Snapshot nur wenn Match noch existiert (Player1 kann Match löschen)
+            let snapshot_opt = if ok {
+                if let Some(session) = repo.find_session_by_id_mut(&match_id) {
+                    let meta = session.meta.clone();
+                    Some(snapshot_from_meta(match_id, &meta, None))
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+
+            (ok, snapshot_opt)
+        };
+
+        if let Some(snapshot) = snapshot_opt {
+            tokio::spawn(async move {
+                hub.publish(match_id, snapshot).await;
+            });
+        }
+
+        Ok(Json(LeaveMatchResponse { ok }))
 }
 
 #[post("/match/start", data = "<req>")]
@@ -102,6 +155,7 @@ pub fn start_match_route(
     auth: AuthUser,
     req: Json<StartMatchRequest>,
     matches: &State<Arc<Mutex<MatchRepository>>>,
+    hub: &State<Arc<WsHub>>,
 ) -> Result<Json<StartMatchResponse>, Status> {
     eprintln!("start_route: ENTER");
 
@@ -151,32 +205,51 @@ pub fn start_match_route(
 
     // -------- Phase C: kurz locken & starten --------
     {
-        eprintln!("start_route: before lock (start_game)");
-        let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
-        eprintln!("start_route: after lock (start_game)");
+    let hub = hub.inner().clone();
 
-        let session = repo
-            .find_session_by_id_mut(&match_id)
-            .ok_or(Status::NotFound)?;
+        let (ok, snapshot_opt) = {
+            eprintln!("start_route: before lock (start_game)");
+            let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
+            eprintln!("start_route: after lock (start_game)");
 
-        // Status kann sich geändert haben (race) -> nochmal prüfen
-        if session.meta.status != MatchStatus::Ready {
-            return Ok(Json(StartMatchResponse { ok: false }));
+            let session = repo
+                .find_session_by_id_mut(&match_id)
+                .ok_or(Status::NotFound)?;
+
+            // Status kann sich geändert haben (race) -> nochmal prüfen
+            if session.meta.status != MatchStatus::Ready {
+                return Ok(Json(StartMatchResponse { ok: false }));
+            }
+
+            let time_limit = Duration::from_secs(6 * 60);
+            let now = Instant::now();
+
+            let ok = session.start_game(puzzle, time_limit, now);
+            eprintln!("start_route: start_game returned {}", ok);
+
+            let snapshot_opt = if ok {
+                session.meta.started_at = Some(Utc::now());
+                session.meta.status = MatchStatus::InProgress;
+                session.touch();
+
+                let meta = session.meta.clone();
+                Some(snapshot_from_meta(match_id, &meta, None))
+            } else {
+                None
+            };
+
+            eprintln!("start_route: done ok={}", ok);
+            (ok, snapshot_opt)
+        };
+
+        // publish ohne lock
+        if let Some(snapshot) = snapshot_opt {
+            tokio::spawn(async move {
+                hub.publish(match_id, snapshot).await;
+            });
         }
 
-        let time_limit = Duration::from_secs(6 * 60);
-        let now = Instant::now();
-
-        let ok = session.start_game(puzzle, time_limit, now);
-        eprintln!("start_route: start_game returned {}", ok);
-
-        if ok {
-            session.meta.started_at = Some(Utc::now());
-            session.meta.status = MatchStatus::InProgress; // falls du das Enum hast
-            session.touch();
-        }
-        eprintln!("start_route: done ok={}", ok);
-        return Ok(Json(StartMatchResponse { ok }));
+        Ok(Json(StartMatchResponse { ok }))
     }
 }
 
