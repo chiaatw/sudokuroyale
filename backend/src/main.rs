@@ -9,6 +9,8 @@ use sqlx::PgPool;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
+
+
 use sudokuroyale::api::dto::error::ApiError;
 use sudokuroyale::api::dto::user::{
     HealthResponse, LoginRequest, LoginResponse, MeResponse, RegisterRequest, RegisterResponse,
