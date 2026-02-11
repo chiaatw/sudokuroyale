@@ -8,6 +8,8 @@ use rocket::State;
 use sqlx::PgPool;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
+use dotenvy::dotenv;
+
 
 
 
@@ -220,6 +222,7 @@ fn logout(
 
 #[launch]
 async fn rocket() -> _ {
+    dotenv().ok();    
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let pool = PgPool::connect(&database_url)
