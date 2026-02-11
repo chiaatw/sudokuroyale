@@ -17,7 +17,7 @@ pub fn routes() -> Vec<Route> {
         r#match::match_ws_route,
 
         //user
-        user::login,
-        user::register,
+        /* user::login,
+        user::register, */
     ]
 }

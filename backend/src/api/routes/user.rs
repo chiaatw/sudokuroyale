@@ -1,4 +1,4 @@
-use rocket::serde::{json::Json, Deserialize, Serialize};
+/*  use rocket::serde::{json::Json, Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
@@ -33,4 +33,4 @@ pub fn register(req: Json<RegisterRequest>) -> Json<AuthResponse> {
         ok: true,
         message: format!("Register received for {}", req.username),
     })
-}
+}*/
