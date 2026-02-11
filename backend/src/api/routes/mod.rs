@@ -2,6 +2,7 @@ use rocket::routes;
 use rocket::Route;
 
 pub mod r#match;
+pub mod user;
 
 pub fn routes() -> Vec<Route> {
     routes![
@@ -14,5 +15,9 @@ pub fn routes() -> Vec<Route> {
         r#match::get_match_state_route,
         r#match::apply_move_route,
         r#match::match_ws_route,
+
+        //user
+        user::login,
+        user::register,
     ]
 }

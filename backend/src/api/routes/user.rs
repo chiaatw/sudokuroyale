@@ -19,7 +19,7 @@ pub struct AuthResponse {
     pub message: String,
 }
 
-#[post("/login", data = "<req>")]
+#[rocket::post("/login", data = "<req>")]
 pub fn login(req: Json<LoginRequest>) -> Json<AuthResponse> {
     Json(AuthResponse {
         ok: true,
@@ -27,7 +27,7 @@ pub fn login(req: Json<LoginRequest>) -> Json<AuthResponse> {
     })
 }
 
-#[post("/register", data = "<req>")]
+#[rocket::post("/register", data = "<req>")]
 pub fn register(req: Json<RegisterRequest>) -> Json<AuthResponse> {
     Json(AuthResponse {
         ok: true,
