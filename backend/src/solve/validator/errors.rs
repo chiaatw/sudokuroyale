@@ -20,27 +20,27 @@ impl fmt::Display for HouseKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ValidationError {
-    /// A given cell was cleared (set to unknown).
+    /// A given cell was cleared
     GivenCellWasCleared { cell: Cell },
 
-    /// A given cell was modified to a different value.
+    /// A given cell was modified to a different value
     GivenCellWasModified {
         cell: Cell,
         existing: Value,
         attempted: Value,
     },
 
-    /// Value is unknown (0) or out of range (>9).
+    /// Value is unknown (0) or out of range (>9)
     InvalidValue { cell: Cell, value: Value },
 
-    /// Attempted to change an already-known cell to a different value.
+    /// Attempted to change an already known cell to a different value
     CellAlreadyHasValue {
         cell: Cell,
         existing: Value,
         attempted: Value,
     },
 
-    /// Duplicate value found in a row/col/block.
+    /// Duplicate value found in a row/col/block
     DuplicateInHouse {
         kind: HouseKind,
         index: usize,
@@ -49,7 +49,7 @@ pub enum ValidationError {
         second: Cell,
     },
 
-    /// Move conflicts with a peer that already has that value.
+    /// Move conflicts with a peer that already has that value
     ConflictWithPeer {
         cell: Cell,
         value: Value,

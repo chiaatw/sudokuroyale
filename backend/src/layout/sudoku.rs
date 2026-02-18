@@ -1,10 +1,4 @@
 use crate::layout::{Cell, Grid, Value, ValueLike};
-
-/// Runtime Sudoku state used by the game layer.
-///
-/// For Sudoku Royale we need:
-/// - the current grid (player-filled)
-/// - the solution grid (for correctness checks)
 #[derive(Clone, Debug)]
 pub struct Sudoku {
     current: Grid,
@@ -13,7 +7,7 @@ pub struct Sudoku {
 
 impl Sudoku {
     /// Creates a Sudoku from a solution grid.
-    /// The current grid starts empty (all unknown).
+    /// The current grid starts empty 
     pub fn from_solution(solution: Grid) -> Self {
         Self {
             current: Grid::new(),
@@ -21,7 +15,6 @@ impl Sudoku {
         }
     }
 
-    /// Creates a Sudoku from both current and solution grids.
     pub fn new(current: Grid, solution: Grid) -> Self {
         Self { current, solution }
     }

@@ -201,7 +201,6 @@ impl Game {
                 };
 
                 if solved {
-                    // IMPORTANT: don't bump revision before set_win, set_win bumps it
                     self.set_win(player);
                     return MoveOutcome::Won {
                         revision: self.revision,
@@ -218,7 +217,6 @@ impl Game {
     }
 
     pub fn view_for(&mut self, player: PlayerId, now: Instant) -> GameView {
-        // Timeout “einschnappen” lassen, auch ohne Moves (polling-friendly)
         if matches!(self.state, GameState::InProgress) {
             if let Some(p) = self.players.get(&player) {
                 if p.time.is_expired(now) && matches!(self.state, GameState::InProgress) {

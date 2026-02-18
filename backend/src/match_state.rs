@@ -8,13 +8,11 @@ use crate::game::Game;
 use crate::game::PlayerId;
 use crate::game_match::model::{GameMatch, MatchStatus};
 
-/// Laufender Match-Zustand (= Lobby-Meta + optional laufendes Spiel)
+/// Laufender Match-Zustand
 #[derive(Debug, Clone)]
 pub struct GameSession {
     pub meta: GameMatch,
     pub game: Option<Game>,
-
-    /// Optional, aber praktisch fürs Aufräumen/Timeouts
     pub last_activity_at: DateTime<Utc>,
 }
 
@@ -50,9 +48,7 @@ impl GameSession {
         self.last_activity_at = Utc::now();
     }
 
-    /// Startet das Spiel (Puzzle + Timer) und schaltet Match auf RUNNING
-    ///
-    /// Erwartung: meta.status == Ready, player2_id vorhanden, nur Player1 triggert das.
+    /// Startet Spiel, schaltet Match auf RUNNING
     pub fn start_game(&mut self, puzzle: Puzzle, time_limit: Duration, now: Instant) -> bool {
         if self.meta.status != MatchStatus::Ready {
             return false;

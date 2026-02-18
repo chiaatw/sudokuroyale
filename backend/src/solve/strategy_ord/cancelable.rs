@@ -1,4 +1,7 @@
-use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 
 #[derive(Clone)]
 pub struct Cancelable {
@@ -7,7 +10,9 @@ pub struct Cancelable {
 
 impl Cancelable {
     pub fn new() -> Self {
-        Self { flag: Arc::new(AtomicBool::new(false)) }
+        Self {
+            flag: Arc::new(AtomicBool::new(false)),
+        }
     }
 
     pub fn cancel(&self) {

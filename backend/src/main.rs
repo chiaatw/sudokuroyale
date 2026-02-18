@@ -5,13 +5,10 @@ use rocket::http::{Cookie, CookieJar, Status};
 use rocket::serde::json::Json;
 use rocket::State;
 
+use dotenvy::dotenv;
 use sqlx::PgPool;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
-use dotenvy::dotenv;
-
-
-
 
 use sudokuroyale::api::dto::error::ApiError;
 use sudokuroyale::api::dto::user::{
@@ -42,7 +39,9 @@ fn auth_error_to_response(err: AuthError) -> (Status, Json<ApiError>) {
         AuthError::TokenInvalid => (Status::BadRequest, "token_invalid"),
         AuthError::TokenExpired => (Status::BadRequest, "token_expired"),
 
-        AuthError::PasswordHashingFailed => (Status::InternalServerError, "password_hashing_failed"),
+        AuthError::PasswordHashingFailed => {
+            (Status::InternalServerError, "password_hashing_failed")
+        }
         AuthError::DatabaseError => (Status::InternalServerError, "database_error"),
     };
 
@@ -64,7 +63,7 @@ fn health(
     matches: &State<Arc<Mutex<MatchRepository>>>,
 ) -> Json<HealthResponse> {
     let _ = users;
-    
+
     drop(sessions.lock().unwrap());
     drop(tokens.lock().unwrap());
     drop(matches.lock().unwrap());
@@ -94,12 +93,12 @@ async fn login(
     sessions: &State<Mutex<SessionRepository>>,
     cookies: &CookieJar<'_>,
 ) -> Result<Json<LoginResponse>, (Status, Json<ApiError>)> {
-    // 1) async: nur DB check (keine Locks!)
+    // nur DB check
     let user_id = authenticate_user(users.inner(), &req.username, &req.password)
         .await
         .map_err(auth_error_to_response)?;
 
-    // 2) sync: Session erstellen (Lock nur kurz, kein await)
+    // Session erstellen
     let session_id = {
         let mut sessions_guard = sessions.lock().unwrap();
         create_session_for_user(&mut sessions_guard, user_id)
@@ -145,7 +144,6 @@ async fn me(
         )
     })?;
 
-    // user_id kopieren (kein borrow über guard)
     let user_id = {
         let sessions_guard = sessions.lock().unwrap();
         match sessions_guard.find_by_session_id(&session_id) {
@@ -222,7 +220,7 @@ fn logout(
 
 #[launch]
 async fn rocket() -> _ {
-    dotenv().ok();    
+    dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let pool = PgPool::connect(&database_url)
@@ -230,14 +228,11 @@ async fn rocket() -> _ {
         .expect("Failed to create database pool");
 
     rocket::build()
-        // DB Repo: ohne Mutex
         .manage(UserRepository::new(pool.clone()))
-        // In-Memory: mit Mutex
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
         .manage(Arc::new(Mutex::new(MatchRepository::new())))
         .mount("/", routes![health, register, login, me, logout])
-        // API aus der Library (Match-Routes etc.)
         .manage(Arc::new(sudokuroyale::api::ws_hub::WsHub::new(64)))
         .mount("/", sudokuroyale::api::routes::routes())
 }

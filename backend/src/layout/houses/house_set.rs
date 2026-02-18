@@ -54,7 +54,7 @@ impl Sub<HouseSet> for HouseSet {
         debug_assert_eq!(self.shape(), other.shape());
         let mut out = self;
         for h in other.iter() {
-            out = out - h; // nutzt Sub<House>
+            out = out - h; 
         }
         out
     }
@@ -568,13 +568,11 @@ mod tests {
 
         let full = HouseSet::full(Shape::Row);
 
-        // full - {r1}
         let minus_set = full.minus(HouseSet::empty(Shape::Row).with(r1));
         assert!(!minus_set.has(r1));
         assert!(minus_set.has(r2));
         assert_eq!(minus_set.len(), 8);
 
-        // invert -> sollte r1 wieder drin haben, r2 raus (weil r2 in minus_set drin war)
         let inv = minus_set.inverted();
         assert!(inv.has(r1));
         assert!(!inv.has(r2));
@@ -603,7 +601,6 @@ mod tests {
 
     #[test]
     fn from_labels() {
-        // Signatur bei dir: from_labels(shape, labels)
         let set = HouseSet::from_labels(Shape::Row, "R1 R2");
 
         assert!(set.has(House::row(Coord::from(0))));
@@ -635,7 +632,6 @@ mod tests {
         let set = HouseSet::empty(Shape::Row).with(r1).with(r2);
         let cells = set.cells();
 
-        // Muss alle Zellen aus beiden Reihen enthalten
         for c in r1.cells().iter() {
             assert!(cells.has(c));
         }

@@ -9,7 +9,7 @@ use crate::solve::strategy_ord::timing::Timings;
 
 use crate::solve::strategy_ord::algorithms::{find_brute_force, BruteForceResult};
 
-/// Finds a solvable starting puzzle from a full solution.
+/// Finds a solvable starting puzzle from a full solution
 pub struct Finder {
     cancelable: Cancelable,
     rng: ThreadRng,
@@ -77,10 +77,8 @@ impl Finder {
                 Resolution::Canceled(..) => break,
                 Resolution::Solved(_, actions, _) => {
                     // FAIRNESS: require uniqueness on the candidate puzzle
-                    // Uniqueness ist teuer -> erst prüfen, wenn wir nahe am Ziel sind
                     let k = next.known_count();
 
-                    // z.B. prüfe nur wenn wir schon fast bei target clues sind (target + 2 Puffer)
                     if k <= self.clues + 2 {
                         if !self.has_unique_solution_via_bf(&next) {
                             continue;

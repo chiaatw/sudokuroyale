@@ -14,8 +14,6 @@ pub enum PenaltyReason {
     WrongValue,
 }
 
-/// Optional: Gibt der GUI/API Kontext, was genau angewendet wurde.
-/// (Kannst du auch entfernen, wenn du es minimal halten willst.)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppliedMove {
     Placed,

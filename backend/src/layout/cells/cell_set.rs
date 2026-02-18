@@ -1,8 +1,3 @@
-// While the tuple struct is a thin wrapper (should be same memory storage),
-// the fact that it's a struct means it cannot be passed by value without moving it.
-//
-// Or maybe not. References are about ownership--not pointers.
-
 use std::fmt;
 use std::iter::FusedIterator;
 use std::ops::{
@@ -19,7 +14,6 @@ type Bits = u128;
 #[allow(dead_code)]
 type Size = u8;
 
-/// A set of cells implemented using a bit field.
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct CellSet(CellSetRepr);
 
@@ -40,7 +34,6 @@ impl Default for CellSet {
 }
 
 impl CellSet {
-    /// Internal constructor from raw bits.
     #[inline]
     const fn from_bits(bits: Bits) -> Self {
         debug_assert!(bits <= ALL_SET);
@@ -51,7 +44,6 @@ impl CellSet {
         }
     }
 
-    /// Returns the raw bit representation.
     #[inline]
     const fn bits(&self) -> Bits {
         match self.0 {
@@ -61,17 +53,14 @@ impl CellSet {
         }
     }
 
-    /// Returns a new empty set.
     pub const fn empty() -> Self {
         Self(CellSetRepr::Empty)
     }
 
-    /// Returns a new full set.
     pub const fn full() -> Self {
         Self(CellSetRepr::Full)
     }
 
-    /// Returns a new set containing the cells with a digit in the packed string `puzzle`.
     pub fn new_from_pattern(puzzle: &str) -> Self {
         let mut bits: Bits = 0;
         let mut c = 0;
@@ -87,7 +76,6 @@ impl CellSet {
         Self::from_bits(bits)
     }
 
-    /// Returns a new set containing each cell in `cells`.
     pub const fn of<const N: usize>(cells: &[Cell; N]) -> Self {
         let mut bits: Bits = 0;
         let mut i = 0;
@@ -99,62 +87,50 @@ impl CellSet {
         Self::from_bits(bits)
     }
 
-    /// Returns true if this set is empty.
     pub const fn is_empty(&self) -> bool {
         matches!(self.0, CellSetRepr::Empty)
     }
 
-    /// Returns true if this set is full.
     pub const fn is_full(&self) -> bool {
         matches!(self.0, CellSetRepr::Full)
     }
 
-    /// Returns the number of cells in this set.
     pub const fn len(&self) -> usize {
         self.bits().count_ones() as usize
     }
 
-    /// Returns true if `cell` is a member of this set.
     pub const fn has(&self, cell: Cell) -> bool {
         self.bits() & cell.bit().bit() != 0
     }
 
-    /// Returns a copy of this set with `cell` as a member.
     pub const fn with(&self, cell: Cell) -> Self {
         Self::from_bits(self.bits() | cell.bit().bit())
     }
 
-    /// Adds `cell` to this set.
     pub fn add(&mut self, cell: Cell) {
         *self = self.with(cell);
     }
 
-    /// Returns a copy of this set without `cell` as a member.
     pub const fn without(&self, cell: Cell) -> Self {
         Self::from_bits(self.bits() & !(cell.bit().bit()))
     }
 
-    /// Removes `cell` from this set.
     pub fn remove(&mut self, cell: Cell) {
         *self = self.without(cell);
     }
 
-    /// Returns true if at least one of the members of `set` is a member of this set.
     pub const fn has_any(&self, set: CellSet) -> bool {
         !self.intersect(set).is_empty()
     }
 
-    /// Returns true if all of the members of `subset` are members of this set.
     pub const fn has_all(&self, subset: CellSet) -> bool {
         self.intersect(subset).bits() == subset.bits()
     }
 
-    /// Returns true if all of the members of this set are members of `superset`.
     pub const fn is_subset_of(&self, superset: CellSet) -> bool {
         self.intersect(superset).bits() == self.bits()
     }
 
-    /// Returns the single cell in this set.
     pub const fn as_single(&self) -> Option<Cell> {
         if self.len() != 1 {
             None
@@ -163,7 +139,6 @@ impl CellSet {
         }
     }
 
-    /// Returns the two cells in this set as a tuple.
     pub const fn as_pair(&self) -> Option<(Cell, Cell)> {
         if self.len() != 2 {
             None
@@ -176,7 +151,6 @@ impl CellSet {
         }
     }
 
-    /// Returns the three cells in this set as a tuple.
     pub const fn as_triple(&self) -> Option<(Cell, Cell, Cell)> {
         if self.len() != 3 {
             None
@@ -191,7 +165,6 @@ impl CellSet {
         }
     }
 
-    /// Returns the first cell in this set in row-then-column order.
     pub const fn first(&self) -> Option<Cell> {
         if self.is_empty() {
             None
@@ -200,14 +173,12 @@ impl CellSet {
         }
     }
 
-    /// Returns the first cell in this set and removes it.
     pub fn pop(&mut self) -> Option<Cell> {
         let cell = self.first()?;
         self.remove(cell);
         Some(cell)
     }
 
-    /// Returns a new set containing the combined members of this set and `set`.
     pub const fn union(&self, set: Self) -> Self {
         let a = self.bits();
         let b = set.bits();
@@ -218,12 +189,10 @@ impl CellSet {
         }
     }
 
-    /// Adds the members of `set` to this set.
     pub fn union_with(&mut self, set: Self) {
         *self = self.union(set);
     }
 
-    /// Returns a new set containing the common members of this set and `set`.
     pub const fn intersect(&self, set: Self) -> Self {
         let a = self.bits();
         let b = set.bits();
@@ -234,12 +203,10 @@ impl CellSet {
         }
     }
 
-    /// Removes all members of this set that are not members of `set`.
     pub fn intersect_with(&mut self, set: Self) {
         *self = self.intersect(set);
     }
 
-    /// Returns a new set containing the members of this set that are not in `set`.
     pub const fn minus(&self, set: Self) -> Self {
         let a = self.bits();
         let b = set.bits();
@@ -250,42 +217,34 @@ impl CellSet {
         }
     }
 
-    /// Removes all members of this set that are members of `set`.
     pub fn subtract(&mut self, set: Self) {
         *self = self.minus(set);
     }
 
-    /// Returns a new set containing all cells that are not in this set.
     pub const fn inverted(&self) -> Self {
         Self::from_bits(!self.bits() & ALL_SET)
     }
 
-    /// Removes all cells from this set and adds all other cells to it.
     pub fn invert(&mut self) {
         *self = self.inverted();
     }
 
-    /// Returns true if all cells in this set are all in any single house.
     pub fn share_any_house(&self) -> bool {
         self.share_row() || self.share_column() || self.share_block()
     }
 
-    /// Returns true if all cells in this set are in the same row.
     pub fn share_row(&self) -> bool {
         self.share_house(Shape::Row)
     }
 
-    /// Returns true if all cells in this set are in the same column.
     pub fn share_column(&self) -> bool {
         self.share_house(Shape::Column)
     }
 
-    /// Returns true if all cells in this set are in the same block.
     pub fn share_block(&self) -> bool {
         self.share_house(Shape::Block)
     }
 
-    /// Returns true if all cells in this set are in the same `shape` house.
     pub fn share_house(&self, shape: Shape) -> bool {
         if self.is_empty() {
             false
@@ -300,53 +259,44 @@ impl CellSet {
         }
     }
 
-    /// Returns the minimal set of rows containing the members of this set.
     pub fn rows(&self) -> HouseSet {
         self.houses(Shape::Row)
     }
 
-    /// Returns the minimal set of columns containing the members of this set.
     pub fn columns(&self) -> HouseSet {
         self.houses(Shape::Column)
     }
 
-    /// Returns the minimal set of blocks containing the members of this set.
     pub fn blocks(&self) -> HouseSet {
         self.houses(Shape::Block)
     }
 
-    /// Returns the minimal set of `shape` houses containing the members of this set.
     pub fn houses(&self, shape: Shape) -> HouseSet {
         self.iter()
             .fold(HouseSet::empty(shape), |set, cell| set + cell.house(shape))
     }
 
-    /// Returns the common peers of all members of this set.
     pub fn peers(&self) -> CellSet {
         self.iter()
             .fold(CellSet::full(), |set, cell| set & cell.peers())
     }
 
-    /// Returns an iterator over the members of this set in row-then-column order.
     pub const fn iter(&self) -> CellIter {
         CellIter {
             iter: self.bit_iter(),
         }
     }
 
-    /// Returns an iterator over the members of this set as bits in row-then-column order.
     pub const fn bit_iter(&self) -> BitIter {
         BitIter { bits: self.bits() }
     }
 
-    /// Returns a packed pattern string with a `1` for each member of this set.
     pub fn pattern_string(&self) -> String {
         (0..Cell::COUNT)
             .map(|i| if self.has(Cell::new(i)) { '1' } else { '.' })
             .collect()
     }
 
-    /// Returns the size and bits of this set as a debug string.
     pub fn debug(&self) -> String {
         format!(
             "{:02}:{:081b}",
@@ -368,14 +318,14 @@ impl CellSet {
 }
 
 impl From<House> for CellSet {
-    /// Returns a set containing the cells in `house`.
+    /// Returns a set containing the cells in house
     fn from(house: House) -> Self {
         house.cells()
     }
 }
 
 impl From<&str> for CellSet {
-    /// Returns a set containing the cells in `labels` after splitting on space.
+    /// Returns a set containing the cells in labels
     fn from(labels: &str) -> Self {
         Self::from_str(labels)
     }
@@ -397,7 +347,7 @@ impl IntoIterator for CellSet {
     type Item = Cell;
     type IntoIter = CellIter;
 
-    /// Returns an iterator over the members of this set in row-then-column order.
+    /// Returns an iterator over the members of this set in row-then-column order
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -412,12 +362,10 @@ impl<I> CellIteratorUnion for I
 where
     I: Iterator<Item = Cell>,
 {
-    /// Collects the cells in `iter` into a set.
     fn union(self) -> CellSet {
         self.union_cells()
     }
 
-    /// Collects the cells in `iter` into a set.
     fn union_cells(self) -> CellSet {
         self.fold(CellSet::empty(), |acc, c| acc + c)
     }
@@ -432,12 +380,10 @@ impl<I> CellSetIteratorUnion for I
 where
     I: Iterator<Item = CellSet>,
 {
-    /// Collects all members of the sets in `iter` into a set.
     fn union(self) -> CellSet {
         self.union_cells()
     }
 
-    /// Collects all members of the sets in `iter` into a set.
     fn union_cells(self) -> CellSet {
         self.fold(CellSet::empty(), |acc, c| acc | c)
     }
@@ -451,14 +397,12 @@ impl<I> CellSetIteratorIntersection for I
 where
     I: Iterator<Item = CellSet>,
 {
-    /// Collects the common members of the sets in `iter` into a set.
     fn intersection(self) -> CellSet {
         self.fold(CellSet::full(), |acc, c| acc & c)
     }
 }
 
 impl FromIterator<Cell> for CellSet {
-    /// Collects the cells in `iter` into a set.
     fn from_iter<I: IntoIterator<Item = Cell>>(iter: I) -> Self {
         let mut set = Self::empty();
         for cell in iter {
@@ -469,7 +413,6 @@ impl FromIterator<Cell> for CellSet {
 }
 
 impl FromIterator<CellSet> for CellSet {
-    /// Collects all members of the sets in `iter` into a set.
     fn from_iter<I: IntoIterator<Item = CellSet>>(iter: I) -> Self {
         let mut union = Self::empty();
         for set in iter {
@@ -507,14 +450,12 @@ impl Index<Cell> for CellSet {
 impl Add<Cell> for CellSet {
     type Output = Self;
 
-    /// Returns a copy of this set with `rhs` as a member.
     fn add(self, rhs: Cell) -> Self {
         self.with(rhs)
     }
 }
 
 impl AddAssign<Cell> for CellSet {
-    /// Adds `rhs` to this set.
     fn add_assign(&mut self, rhs: Cell) {
         self.add(rhs)
     }
@@ -523,14 +464,12 @@ impl AddAssign<Cell> for CellSet {
 impl Sub<Cell> for CellSet {
     type Output = Self;
 
-    /// Returns a copy of this set without `rhs` as a member.
     fn sub(self, rhs: Cell) -> Self {
         self.without(rhs)
     }
 }
 
 impl SubAssign<Cell> for CellSet {
-    /// Removes `rhs` from this set.
     fn sub_assign(&mut self, rhs: Cell) {
         self.remove(rhs)
     }
@@ -539,7 +478,6 @@ impl SubAssign<Cell> for CellSet {
 impl Not for CellSet {
     type Output = Self;
 
-    /// Returns a new set containing all cells that are not in this set.
     fn not(self) -> Self {
         self.inverted()
     }
@@ -548,14 +486,12 @@ impl Not for CellSet {
 impl BitOr for CellSet {
     type Output = Self;
 
-    /// Returns a new set containing the combined members of this set and `rhs`.
     fn bitor(self, rhs: Self) -> Self {
         self.union(rhs)
     }
 }
 
 impl BitOrAssign for CellSet {
-    /// Adds the members of `rhs` to this set.
     fn bitor_assign(&mut self, rhs: Self) {
         self.union_with(rhs)
     }
@@ -564,14 +500,12 @@ impl BitOrAssign for CellSet {
 impl BitAnd for CellSet {
     type Output = Self;
 
-    /// Returns a new set containing the common members of this set and `rhs`.
     fn bitand(self, rhs: Self) -> Self {
         self.intersect(rhs)
     }
 }
 
 impl BitAndAssign for CellSet {
-    /// Removes all members of this set that are not members of `rhs`.
     fn bitand_assign(&mut self, rhs: Self) {
         self.intersect_with(rhs)
     }
@@ -580,21 +514,18 @@ impl BitAndAssign for CellSet {
 impl Sub for CellSet {
     type Output = Self;
 
-    /// Returns a new set containing the members of this set that are not in `rhs`.
     fn sub(self, rhs: Self) -> Self {
         self.minus(rhs)
     }
 }
 
 impl SubAssign for CellSet {
-    /// Removes all members of this set that are members of `rhs`.
     fn sub_assign(&mut self, rhs: Self) {
         self.subtract(rhs)
     }
 }
 
 impl fmt::Display for CellSet {
-    /// Returns a string containing the labels of the cells in this set separated by spaces.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.is_empty() {
             write!(f, "{}", EMPTY_SET)
@@ -620,7 +551,6 @@ impl fmt::Debug for CellSet {
     }
 }
 
-/// Returns a new set from the given bits, cells, or labels.
 #[macro_export]
 macro_rules! cells {
     ($s:expr) => {{
@@ -642,7 +572,6 @@ impl Iterator for CellIter {
 
 impl FusedIterator for CellIter {}
 
-// TODO Inline this into CellIter?
 pub struct BitIter {
     bits: Bits,
 }

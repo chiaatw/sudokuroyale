@@ -8,7 +8,6 @@ use crate::layout::{Cell, CellSet, Coord};
 
 use super::{HouseSet, Shape};
 
-//Trait, describes House-API
 pub trait HouseLike: Copy + Clone + Eq + PartialEq + Sized {
     fn coord(&self) -> Coord;
     fn shape(&self) -> Shape;
@@ -68,7 +67,6 @@ pub trait HouseLike: Copy + Clone + Eq + PartialEq + Sized {
 
     fn crossing_houses(&self, cells: CellSet) -> HouseSet;
 
-    //Returns the set of houses of a given shape that belong to this house
     fn houses(&self, shape: Shape) -> HouseSet;
 
     fn rows(&self) -> HouseSet {
@@ -157,7 +155,6 @@ impl House {
 
     pub fn intersect(&self, other: House) -> CellSet {
         self.cells().intersect(other.cells())
-        // oder: self.cells() & other.cells() falls BitAnd existiert
     }
 
     pub fn iter() -> HouseIter {
@@ -934,6 +931,6 @@ mod tests {
         let c0 = House::column(Coord::from(0));
 
         assert!(r0 < r1);
-        assert!(r1 < c0); // Rows < Columns by Shape ordering
+        assert!(r1 < c0); 
     }
 }

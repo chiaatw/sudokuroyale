@@ -1,6 +1,5 @@
 use crate::solve::strategy_ord::board::Board;
 
-// Re-export: nutzt deinen echten Cancelable aus strategy_ord
 pub use crate::solve::strategy_ord::cancelable::{create_signal, Cancelable};
 
 use std::time::Duration;

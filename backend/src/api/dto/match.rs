@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use uuid::Uuid;
 
-use crate::api::dto::ws::WsServerEvent;
 use crate::api::dto::game::GameViewDto;
+use crate::api::dto::ws::WsServerEvent;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]

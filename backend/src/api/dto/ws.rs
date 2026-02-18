@@ -13,10 +13,9 @@ pub enum WsServerEvent {
         player1_id: Uuid,
         player2_id: Option<Uuid>,
         started_at: Option<chrono::DateTime<chrono::Utc>>,
-        view: Option<GameViewDto>, // 👈 None = Lobby
+        view: Option<GameViewDto>, 
     },
 
-    // optional, kannst du später behalten oder entfernen
     RevisionChanged {
         revision: u64,
         view: GameViewDto,

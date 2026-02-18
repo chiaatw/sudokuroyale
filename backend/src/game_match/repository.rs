@@ -9,7 +9,9 @@ pub struct MatchRepository {
 
 impl MatchRepository {
     pub fn new() -> Self {
-        Self { sessions: Vec::new() }
+        Self {
+            sessions: Vec::new(),
+        }
     }
 
     pub fn add_match(&mut self, m: GameMatch) {

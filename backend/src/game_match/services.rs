@@ -4,25 +4,24 @@ use uuid::Uuid;
 use std::time::{Duration, Instant};
 
 use crate::build::{Finder, Generator};
-use crate::game::puzzle::Puzzle as GamePuzzle;
-use crate::game_match::model::{GameMatch, MatchStatus};
-use crate::game_match::repository::MatchRepository;
-use crate::match_state::GameSession;
-use crate::io::Cancelable;
-use crate::layout::{Cell, Grid};
-use crate::puzzle::{Board, Changer, Options}; // Board = solve::strategy_ord::Board
 use crate::game::outcome::MoveOutcome;
 use crate::game::player::PlayerId;
+use crate::game::puzzle::Puzzle as GamePuzzle;
 use crate::game::r#move::Move;
 use crate::game::view::GameView;
+use crate::game_match::model::{GameMatch, MatchStatus};
+use crate::game_match::repository::MatchRepository;
+use crate::io::Cancelable;
+use crate::layout::{Cell, Grid};
+use crate::match_state::GameSession;
+use crate::puzzle::{Board, Changer, Options}; 
 
-/// Neues Match erstellen – synchron, bekommt user_id direkt.
-/// Legt automatisch eine GameSession an (meta + game=None).
+/// Neues Match erstellen – synchron, bekommt user_id direkt
+/// Legt automatisch eine GameSession an (meta + game=None)
 pub fn create_match(match_repo: &mut MatchRepository, user_id: &Uuid) -> Uuid {
     let meta = GameMatch::new(*user_id);
     let match_id = meta.id;
 
-    // direkt Session erstellen statt nur Meta
     let session = GameSession::from_match(meta);
     match_repo.add_session(session);
 
@@ -39,9 +38,7 @@ pub fn join_match(match_repo: &mut MatchRepository, user_id: &Uuid, match_id: &U
     eprintln!("start_match: user_id={user_id} match_id={match_id}");
     eprintln!(
         "start_match: meta status={:?}, p1={}, p2={:?}",
-        session.meta.status,
-        session.meta.player1_id,
-        session.meta.player2_id
+        session.meta.status, session.meta.player1_id, session.meta.player2_id
     );
 
     let m = &mut session.meta;
@@ -60,7 +57,11 @@ pub fn join_match(match_repo: &mut MatchRepository, user_id: &Uuid, match_id: &U
     true
 }
 
-pub fn leave_match_by_user(match_repo: &mut MatchRepository, user_id: &Uuid, match_id: &Uuid) -> bool {
+pub fn leave_match_by_user(
+    match_repo: &mut MatchRepository,
+    user_id: &Uuid,
+    match_id: &Uuid,
+) -> bool {
     // Session mut holen
     let session = match match_repo.find_session_by_id_mut(match_id) {
         Some(s) => s,
@@ -80,10 +81,6 @@ pub fn leave_match_by_user(match_repo: &mut MatchRepository, user_id: &Uuid, mat
         m.player2_id = None;
         m.status = MatchStatus::Waiting;
 
-        // falls das Spiel schon lief, kannst du entscheiden:
-        // - abbrechen: session.game = None;
-        // - oder keep: session.game bleibt, bis cleanup ihn entfernt
-        // Für MVP: abbrechen ist meistens sinnvoll:
         session.game = None;
 
         session.touch();
@@ -98,7 +95,6 @@ fn board_to_grid(board: &Board) -> Grid {
     let mut grid = Grid::new();
     for i in 0..81 {
         let cell = Cell::new(i);
-        // board.value(cell) muss einen Value liefern, der zu Grid::set passt
         grid.set(cell, board.value(cell));
     }
     grid
@@ -114,7 +110,6 @@ pub(crate) fn generate_puzzle_mvp() -> Option<GamePuzzle> {
     for attempt in 1..=120 {
         eprintln!("gen: attempt {}", attempt);
 
-        // pro Attempt eigener cancelable (robust gegen “sticky” cancel)
         let cancelable = Cancelable::new();
 
         // 1) solved board erzeugen
@@ -134,11 +129,9 @@ pub(crate) fn generate_puzzle_mvp() -> Option<GamePuzzle> {
             }
         };
 
-        // Lösung sichern bevor Finder `solved` moved
         let solution = solved.clone();
 
         // 2) Finder: aus solved -> givens (Puzzle)
-        // Wenn 28 zu aggressiv ist: testweise 30/32 setzen oder Finder-Parameter lockern.
         let mut finder = Finder::new(28, 5, false);
         eprintln!("gen: starting finder...");
         let (givens_board, _effects) = finder.backtracking_find(solved);
@@ -151,9 +144,6 @@ pub(crate) fn generate_puzzle_mvp() -> Option<GamePuzzle> {
             eprintln!("gen: guard failed (clues={}), retrying", clues);
             continue;
         }
-
-        // Optional: wenn du “ungefähr 28” willst, aber nicht zu viele:
-        // if clues > 40 { continue; }
 
         // 4) Puzzle bauen
         let givens_grid = board_to_grid(&givens_board);
@@ -172,13 +162,11 @@ pub fn start_match_by_user(
     user_id: &Uuid,
     match_id: &Uuid,
 ) -> bool {
-    // 1) komplette Session holen (nicht nur Meta!)
     let session = match match_repo.find_session_by_id_mut(match_id) {
         Some(s) => s,
         None => return false,
     };
 
-    // 2) Regeln: nur Player1 darf starten, Player2 muss da sein, Status READY
     if session.meta.player1_id != *user_id {
         return false;
     }
@@ -189,7 +177,6 @@ pub fn start_match_by_user(
         return false;
     }
 
-    // 3) Lösung generieren – mit Retries
     let mut solved_opt: Option<Board> = None;
 
     for attempt in 0..50 {
@@ -211,7 +198,10 @@ pub fn start_match_by_user(
                 );
             }
             None => {
-                eprintln!("start_match: generator returned None on attempt {}", attempt + 1);
+                eprintln!(
+                    "start_match: generator returned None on attempt {}",
+                    attempt + 1
+                );
             }
         }
     }
@@ -221,10 +211,8 @@ pub fn start_match_by_user(
         None => return false,
     };
 
-    // WICHTIG: Solution behalten, bevor Finder das Board "verbraucht"
     let solved_clone = solved.clone();
 
-    // 4) Givens finden: Ziel 28 clues (kann höher enden, wenn Finder früher stoppt)
     let mut finder = Finder::new(28, 5, false);
     eprintln!("start_match: starting finder...");
     let (givens_board, _effects) = finder.backtracking_find(solved);
@@ -233,19 +221,16 @@ pub fn start_match_by_user(
     let clues = givens_board.known_count();
     eprintln!("start_match: givens clues={}", clues);
 
-    // Guard: kaputte Ergebnisse verhindern
     if clues < 17 || clues > 81 {
         eprintln!("start_match: clues guard failed");
         return false;
     }
 
-    // 5) Puzzle bauen: givens + solution passen zusammen
     let givens_grid = board_to_grid(&givens_board);
     let solution_grid = board_to_grid(&solved_clone);
     let puzzle = GamePuzzle::new(givens_grid, solution_grid);
 
-    // 6) Start Game in Session
-    let time_limit = Duration::from_secs(6 * 60); // 6 Minuten
+    let time_limit = Duration::from_secs(6 * 60); 
     let now = Instant::now();
 
     let ok = session.start_game(puzzle, time_limit, now);
@@ -258,12 +243,13 @@ pub fn start_match_by_user(
     ok
 }
 
-fn player_id_for_user(session: &crate::match_state::GameSession, user_id: &uuid::Uuid) -> Option<PlayerId> {
+fn player_id_for_user(
+    session: &crate::match_state::GameSession,
+    user_id: &uuid::Uuid,
+) -> Option<PlayerId> {
     session.player_for_user(user_id)
 }
 
-/// GET /match/<id>/state
-/// Gibt einen GameView zurück (enthält givens + current, aber nie solution).
 pub fn get_match_state_for_user(
     match_repo: &mut crate::game_match::repository::MatchRepository,
     user_id: &uuid::Uuid,
@@ -278,9 +264,6 @@ pub fn get_match_state_for_user(
     Some(game.view_for(player, now))
 }
 
-/// POST /match/<id>/move  (mit expected_revision)
-/// Liefert MoveOutcome + optional updated view.
-/// - Wenn RevisionMismatch -> Rejected(RevisionMismatch) => Route gibt 409 zurück.
 pub fn apply_move_for_user(
     match_repo: &mut crate::game_match::repository::MatchRepository,
     user_id: &uuid::Uuid,
@@ -295,7 +278,6 @@ pub fn apply_move_for_user(
     let now = Instant::now();
 
     let outcome = game.apply_move(player, expected_revision, mv, now);
-    // Nach dem Move immer neuen View erzeugen (auch fürs Polling gut)
     let view = game.view_for(player, now);
 
     session.touch();
