@@ -1,12 +1,25 @@
 const BASE_URL = "http://localhost:8000";
 
-export async function apiPost(path: string, data: any) {
+export async function apiGet<T>(path: string): Promise<T> {
+  const response = await fetch(BASE_URL + path, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("API Fehler");
+  }
+
+  return response.json();
+}
+
+
+export async function apiPost<T>(path: string, data: any): Promise<T> {
   const response = await fetch(BASE_URL + path, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include", 
+    credentials: "include",
     body: JSON.stringify(data),
   });
 
