@@ -258,39 +258,6 @@ export function GamePage() {
     }
   };
 
-  const handleClear = async () => {
-    if (!selectedCell || !view) return;
-
-    const cell = cellIndex(selectedCell.row, selectedCell.col);
-
-    try {
-      setErr(null);
-
-      const body = {
-        expected_revision: view.revision,
-        move_id: null,
-        mv: { type: "clear", cell },
-      };
-
-      const resp = await apiPost<ApplyMoveResponse>(`/match/${matchId}/move`, body);
-
-      if (resp.view) {
-        setView(resp.view);
-        setGrid(toGrid9x9(resp.view.current));
-        setInitialGrid(toGrid9x9(resp.view.givens));
-      }
-
-      if (resp.outcome.type === "rejected") {
-        const fresh = await apiGet<GameViewDto>(`/match/${matchId}/state`);
-        setView(fresh);
-        setGrid(toGrid9x9(fresh.current));
-        setInitialGrid(toGrid9x9(fresh.givens));
-      }
-    } catch (e: any) {
-      setErr(e?.message ?? "Clear fehlgeschlagen");
-    }
-  };
-
   const isSameRow = (row: number) => selectedCell?.row === row;
   const isSameCol = (col: number) => selectedCell?.col === col;
   const isSameBox = (row: number, col: number) => {
@@ -398,7 +365,7 @@ export function GamePage() {
       {/* Number Input */}
       <div className="max-w-4xl w-full mx-auto">
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-white/20">
-          <div className="grid grid-cols-10 gap-2 max-w-lg mx-auto">
+          <div className="grid grid-cols-9 gap-2 max-w-lg mx-auto">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <button
                 key={num}
@@ -416,22 +383,6 @@ export function GamePage() {
                 {num}
               </button>
             ))}
-            {/* Clear Button */}
-            <button
-              onClick={handleClear}
-              disabled={!selectedCell}
-              className={`
-                aspect-square flex items-center justify-center text-xl font-bold rounded-lg
-                transition-all
-                ${
-                  selectedCell
-                    ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
-                    : "bg-white/5 text-white/30 cursor-not-allowed"
-                }
-              `}
-            >
-              ⌫
-            </button>
           </div>
         </div>
       </div>
