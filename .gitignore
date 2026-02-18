@@ -1,6 +1,6 @@
 # Rust build folder
 backend/target/
-
+target/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
