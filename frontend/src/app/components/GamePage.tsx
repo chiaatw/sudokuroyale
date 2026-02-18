@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Clock, User, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { apiGet, apiPost } from "../api/client";
@@ -39,8 +39,31 @@ const formatTime = (seconds: number) => {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
+type WsMsg =
+  | { type: "Snapshot"; view: GameViewDto }
+  | { type: "RevisionChanged"; revision: number; view: GameViewDto }
+  | any;
+
+function computeWsUrl(matchId: string) {
+  const base =
+    (import.meta as any).env?.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+
+  const u = new URL(base);
+  u.protocol = u.protocol === "https:" ? "wss:" : "ws:";
+  u.pathname = `/match/${matchId}/ws`;
+  return u.toString();
+}
+
 export function GamePage() {
   const navigate = useNavigate();
+
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<number | null>(null);
+  const backoffRef = useRef<number>(400);
+  const aliveRef = useRef<boolean>(true);
+
+  const targetEndMsRef = useRef<number | null>(null);
+  const [uiRemainingSeconds, setUiRemainingSeconds] = useState<number>(0);
 
   // matchId aus URL (?matchId=...) oder localStorage
   const matchId = useMemo(() => {
@@ -59,44 +82,126 @@ export function GamePage() {
   // für error anzeige
   const [maxMistakes, setMaxMistakes] = useState<number | null>(null);
 
+  const applyView = useCallback(
+    (v: GameViewDto) => {
+      setView(v);
+      setGrid(toGrid9x9(v.current));
+      setInitialGrid(toGrid9x9(v.givens));
+      setMaxMistakes((prev) => (prev == null ? v.mistakesLeft : prev));
+
+      targetEndMsRef.current = Date.now() + v.remainingMs;
+
+      if (v.state?.startsWith("Won")) navigate("/result/win");
+      if (v.state?.startsWith("Lost")) navigate("/result/lose");
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    const tick = () => {
+      const target = targetEndMsRef.current;
+      if (!target) {
+        setUiRemainingSeconds(0);
+        return;
+      }
+      const msLeft = Math.max(0, target - Date.now());
+      setUiRemainingSeconds(Math.floor(msLeft / 1000));
+    };
+
+    tick();
+    const id = window.setInterval(tick, 200);
+    return () => window.clearInterval(id);
+  }, []);
+
   useEffect(() => {
     if (!matchId) return;
 
-    let alive = true;
-    let interval: number | undefined;
+    aliveRef.current = true;
 
-    const fetchState = async () => {
-      try {
-        const v = await apiGet<GameViewDto>(`/match/${matchId}/state`);
-        if (!alive) return;
-
-        setView(v);
-        setGrid(toGrid9x9(v.current));
-        setInitialGrid(toGrid9x9(v.givens));
-        setMaxMistakes((prev) => (prev == null ? v.mistakesLeft : prev));
-
-      if (
-        v.state.startsWith("Won") ||
-        v.state.startsWith("Lost")
-      ) {
-        alive = false;
-        if (interval !== undefined) clearInterval(interval);
+    const connect = () => {
+      if (wsRef.current) {
+        try { wsRef.current.close(); } catch {}
+        wsRef.current = null;
       }
-      } catch {
-      }
+
+      const ws = new WebSocket(computeWsUrl(matchId));
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        backoffRef.current = 400;
+
+        apiGet<GameViewDto>(`/match/${matchId}/state`)
+          .then(applyView)
+          .catch(() => {});
+      };
+
+      ws.onmessage = (ev) => {
+        try {
+          const msg: WsMsg = JSON.parse(ev.data);
+
+          if (msg?.view) {
+            applyView(msg.view as GameViewDto);
+            return;
+          }
+
+          if (msg?.snapshot?.view) {
+            applyView(msg.snapshot.view as GameViewDto);
+            return;
+          }
+        } catch {
+        }
+      };
+
+      ws.onclose = () => {
+        if (!aliveRef.current) return;
+
+        const backoff = Math.min(4000, backoffRef.current);
+        backoffRef.current = Math.min(8000, backoffRef.current * 1.6);
+
+        reconnectTimerRef.current = window.setTimeout(() => {
+          connect();
+        }, backoff);
+      };
+
+      ws.onerror = () => {
+        try { ws.close(); } catch {}
+      };
     };
 
-    fetchState();
+    connect();
 
-    interval = window.setInterval(fetchState, 800);
+    const syncId = window.setInterval(() => {
+      apiGet<GameViewDto>(`/match/${matchId}/state`)
+        .then(applyView)
+        .catch(() => {});
+    }, 8000);
+
+    const onVis = () => {
+      if (document.visibilityState === "visible") {
+        apiGet<GameViewDto>(`/match/${matchId}/state`)
+          .then(applyView)
+          .catch(() => {});
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
 
     return () => {
-      alive = false;
-      if (interval !== undefined) clearInterval(interval);
-    };
-  }, [matchId]);
+      aliveRef.current = false;
 
-  const remainingSeconds = view ? Math.max(0, Math.floor(view.remainingMs / 1000)) : 0;
+      document.removeEventListener("visibilitychange", onVis);
+      window.clearInterval(syncId);
+
+      if (reconnectTimerRef.current != null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+
+      if (wsRef.current) {
+        try { wsRef.current.close(); } catch {}
+        wsRef.current = null;
+      }
+    };
+  }, [matchId, applyView]);
 
   const myErrors =
   maxMistakes == null || !view ? 0 : Math.max(0, maxMistakes - view.mistakesLeft);
@@ -130,11 +235,7 @@ export function GamePage() {
 
       const resp = await apiPost<ApplyMoveResponse>(`/match/${matchId}/move`, body);
 
-      if (resp.view) {
-        setView(resp.view);
-        setGrid(toGrid9x9(resp.view.current));
-        setInitialGrid(toGrid9x9(resp.view.givens));
-      }
+      if (resp.view) applyView(resp.view);
 
       if (resp.outcome.type === "rejected") {
         const fresh = await apiGet<GameViewDto>(`/match/${matchId}/state`);
@@ -249,7 +350,7 @@ export function GamePage() {
       <div className="max-w-4xl w-full mx-auto mb-3">
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-2 border border-white/20 flex items-center justify-center gap-2">
           <Clock className="w-5 h-5 text-cyan-400" />
-          <span className="text-2xl font-bold text-white tabular-nums">{formatTime(remainingSeconds)}</span>
+          <span className="text-2xl font-bold text-white tabular-nums">{formatTime(uiRemainingSeconds)}</span>
         </div>
       </div>
 
