@@ -16,6 +16,7 @@ use sudokuroyale::api::dto::user::{
 };
 
 mod cors;
+mod preflight;
 
 use sudokuroyale::user::error::AuthError;
 use sudokuroyale::user::repository::UserRepository;
@@ -235,7 +236,7 @@ async fn rocket() -> _ {
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
         .manage(Arc::new(Mutex::new(MatchRepository::new())))
-        .mount("/", routes![health, register, login, me, logout])
+        .mount("/", routes![ preflight::all_options,health,register,login,me,logout])
         .manage(Arc::new(sudokuroyale::api::ws_hub::WsHub::new(64)))
         .mount("/", sudokuroyale::api::routes::routes())
 }

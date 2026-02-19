@@ -1,14 +1,14 @@
 use crate::layout::{Cell, Value, ValueLike};
 use crate::solve::validator::{Board, ValidationError};
 
-/// Validate a PLACE move
+/// validiere einen PLACE move
 
 pub fn validate_place_move(
     board: &Board,
     cell: Cell,
     attempted: Value,
 ) -> Result<(), ValidationError> {
-    // Value must be in 1..=9
+    // Wert muss in 1..=9 sein 
     let raw = attempted.raw();
     if raw == 0 || raw > 9 {
         return Err(ValidationError::InvalidValue {
@@ -19,7 +19,7 @@ pub fn validate_place_move(
 
     let existing = board.get(cell);
 
-    // Given cells are immutable
+    // gegebene zellen sind immutable
     if board.is_given(cell) {
         if existing != attempted {
             return Err(ValidationError::GivenCellWasModified {
@@ -39,7 +39,7 @@ pub fn validate_place_move(
         });
     }
 
-    // Check row / column / box peers
+    // check reihe / spalte / box nachbarn
     for peer in cell.peers().iter() {
         if board.get(peer) == attempted {
             return Err(ValidationError::ConflictWithPeer {
@@ -53,9 +53,9 @@ pub fn validate_place_move(
     Ok(())
 }
 
-/// Validate a CLEAR move.
+/// validiere einen CLEAR move.
 ///
-/// Clearing a given is illegal.
+/// eine gegebene zu clearen ist illegal.
 pub fn validate_clear_move(board: &Board, cell: Cell) -> Result<(), ValidationError> {
     if board.is_given(cell) {
         return Err(ValidationError::GivenCellWasCleared { cell });

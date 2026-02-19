@@ -12,9 +12,9 @@ impl UserRepository {
         Self { pool }
     }
 
-    // ---------------------------
-    // CREATE
-    // ---------------------------
+    
+    // Erstellen
+    
     pub async fn add_user(&self, user: &User) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
@@ -33,9 +33,9 @@ impl UserRepository {
         Ok(())
     }
 
-    // ---------------------------
-    // READ
-    // ---------------------------
+    
+    // lese
+    
     pub async fn find_by_id(&self, id: &Uuid) -> Result<Option<User>, sqlx::Error> {
         let row = sqlx::query(
             r#"
@@ -99,9 +99,9 @@ impl UserRepository {
         }))
     }
 
-    // ---------------------------
-    // UPDATE
-    // ---------------------------
+    
+    // update
+    
     pub async fn update_password(
         &self,
         user_id: &Uuid,

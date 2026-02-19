@@ -2,7 +2,7 @@ use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use rocket::{Request, Response};
 
-/// CORS Fairing — erlaubt Cross-Origin-Requests vom Frontend.
+/// CORS Fairing — erlaubt cross-origin-requests vom frontend
 pub struct Cors;
 
 #[rocket::async_trait]
@@ -15,7 +15,7 @@ impl Fairing for Cors {
     }
 
     async fn on_response<'r>(&self, request: &'r Request<'_>, response: &mut Response<'r>) {
-        // Origin aus dem Request lesen (dynamisch, damit mehrere Frontends möglich)
+        // origin aus dem request lesen 
         let origin = request
             .headers()
             .get_one("Origin")
