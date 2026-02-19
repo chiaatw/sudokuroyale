@@ -15,6 +15,8 @@ use sudokuroyale::api::dto::user::{
     HealthResponse, LoginRequest, LoginResponse, MeResponse, RegisterRequest, RegisterResponse,
 };
 
+mod cors;
+
 use sudokuroyale::user::error::AuthError;
 use sudokuroyale::user::repository::UserRepository;
 use sudokuroyale::user::reset_token_repository::ResetTokenRepository;
@@ -228,6 +230,7 @@ async fn rocket() -> _ {
         .expect("Failed to create database pool");
 
     rocket::build()
+        .attach(cors::Cors)
         .manage(UserRepository::new(pool.clone()))
         .manage(Mutex::new(SessionRepository::new()))
         .manage(Mutex::new(ResetTokenRepository::new()))
