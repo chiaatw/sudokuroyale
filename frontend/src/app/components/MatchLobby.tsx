@@ -1,5 +1,7 @@
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { createMatch } from "../api/match";
+
 
 export function MatchLobby() {
   const navigate = useNavigate();
@@ -21,7 +23,14 @@ export function MatchLobby() {
 
           <div className="space-y-4">
             <button
-              onClick={() => navigate("/waiting")}
+              onClick={async () => {
+                try {
+                  const matchId = await createMatch();
+                  navigate(`/waiting?matchId=${matchId}`);
+                } catch {
+                  alert("Konnte kein Match erstellen. Bist du eingeloggt?");
+                }
+              }}
               className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 group"
             >
               <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform" />

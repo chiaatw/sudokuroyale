@@ -62,7 +62,7 @@ pub fn leave_match_by_user(
     user_id: &Uuid,
     match_id: &Uuid,
 ) -> bool {
-    // Session mut holen
+    
     let session = match match_repo.find_session_by_id_mut(match_id) {
         Some(s) => s,
         None => return false,
