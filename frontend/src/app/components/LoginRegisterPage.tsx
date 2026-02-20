@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User, Lock, Mail, UserPlus, LogIn } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
+import { login, register } from '../api/auth';
 
 export function LoginRegisterPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,18 +11,24 @@ export function LoginRegisterPage() {
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLogin) {
-      console.log('Login:', { email, password });
-      // Mock login logic
-      alert(`Login erfolgreich als ${email}`);
-      navigate("/lobby");
-    } else {
-      console.log('Register:', { email, username, password });
-      // Mock register logic
-      alert(`Registrierung erfolgreich! Willkommen ${username}`);
-      navigate("/lobby");
+  
+    try {
+      if (isLogin) {
+        await login({ username, password });
+        navigate("/lobby");
+      } else {
+        await register({ username, email, password });
+        navigate("/lobby");
+      }
+    } catch (err) {
+      console.error(err);
+      alert(
+        (err as Error)?.message
+          ? (err as Error).message
+          : (isLogin ? "Login fehlgeschlagen" : "Registrierung fehlgeschlagen")
+      );
     }
   };
 
@@ -41,7 +48,12 @@ export function LoginRegisterPage() {
           {/* Toggle Buttons */}
           <div className="flex gap-2 mb-6 bg-black/20 rounded-lg p-1">
             <button
-              onClick={() => setIsLogin(true)}
+              onClick={() => {
+                setIsLogin(true);
+                setEmail("");
+                setUsername("");
+                setPassword("");
+              }}
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${
                 isLogin
                   ? 'bg-white text-blue-900 shadow-lg'
@@ -52,7 +64,12 @@ export function LoginRegisterPage() {
               Login
             </button>
             <button
-              onClick={() => setIsLogin(false)}
+              onClick={() => {
+                setIsLogin(false);
+                setEmail("");
+                setUsername("");
+                setPassword("");
+              }}
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${
                 !isLogin
                   ? 'bg-white text-blue-900 shadow-lg'
@@ -66,18 +83,24 @@ export function LoginRegisterPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
+            
             <div>
               <label className="block text-white/90 mb-2 text-sm font-medium">
-                E-Mail
+                 {isLogin ? "Benutzername" : "E-Mail"}
               </label>
+
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="deine@email.com"
+                {isLogin ? (
+                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                ) : (
+                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                )}
+
+                 <input
+                  type={isLogin ? "text" : "email"}
+                  value={isLogin ? username : email}
+                  onChange={(e) => (isLogin ? setUsername(e.target.value) : setEmail(e.target.value))}
+                  placeholder={isLogin ? "deinUsername" : "deine@email.com"}
                   required
                   className="w-full bg-white/10 border border-white/30 rounded-lg py-3 px-10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all"
                 />
