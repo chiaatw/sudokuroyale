@@ -5,11 +5,12 @@ import { useNavigate } from "react-router-dom";
 export function WaitingPage() {
   const navigate = useNavigate();
 
-  const [matchCode] = useState("XYZ789"); // Mock match code
+  const params = new URLSearchParams(window.location.search);
+  const matchCode = params.get("matchId") ?? "";
   const [copied, setCopied] = useState(false);
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(matchCode);
+    if (matchCode) navigator.clipboard.writeText(matchCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

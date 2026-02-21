@@ -1,16 +1,30 @@
 import { useState } from "react";
 import { ArrowLeft, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { joinMatch } from "../api/match";
+
 
 export function JoinMatch() {
   const navigate = useNavigate();
   const [matchCode, setMatchCode] = useState("");
 
-  const handleJoin = (e: React.FormEvent) => {
+  const handleJoin = async (e: any) => {
     e.preventDefault();
-    console.log("Beitritt zu Match:", matchCode);
-    alert(`Trete Match ${matchCode} bei...`);
-    navigate("/game");
+  
+    try {
+      const ok = await joinMatch(matchCode);
+  
+      if (!ok) {
+        alert("Match konnte nicht beigetreten werden.");
+        return;
+      }
+  
+      localStorage.setItem("matchId", matchCode);
+  
+      navigate(`/waiting?matchId=${matchCode}`);
+    } catch (err) {
+      alert("Fehler beim Beitreten.");
+    }
   };
 
   return (
@@ -36,12 +50,9 @@ export function JoinMatch() {
               <input
                 type="text"
                 value={matchCode}
-                onChange={(e) =>
-                  setMatchCode(e.target.value.toUpperCase())
-                }
-                placeholder="z.B. ABC123"
+                onChange={(e) => setMatchCode(e.target.value)}
+                placeholder="z.B. 10d2396c-f656-4589-b5da-ea713a26eaca"
                 required
-                maxLength={10}
                 className="w-full bg-white/10 border border-white/30 rounded-xl py-6 px-6 text-white text-center text-2xl font-bold tracking-widest"
               />
             </div>
