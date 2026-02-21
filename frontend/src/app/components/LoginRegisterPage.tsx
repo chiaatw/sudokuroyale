@@ -20,7 +20,8 @@ export function LoginRegisterPage() {
         navigate("/lobby");
       } else {
         await register({ username, email, password });
-        navigate("/lobby");
+        alert("Registrierung erfolgreich. Bitte einloggen.");
+        setIsLogin(true);
       }
     } catch (err) {
       console.error(err);
