@@ -1,23 +1,16 @@
-import { Trophy, Clock, X, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Trophy, X, ArrowLeft } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export function ResultPage() {
   const navigate = useNavigate();
 
-  // Mock data
-  const winner = {
-    name: "Du",
-    time: "05:42",
-    errors: 2,
-  };
+  const { state } = useLocation();
 
-  const loser = {
-    name: "Gegner",
-    time: "06:15",
-    errors: 4,
-  };
+  const s = state as any;
 
-  const isWinner = true; // Mock: current player won
+  const winner = s?.winner ?? { name: "Du", time: "05:42", errors: 2 };
+  const loser = s?.loser ?? { name: "Gegner", time: "06:15", errors: 4 };
+  const isWinner = s?.isWinner ?? true;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 flex items-center justify-center p-4 relative overflow-hidden">
@@ -79,10 +72,6 @@ export function ResultPage() {
                   {winner.name}
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-center gap-2 text-cyan-200">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">{winner.time}</span>
-                  </div>
                   <div className="flex items-center justify-center gap-2 text-red-300">
                     <X className="w-4 h-4" />
                     <span className="text-sm">{winner.errors} Fehler</span>
@@ -103,10 +92,6 @@ export function ResultPage() {
                   {loser.name}
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-center gap-2 text-cyan-200">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">{loser.time}</span>
-                  </div>
                   <div className="flex items-center justify-center gap-2 text-red-300">
                     <X className="w-4 h-4" />
                     <span className="text-sm">{loser.errors} Fehler</span>

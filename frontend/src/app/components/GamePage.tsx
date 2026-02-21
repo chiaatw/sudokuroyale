@@ -39,6 +39,35 @@ const formatTime = (seconds: number) => {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
+const secondsFromRemainingMs = (ms: number) => Math.max(0, Math.floor(ms / 1000));
+
+function buildResultState(v: GameViewDto, maxMistakes: number | null) {
+  const mm = maxMistakes ?? v.mistakesLeft;
+
+  const myErrors = Math.max(0, mm - v.mistakesLeft);
+  const oppErrors = v.opponentProgress
+    ? Math.max(0, mm - v.opponentProgress.mistakesLeft)
+    : 0;
+
+  const myTime = formatTime(secondsFromRemainingMs(v.remainingMs));
+  const oppTime = v.opponentProgress
+    ? formatTime(secondsFromRemainingMs(v.opponentProgress.remainingMs))
+    : "00:00";
+
+  return {
+    winState: {
+      winner: { name: "Du", time: myTime, errors: myErrors },
+      loser: { name: "Gegner", time: oppTime, errors: oppErrors },
+      isWinner: true,
+    },
+    loseState: {
+      winner: { name: "Gegner", time: oppTime, errors: oppErrors },
+      loser: { name: "Du", time: myTime, errors: myErrors },
+      isWinner: false,
+    },
+  };
+}
+
 type WsMsg =
   | { type: "Snapshot"; view: GameViewDto }
   | { type: "RevisionChanged"; revision: number; view: GameViewDto }
@@ -80,7 +109,10 @@ export function GamePage() {
 
   const [err, setErr] = useState<string | null>(null);
 
-  // für error anzeige
+  const isGridComplete = (arr81: number[]) => arr81.every((n) => n !== 0);
+
+  const navigatedRef = useRef(false);
+
   const [maxMistakes, setMaxMistakes] = useState<number | null>(null);
 
   const applyView = useCallback(
@@ -92,10 +124,55 @@ export function GamePage() {
 
       targetEndMsRef.current = Date.now() + v.remainingMs;
 
-      if (v.state?.startsWith("Won")) navigate("/result/win");
-      if (v.state?.startsWith("Lost")) navigate("/result/lose");
+      const { winState, loseState } = buildResultState(v, maxMistakes);
+
+      if (navigatedRef.current) return;
+
+      const mm = maxMistakes ?? v.mistakesLeft; 
+      const oppErr =
+        !v.opponentProgress ? 0 : Math.max(0, mm - v.opponentProgress.mistakesLeft);
+      if (oppErr >= 3) {
+        navigatedRef.current = true;
+        navigate("/result/win", { state: winState });
+        return;
+      }
+
+      const myErr = Math.max(0, mm - v.mistakesLeft);
+      if (myErr >= 3) {
+        navigatedRef.current = true;
+        navigate("/result/lose", { state: loseState });
+        return;
+      }
+
+      if (isGridComplete(v.current)) {
+        if (v.state?.startsWith("Won")) {
+          navigatedRef.current = true;
+          navigate("/result/win", { state: winState });
+          return;
+        }
+        if (v.state?.startsWith("Lost")) {
+          navigatedRef.current = true;
+          navigate("/result/lose", { state: loseState });
+          return;
+        }
+
+        navigatedRef.current = true;
+        navigate("/result/win", { state: winState });
+        return;
+      }
+
+      if (v.state?.startsWith("Won")) {
+        navigatedRef.current = true;
+        navigate("/result/win", { state: winState });
+        return;
+      }
+      if (v.state?.startsWith("Lost")) {
+        navigatedRef.current = true;
+        navigate("/result/lose", { state: loseState });
+        return;
+      }
     },
-    [navigate]
+    [navigate, maxMistakes]
   );
 
   useEffect(() => {
@@ -252,8 +329,11 @@ export function GamePage() {
         setInitialGrid(toGrid9x9(fresh.givens));
       }
 
-      if (resp.outcome?.type === "won") navigate("/result/win");
-      if (resp.outcome?.type === "lost") navigate("/result/lose");
+    const baseView = resp.view ?? view;
+    const { winState, loseState } = buildResultState(baseView, maxMistakes);
+
+    if (resp.outcome?.type === "won") navigate("/result/win", { state: winState });
+    if (resp.outcome?.type === "lost") navigate("/result/lose", { state: loseState });
     } catch (e: any) {
       setErr(e?.message ?? "Move fehlgeschlagen");
     }

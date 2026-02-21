@@ -60,7 +60,6 @@ pub fn join_match_route(
     let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
         let hub = hub.inner().clone();
 
-        // lock kurz halten: join + snapshot bauen
         let (ok, snapshot_opt) = {
             let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
 
@@ -72,7 +71,7 @@ pub fn join_match_route(
                     .ok_or(Status::NotFound)?;
                 let meta = session.meta.clone();
 
-                // MVP: view None (Lobby-Update). Clients holen /state wenn gestartet.
+                // lobby update state wenn gestartet
                 Some(snapshot_from_meta(match_id, &meta, None))
             } else {
                 None
@@ -81,7 +80,6 @@ pub fn join_match_route(
             (ok, snapshot_opt)
         };
 
-        // publish ohne lock
         if let Some(snapshot) = snapshot_opt {
             tokio::spawn(async move {
                 hub.publish(match_id, snapshot).await;
@@ -126,7 +124,7 @@ pub fn leave_match_route(
 
             let ok = leave_match_by_user(&mut repo, &auth.user_id, &match_id);
 
-            // Snapshot nur wenn Match noch existiert (Player1 kann Match löschen)
+            // Snapshot nur wenn Match noch existiert 
             let snapshot_opt = if ok {
                 if let Some(session) = repo.find_session_by_id_mut(&match_id) {
                     let meta = session.meta.clone();
@@ -161,7 +159,6 @@ pub fn start_match_route(
 
     let match_id = Uuid::parse_str(&req.match_id).map_err(|_| Status::BadRequest)?;
 
-    // -------- Phase A: kurz locken & validieren --------
     {
         eprintln!("start_route: before lock (validate)");
         let mut repo = matches.lock().map_err(|_| Status::InternalServerError)?;
@@ -191,19 +188,16 @@ pub fn start_match_route(
             eprintln!("start_route: reject status not Ready");
             return Ok(Json(StartMatchResponse { ok: false }));
         }
-        // lock wird hier automatisch gedroppt
     }
 
-    // -------- Phase B: Puzzle generieren OHNE lock --------
     eprintln!("start_route: generating puzzle (no lock)");
 
-    let puzzle_opt = generate_puzzle_mvp(); // implementieren (siehe unten)
+    let puzzle_opt = generate_puzzle_mvp(); 
     let puzzle = match puzzle_opt {
         Some(p) => p,
         None => return Ok(Json(StartMatchResponse { ok: false })),
     };
 
-    // -------- Phase C: kurz locken & starten --------
     {
     let hub = hub.inner().clone();
 
@@ -216,7 +210,7 @@ pub fn start_match_route(
                 .find_session_by_id_mut(&match_id)
                 .ok_or(Status::NotFound)?;
 
-            // Status kann sich geändert haben (race) -> nochmal prüfen
+            // Status kann sich geändert haben nochmal prüfen
             if session.meta.status != MatchStatus::Ready {
                 return Ok(Json(StartMatchResponse { ok: false }));
             }
@@ -242,7 +236,6 @@ pub fn start_match_route(
             (ok, snapshot_opt)
         };
 
-        // publish ohne lock
         if let Some(snapshot) = snapshot_opt {
             tokio::spawn(async move {
                 hub.publish(match_id, snapshot).await;
@@ -287,7 +280,6 @@ pub fn apply_move_route(
 
     let match_id = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
 
-    // MoveDto -> Move (domain)
     let mv = move_dto_to_domain(&req.mv).ok_or(Status::BadRequest)?;
 
     let mut repo = matches.inner().lock().map_err(|_| Status::InternalServerError)?;
@@ -309,10 +301,9 @@ pub fn apply_move_route(
     // dto view nur einmal bauen
     let dto_view = game_view_to_dto(view);
 
-    // Alles, was in tokio::spawn geht, muss 'static sein: Arc + owned values
-    let hub_for_ws = hub.inner().clone();          // Arc<WsHub>
-    let dto_view_for_ws = dto_view.clone();        // GameViewDto (Clone)
-    let match_id_for_ws = match_id;                // Uuid (Copy/Clone-safe)
+    let hub_for_ws = hub.inner().clone();          
+    let dto_view_for_ws = dto_view.clone();      
+    let match_id_for_ws = match_id;              
 
     tokio::spawn(async move {
         hub_for_ws
@@ -448,7 +439,6 @@ pub fn match_ws_route(
 ) -> Result<Channel<'static>, Status> {
     let match_id = Uuid::parse_str(match_id).map_err(|_| Status::BadRequest)?;
 
-    // Arc-Klone ziehen, damit die Closure nur 'static Dinge captured
     let hub = hub.inner().clone();
     let matches = matches.inner().clone();
     let user_id = auth.user_id;
@@ -458,7 +448,6 @@ pub fn match_ws_route(
         let matches = matches.clone();
 
         Box::pin(async move {
-            // ----- Helper: Snapshot (Lobby-fähig) bauen -----
             let build_snapshot = || async {
                 let (meta_clone, view_opt) = {
                     let mut repo = matches.lock().map_err(|_| {
@@ -474,7 +463,6 @@ pub fn match_ws_route(
 
                     let meta_clone = session.meta.clone();
 
-                    // view ist optional: None wenn game noch nicht gestartet ist (Lobby)
                     let view_opt = get_match_state_for_user(&mut repo, &user_id, &match_id)
                         .map(game_view_to_dto);
 
@@ -486,22 +474,19 @@ pub fn match_ws_route(
                 )
             };
 
-            // 1) Initial Snapshot senden (auch im Lobby-State)
             let snapshot = build_snapshot().await?;
             stream
                 .send(Message::Text(serde_json::to_string(&snapshot).unwrap()))
                 .await?;
 
-            // 2) Subscribe auf Room (Receiver)
             {
                 let mut rx = hub.subscribe(match_id).await;
 
-                // 3) Events weiterleiten + Verbindung offen halten
                 loop {
                     tokio::select! {
                         msg = stream.next() => {
                             match msg {
-                                None => break,                    // client disconnected
+                                None => break,             
                                 Some(Ok(_)) => { /* ignore client messages */ }
                                 Some(Err(e)) => return Err(e),
                             }
@@ -515,7 +500,7 @@ pub fn match_ws_route(
                                         .await?;
                                 }
                                 Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
-                                    // Wenn der Client hinterherhinkt: Snapshot neu senden
+                                    // wenn Client hinterher Snapshot neu senden
                                     let snapshot = build_snapshot().await?;
                                     stream
                                         .send(Message::Text(serde_json::to_string(&snapshot).unwrap()))
@@ -526,7 +511,7 @@ pub fn match_ws_route(
                         }
                     }
                 }
-            } // rx wird hier gedroppt
+            } 
 
             // Cleanup nach Disconnect
             hub.cleanup_room_if_unused(match_id).await;

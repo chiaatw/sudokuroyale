@@ -1,17 +1,26 @@
-import { Clock, X, ArrowLeft, Frown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { X, ArrowLeft, Frown } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+
+type ResultState = {
+  winner: { name: string; time: string; errors: number };
+  loser: { name: string; time: string; errors: number };
+  isWinner?: boolean; // optional
+};
 
 export function ResultPageLoser() {
   const navigate = useNavigate();
 
-  // Mock data
-  const winner = {
+  const { state } = useLocation();
+
+  const s = state as ResultState | null;
+
+    const winner = s?.winner ?? {
     name: "Gegner",
     time: "05:42",
     errors: 2,
   };
 
-  const loser = {
+  const loser = s?.loser ?? {
     name: "Du",
     time: "06:15",
     errors: 4,
@@ -69,10 +78,6 @@ export function ResultPageLoser() {
                   {winner.name}
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-center gap-2 text-cyan-200">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">{winner.time}</span>
-                  </div>
                   <div className="flex items-center justify-center gap-2 text-red-300">
                     <X className="w-4 h-4" />
                     <span className="text-sm">{winner.errors} Fehler</span>
@@ -91,10 +96,6 @@ export function ResultPageLoser() {
                   {loser.name}
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-center gap-2 text-cyan-200">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">{loser.time}</span>
-                  </div>
                   <div className="flex items-center justify-center gap-2 text-red-300">
                     <X className="w-4 h-4" />
                     <span className="text-sm">{loser.errors} Fehler</span>
