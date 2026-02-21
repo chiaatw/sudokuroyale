@@ -46,10 +46,11 @@ type WsMsg =
 
 function computeWsUrl(matchId: string) {
   const base =
-    (import.meta as any).env?.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+    (import.meta as any).env?.VITE_API_BASE_URL ?? "http://localhost:8000";
 
   const u = new URL(base);
   u.protocol = u.protocol === "https:" ? "wss:" : "ws:";
+  u.host = u.host.replace("127.0.0.1", "localhost");
   u.pathname = `/match/${matchId}/ws`;
   return u.toString();
 }
@@ -228,8 +229,8 @@ export function GamePage() {
       setErr(null);
 
       const body = {
-        expected_revision: view.revision,
-        move_id: null,
+        expectedRevision: view.revision,
+        moveId: null,
         mv: { type: "place", cell, value: num },
       };
 
