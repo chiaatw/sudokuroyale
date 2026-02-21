@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Copy, X, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { getMatch, startMatch } from "../api/match";
 
 export function WaitingPage() {
   const navigate = useNavigate();
@@ -8,6 +10,28 @@ export function WaitingPage() {
   const params = new URLSearchParams(window.location.search);
   const matchCode = params.get("matchId") ?? "";
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!matchCode) return;
+  
+    const interval = setInterval(async () => {
+      try {
+        const match = await getMatch(matchCode);
+  
+        if (match.status === "Ready") {
+          await startMatch(matchCode);
+        }
+  
+        if (match.status === "InProgress") {
+          navigate(`/game?matchId=${matchCode}`);
+        }
+      } catch (e) {
+        console.log("Polling Fehler");
+      }
+    }, 1000);
+  
+    return () => clearInterval(interval);
+  }, [matchCode]);
 
   const handleCopyCode = () => {
     if (matchCode) navigator.clipboard.writeText(matchCode);
