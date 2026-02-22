@@ -124,7 +124,6 @@ pub fn leave_match_route(
 
             let ok = leave_match_by_user(&mut repo, &auth.user_id, &match_id);
 
-            // Snapshot nur wenn Match noch existiert 
             let snapshot_opt = if ok {
                 if let Some(session) = repo.find_session_by_id_mut(&match_id) {
                     let meta = session.meta.clone();
@@ -210,12 +209,11 @@ pub fn start_match_route(
                 .find_session_by_id_mut(&match_id)
                 .ok_or(Status::NotFound)?;
 
-            // Status kann sich geändert haben nochmal prüfen
             if session.meta.status != MatchStatus::Ready {
                 return Ok(Json(StartMatchResponse { ok: false }));
             }
 
-            let time_limit = Duration::from_secs(6 * 60);
+            let time_limit = Duration::from_secs(20 * 60);
             let now = Instant::now();
 
             let ok = session.start_game(puzzle, time_limit, now);
@@ -310,8 +308,7 @@ pub fn apply_move_route(
             .publish(
                 match_id_for_ws,
                 WsServerEvent::RevisionChanged {
-                    revision: dto_view_for_ws.revision,
-                    view: dto_view_for_ws,
+                    revision: dto_view_for_ws.revision
                 },
             )
             .await;
@@ -409,6 +406,7 @@ fn move_outcome_to_dto(outcome: MoveOutcome) -> MoveOutcomeDto {
             reason: match reason {
                 crate::game::state::LoseReason::TimeExpired => LoseReasonDto::Timeout,
                 crate::game::state::LoseReason::TooManyMistakes => LoseReasonDto::TooManyMistakes,
+                crate::game::state::LoseReason::OpponentSolved => LoseReasonDto::OpponentSolved, 
             },
         },
     }

@@ -34,8 +34,6 @@ impl Game {
         }
     }
 
-    // --- Meta / Accessors ---
-
     pub fn state(&self) -> &GameState {
         &self.state
     }
@@ -60,8 +58,6 @@ impl Game {
         self.players.get_mut(&player).expect("missing player")
     }
 
-    // --- Lifecycle ---
-
     pub fn start(&mut self, now: Instant) {
         if self.state == GameState::Waiting {
             self.state = GameState::InProgress;
@@ -75,7 +71,6 @@ impl Game {
         }
     }
 
-    // --- Internal helpers ---
 
     fn set_win(&mut self, player: PlayerId) {
         self.state = GameState::Won { player };
@@ -95,8 +90,6 @@ impl Game {
         };
         self.revision += 1;
     }
-
-    // --- Core API ---
 
     pub fn apply_move(
         &mut self,
@@ -126,7 +119,6 @@ impl Game {
             };
         }
 
-        // Timeout check (borrow-safe)
         let expired = self.players.get(&player).unwrap().time.is_expired(now);
         if expired {
             self.set_loss(player, LoseReason::TimeExpired);
@@ -169,7 +161,6 @@ impl Game {
                     };
                 }
 
-                // Wrong value -> penalty or loss
                 if !self.puzzle.is_correct_value(cell, value) {
                     let (lost, mistakes_left) = {
                         let p = self.players.get_mut(&player).unwrap();
@@ -193,7 +184,6 @@ impl Game {
                     };
                 }
 
-                // Correct value: set + check solved while holding borrow
                 let solved = {
                     let p = self.players.get_mut(&player).unwrap();
                     p.current.set(cell, value);
@@ -249,9 +239,38 @@ impl Game {
             remaining_time: op.time.remaining(now),
         });
 
+        let state_for_me = match &self.state {
+            GameState::Waiting => GameState::Waiting,
+            GameState::InProgress => GameState::InProgress,
+
+            GameState::Won { player: winner } => {
+                if *winner == player {
+                    GameState::Won { player: *winner }
+                } else {
+                    GameState::Lost {
+                        loser: player,
+                        winner: *winner,
+                        reason: LoseReason::OpponentSolved,
+                    }
+                }
+            }
+
+            GameState::Lost { loser, winner, reason } => {
+                if *winner == player {
+                    GameState::Won { player: *winner }
+                } else {
+                    GameState::Lost {
+                        loser: *loser,
+                        winner: *winner,
+                        reason: reason.clone(),
+                    }
+                }
+            }
+        };
+
         GameView {
             revision: self.revision,
-            state: self.state.clone(),
+            state: state_for_me,
 
             givens: self.puzzle.givens().clone(),
             current: p.current.clone(),
@@ -264,7 +283,6 @@ impl Game {
     }
 }
 
-/// zählt wie viele Felder gesetzt sind
 fn count_filled(grid: &Grid) -> u8 {
     let mut count = 0u8;
     for cell in Cell::iter() {

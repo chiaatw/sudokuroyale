@@ -18,4 +18,5 @@ pub enum GameState {
 pub enum LoseReason {
     TooManyMistakes,
     TimeExpired,
+    OpponentSolved,
 }

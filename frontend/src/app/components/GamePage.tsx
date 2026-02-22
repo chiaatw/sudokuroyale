@@ -6,8 +6,8 @@ import { apiGet, apiPost } from "../api/client";
 type GameViewDto = {
   revision: number;
   state: string;
-  givens: number[];   
-  current: number[];  
+  givens: number[];
+  current: number[];
   mistakesLeft: number;
   remainingMs: number;
   opponentProgress?: {
@@ -95,7 +95,6 @@ export function GamePage() {
   const targetEndMsRef = useRef<number | null>(null);
   const [uiRemainingSeconds, setUiRemainingSeconds] = useState<number>(0);
 
-  // matchId aus URL (?matchId=...) oder localStorage
   const matchId = useMemo(() => {
     const url = new URL(window.location.href);
     return url.searchParams.get("matchId") ?? localStorage.getItem("matchId") ?? "";
@@ -109,57 +108,28 @@ export function GamePage() {
 
   const [err, setErr] = useState<string | null>(null);
 
-  const isGridComplete = (arr81: number[]) => arr81.every((n) => n !== 0);
-
   const navigatedRef = useRef(false);
 
   const [maxMistakes, setMaxMistakes] = useState<number | null>(null);
+  const maxMistakesRef = useRef<number | null>(null);
 
   const applyView = useCallback(
     (v: GameViewDto) => {
       setView(v);
       setGrid(toGrid9x9(v.current));
       setInitialGrid(toGrid9x9(v.givens));
-      setMaxMistakes((prev) => (prev == null ? v.mistakesLeft : prev));
+
+      if (maxMistakesRef.current == null) {
+        maxMistakesRef.current = v.mistakesLeft;
+      }
+      const mmLocal = maxMistakesRef.current ?? v.mistakesLeft;
+      setMaxMistakes((prev) => (prev == null ? mmLocal : prev));
 
       targetEndMsRef.current = Date.now() + v.remainingMs;
 
-      const { winState, loseState } = buildResultState(v, maxMistakes);
-
       if (navigatedRef.current) return;
 
-      const mm = maxMistakes ?? v.mistakesLeft; 
-      const oppErr =
-        !v.opponentProgress ? 0 : Math.max(0, mm - v.opponentProgress.mistakesLeft);
-      if (oppErr >= 3) {
-        navigatedRef.current = true;
-        navigate("/result/win", { state: winState });
-        return;
-      }
-
-      const myErr = Math.max(0, mm - v.mistakesLeft);
-      if (myErr >= 3) {
-        navigatedRef.current = true;
-        navigate("/result/lose", { state: loseState });
-        return;
-      }
-
-      if (isGridComplete(v.current)) {
-        if (v.state?.startsWith("Won")) {
-          navigatedRef.current = true;
-          navigate("/result/win", { state: winState });
-          return;
-        }
-        if (v.state?.startsWith("Lost")) {
-          navigatedRef.current = true;
-          navigate("/result/lose", { state: loseState });
-          return;
-        }
-
-        navigatedRef.current = true;
-        navigate("/result/win", { state: winState });
-        return;
-      }
+      const { winState, loseState } = buildResultState(v, mmLocal);
 
       if (v.state?.startsWith("Won")) {
         navigatedRef.current = true;
@@ -172,7 +142,7 @@ export function GamePage() {
         return;
       }
     },
-    [navigate, maxMistakes]
+    [navigate]
   );
 
   useEffect(() => {
@@ -194,6 +164,10 @@ export function GamePage() {
   useEffect(() => {
     if (!matchId) return;
 
+    navigatedRef.current = false;
+    maxMistakesRef.current = null;
+    setMaxMistakes(null);
+
     aliveRef.current = true;
 
     const connect = () => {
@@ -213,21 +187,12 @@ export function GamePage() {
           .catch(() => {});
       };
 
-      ws.onmessage = (ev) => {
-        try {
-          const msg: WsMsg = JSON.parse(ev.data);
-
-          if (msg?.view) {
-            applyView(msg.view as GameViewDto);
-            return;
-          }
-
-          if (msg?.snapshot?.view) {
-            applyView(msg.snapshot.view as GameViewDto);
-            return;
-          }
-        } catch {
-        }
+      ws.onmessage = () => {
+        // Wichtig: WS-Events können nicht player-spezifische Views enthalten.
+        // Daher immer die player-spezifische View per /state holen.
+        apiGet<GameViewDto>(`/match/${matchId}/state`)
+          .then(applyView)
+          .catch(() => {});
       };
 
       ws.onclose = () => {
@@ -282,7 +247,7 @@ export function GamePage() {
   }, [matchId, applyView]);
 
   const myErrors =
-  maxMistakes == null || !view ? 0 : Math.max(0, maxMistakes - view.mistakesLeft);
+    maxMistakes == null || !view ? 0 : Math.max(0, maxMistakes - view.mistakesLeft);
 
   const oppErrors =
     maxMistakes == null || !view?.opponentProgress
@@ -290,7 +255,7 @@ export function GamePage() {
       : Math.max(0, maxMistakes - view.opponentProgress.mistakesLeft);
 
   const isInitialCell = (row: number, col: number) => initialGrid[row][col] !== 0;
-  
+
   const handleCellClick = (row: number, col: number) => {
     if (initialGrid[row][col] === 0) {
       setSelectedCell({ row, col });
@@ -317,23 +282,13 @@ export function GamePage() {
 
       if (resp.outcome.type === "rejected") {
         const fresh = await apiGet<GameViewDto>(`/match/${matchId}/state`);
-        setView(fresh);
-        setGrid(toGrid9x9(fresh.current));
-        setInitialGrid(toGrid9x9(fresh.givens));
+        applyView(fresh);
       }
 
       if (resp.outcome.type === "penalty" && !resp.view) {
         const fresh = await apiGet<GameViewDto>(`/match/${matchId}/state`);
-        setView(fresh);
-        setGrid(toGrid9x9(fresh.current));
-        setInitialGrid(toGrid9x9(fresh.givens));
+        applyView(fresh);
       }
-
-    const baseView = resp.view ?? view;
-    const { winState, loseState } = buildResultState(baseView, maxMistakes);
-
-    if (resp.outcome?.type === "won") navigate("/result/win", { state: winState });
-    if (resp.outcome?.type === "lost") navigate("/result/lose", { state: loseState });
     } catch (e: any) {
       setErr(e?.message ?? "Move fehlgeschlagen");
     }
@@ -357,10 +312,8 @@ export function GamePage() {
           </div>
         </div>
       )}
-      {/* Header with Players */}
       <div className="max-w-4xl w-full mx-auto mb-3">
         <div className="grid grid-cols-2 gap-3">
-          {/* Player 1 */}
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-cyan-400/50">
             <div className="flex items-center gap-2">
               <div className="bg-cyan-500 rounded-full p-2">
@@ -376,7 +329,6 @@ export function GamePage() {
             </div>
           </div>
 
-          {/* Player 2 */}
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-white/20">
             <div className="flex items-center gap-2">
               <div className="bg-white/20 rounded-full p-2">
@@ -394,7 +346,6 @@ export function GamePage() {
         </div>
       </div>
 
-      {/* Timer */}
       <div className="max-w-4xl w-full mx-auto mb-3">
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-2 border border-white/20 flex items-center justify-center gap-2">
           <Clock className="w-5 h-5 text-cyan-400" />
@@ -402,7 +353,6 @@ export function GamePage() {
         </div>
       </div>
 
-      {/* Sudoku Grid */}
       <div className="max-w-4xl w-full mx-auto mb-3">
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-white/20">
           <div className="aspect-square max-w-lg mx-auto">
@@ -422,18 +372,18 @@ export function GamePage() {
                       className={`
                         aspect-square flex items-center justify-center text-lg font-bold
                         transition-all
-                        ${isSelected ? 'bg-cyan-400 text-slate-900' : ''}
-                        ${!isSelected && isHighlighted ? 'bg-white/20' : ''}
-                        ${!isSelected && !isHighlighted ? 'bg-white/5 hover:bg-white/10' : ''}
-                        ${isInitial ? 'text-white' : 'text-cyan-300'}
-                        ${isRightBorder ? 'border-r-2 border-white/40' : ''}
-                        ${isBottomBorder ? 'border-b-2 border-white/40' : ''}
-                        ${!isInitial && !isSelected ? 'cursor-pointer' : ''}
-                        ${isInitial ? 'cursor-default' : ''}
+                        ${isSelected ? "bg-cyan-400 text-slate-900" : ""}
+                        ${!isSelected && isHighlighted ? "bg-white/20" : ""}
+                        ${!isSelected && !isHighlighted ? "bg-white/5 hover:bg-white/10" : ""}
+                        ${isInitial ? "text-white" : "text-cyan-300"}
+                        ${isRightBorder ? "border-r-2 border-white/40" : ""}
+                        ${isBottomBorder ? "border-b-2 border-white/40" : ""}
+                        ${!isInitial && !isSelected ? "cursor-pointer" : ""}
+                        ${isInitial ? "cursor-default" : ""}
                       `}
                       disabled={isInitial}
                     >
-                      {cell !== 0 ? cell : ''}
+                      {cell !== 0 ? cell : ""}
                     </button>
                   );
                 })
@@ -443,7 +393,6 @@ export function GamePage() {
         </div>
       </div>
 
-      {/* Number Input */}
       <div className="max-w-4xl w-full mx-auto">
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 border border-white/20">
           <div className="grid grid-cols-9 gap-2 max-w-lg mx-auto">
@@ -455,9 +404,9 @@ export function GamePage() {
                 className={`
                   aspect-square flex items-center justify-center text-xl font-bold rounded-lg
                   transition-all
-                  ${selectedCell 
-                    ? 'bg-cyan-500 hover:bg-cyan-600 text-white cursor-pointer' 
-                    : 'bg-white/5 text-white/30 cursor-not-allowed'
+                  ${selectedCell
+                    ? "bg-cyan-500 hover:bg-cyan-600 text-white cursor-pointer"
+                    : "bg-white/5 text-white/30 cursor-not-allowed"
                   }
                 `}
               >
@@ -470,4 +419,3 @@ export function GamePage() {
     </div>
   );
 }
-

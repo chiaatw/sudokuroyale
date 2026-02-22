@@ -18,6 +18,5 @@ pub enum WsServerEvent {
 
     RevisionChanged {
         revision: u64,
-        view: GameViewDto,
     },
 }

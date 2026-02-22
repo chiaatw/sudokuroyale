@@ -84,7 +84,7 @@ pub enum PenaltyReasonDto {
 pub enum LoseReasonDto {
     Timeout,
     TooManyMistakes,
-    OpponentWon,
+    OpponentSolved,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
