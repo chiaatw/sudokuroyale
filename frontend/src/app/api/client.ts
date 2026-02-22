@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "/api";
 
 export async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(BASE_URL + path, {
