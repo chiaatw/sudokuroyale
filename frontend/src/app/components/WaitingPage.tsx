@@ -34,7 +34,17 @@ export function WaitingPage() {
   }, [matchCode]);
 
   const handleCopyCode = () => {
-    if (matchCode) navigator.clipboard.writeText(matchCode);
+    if (!matchCode) return;
+  
+    const textarea = document.createElement("textarea");
+    textarea.value = matchCode;
+    document.body.appendChild(textarea);
+  
+    textarea.select();
+    document.execCommand("copy");
+  
+    document.body.removeChild(textarea);
+  
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

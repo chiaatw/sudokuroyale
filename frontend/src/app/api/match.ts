@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "/api";
 
 export async function createMatch(): Promise<string> {
   const res = await fetch(`${BASE_URL}/match/create`, {
