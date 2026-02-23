@@ -4,50 +4,41 @@ use std::time::{Duration, Instant};
 /// Vor start(now) läuft die Uhr nicht
 /// Nach start(now) läuft sie bis deadline
 #[derive(Debug, Clone)]
+use std::time::{Duration, Instant};
+
+#[derive(Debug, Clone)]
 pub struct TimeControl {
-    limit: Duration,
-    deadline: Option<Instant>,
+    started_at: Option<Instant>,
 }
 
 impl TimeControl {
-    pub fn new(limit: Duration) -> Self {
+    pub fn new() -> Self {
         Self {
-            limit,
-            deadline: None,
+            started_at: None,
         }
     }
 
-    /// Startet die Uhr vorher läuft sie nicht
-    /// Wenn mehrfach aufgerufen: setzt Deadline neu
     pub fn start(&mut self, now: Instant) {
-        if self.deadline.is_none() {
-            self.deadline = Some(now + self.limit);
+        if self.started_at.is_none() {
+            self.started_at = Some(now);
         }
     }
 
-    /// Gibt die verbleibende Zeit zurück
-    /// Vor Start: volle Zeit
-    pub fn remaining(&self, now: Instant) -> Duration {
-        match self.deadline {
-            None => self.limit,
-            Some(deadline) => deadline.saturating_duration_since(now),
+    // vergangene Zeit seit Start
+    pub fn elapsed(&self, now: Instant) -> Duration {
+        match self.started_at {
+            None => Duration::ZERO,
+            Some(start) => now.saturating_duration_since(start),
         }
     }
 
-    /// True, wenn die Zeit abgelaufen ist
-    /// Vor Start: immer false
-    pub fn is_expired(&self, now: Instant) -> bool {
-        match self.deadline {
-            None => false,
-            Some(deadline) => now >= deadline,
-        }
-    }
-
-    pub fn set_remaining(&mut self, now: Instant, remaining: Duration) {
-        self.deadline = Some(now + remaining);
+    // Timer beendet NIE das Match
+    pub fn is_expired(&self, _now: Instant) -> bool {
+        false
     }
 
     pub fn has_started(&self) -> bool {
-        self.deadline.is_some()
+        self.started_at.is_some()
     }
 }
+    
