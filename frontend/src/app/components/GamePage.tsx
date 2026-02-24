@@ -127,7 +127,19 @@ export function GamePage() {
 
     if (v.state?.startsWith("InProgress")) {
   
-  targetEndMsRef.current = Date.now() - v.elapsedMs;
+  
+if (v.state === "InProgress" || v.state?.startsWith("InProgress")) {
+  
+  targetEndMsRef.current = Date.now() - (v.elapsedMs ?? 0);
+} else {
+  
+  targetEndMsRef.current = null;
+
+  
+  setUiRemainingSeconds(Math.floor(((v.elapsedMs ?? 0) as number) / 1000));
+}
+
+
 } else {
 
   targetEndMsRef.current = null;
@@ -153,20 +165,22 @@ export function GamePage() {
   );
 
   useEffect(() => {
-    const tick = () => {
-      const target = targetEndMsRef.current;
-      if (!target) {
-        setUiRemainingSeconds(0);
-        return;
-      }
-      const msLeft = Math.max(0, target - Date.now());
-      setUiRemainingSeconds(Math.floor(msLeft / 1000));
-    };
+  const tick = () => {
+    const startedAt = targetEndMsRef.current;
 
-    tick();
-    const id = window.setInterval(tick, 200);
-    return () => window.clearInterval(id);
-  }, []);
+    if (startedAt == null) {
+      return;
+    }
+
+    
+    const elapsedMs = Math.max(0, Date.now() - startedAt);
+    setUiRemainingSeconds(Math.floor(elapsedMs / 1000));
+  };
+
+  tick(); 
+  const id = window.setInterval(tick, 200);
+  return () => window.clearInterval(id);
+}, []);
 
   useEffect(() => {
     if (!matchId) return;
