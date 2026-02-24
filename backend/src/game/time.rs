@@ -1,11 +1,8 @@
 use std::time::{Duration, Instant};
 
-/// Server-authoritative Timer
-/// Vor start(now) läuft die Uhr nicht
-/// Nach start(now) läuft sie bis deadline
-#[derive(Debug, Clone)]
-use std::time::{Duration, Instant};
-
+/// Server-authoritative Stopwatch
+/// - Vor start(now) läuft sie nicht
+/// - Nach start(now) zählt sie hoch (elapsed)
 #[derive(Debug, Clone)]
 pub struct TimeControl {
     started_at: Option<Instant>,
@@ -13,9 +10,7 @@ pub struct TimeControl {
 
 impl TimeControl {
     pub fn new() -> Self {
-        Self {
-            started_at: None,
-        }
+        Self { started_at: None }
     }
 
     pub fn start(&mut self, now: Instant) {
@@ -24,7 +19,7 @@ impl TimeControl {
         }
     }
 
-    // vergangene Zeit seit Start
+    /// Vergangene Zeit seit Start
     pub fn elapsed(&self, now: Instant) -> Duration {
         match self.started_at {
             None => Duration::ZERO,
@@ -32,7 +27,7 @@ impl TimeControl {
         }
     }
 
-    // Timer beendet NIE das Match
+    /// Für Stoppuhr: nie "expired"
     pub fn is_expired(&self, _now: Instant) -> bool {
         false
     }
@@ -41,4 +36,3 @@ impl TimeControl {
         self.started_at.is_some()
     }
 }
-    
