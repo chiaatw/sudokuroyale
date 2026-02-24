@@ -225,7 +225,7 @@ impl Game {
         let opponent_progress = self.players.get(&opponent_id).map(|op| OpponentProgress {
             filled: count_filled(&op.current),
             mistakes_left: op.mistakes_left(),
-            remaining_time: op.time.remaining(now),
+            remaining_time: op.time.elapsed(now),
         });
 
         let state_for_me = match &self.state {
@@ -265,7 +265,7 @@ impl Game {
             current: p.current.clone(),
 
             mistakes_left: p.mistakes_left(),
-            remaining_time: p.time.remaining(now),
+          remaining_time: p.time.elapsed(now),
 
             opponent_progress,
         }
