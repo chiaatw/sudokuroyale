@@ -95,7 +95,7 @@ pub struct GameViewDto {
     pub givens: Vec<u8>,  // length 81
     pub current: Vec<u8>, // length 81
     pub mistakes_left: u8,
-    pub remaining_ms: u64,
+    pub elapsed_ms: u64,
     pub opponent_progress: Option<OpponentProgressDto>,
 }
 
@@ -104,5 +104,5 @@ pub struct GameViewDto {
 pub struct OpponentProgressDto {
     pub filled: u8,
     pub mistakes_left: u8,
-    pub remaining_ms: u64,
+    pub elapsed_ms: u64,
 }
