@@ -9,7 +9,7 @@ type GameViewDto = {
   givens: number[];
   current: number[];
   mistakesLeft: number;
-  remainingMs: number;
+  elapsedMs: number;
   opponentProgress?: {
     filled: number;
     mistakesLeft: number;
@@ -49,9 +49,9 @@ function buildResultState(v: GameViewDto, maxMistakes: number | null) {
     ? Math.max(0, mm - v.opponentProgress.mistakesLeft)
     : 0;
 
-  const myTime = formatTime(secondsFromRemainingMs(v.remainingMs));
+  const myTime = formatTime(secondsFromRemainingMs(v.elapsedMs));
   const oppTime = v.opponentProgress
-    ? formatTime(secondsFromRemainingMs(v.opponentProgress.remainingMs))
+    ? formatTime(secondsFromRemainingMs(v.opponentProgress.elapsedMs))
     : "00:00";
 
   return {
@@ -125,7 +125,7 @@ export function GamePage() {
       const mmLocal = maxMistakesRef.current ?? v.mistakesLeft;
       setMaxMistakes((prev) => (prev == null ? mmLocal : prev));
 
-      targetEndMsRef.current = Date.now() + v.remainingMs;
+     targetEndMsRef.current = Date.now() - v.elapsedMs;
 
       if (navigatedRef.current) return;
 
