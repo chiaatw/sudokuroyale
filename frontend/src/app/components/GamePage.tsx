@@ -13,7 +13,7 @@ type GameViewDto = {
   opponentProgress?: {
     filled: number;
     mistakesLeft: number;
-    remainingMs: number;
+    elapsedMs: number;
   } | null;
 };
 
