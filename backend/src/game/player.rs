@@ -23,7 +23,7 @@ impl PlayerState {
         Self {
             current: puzzle.givens().clone(),
             mistakes: 0,
-            time: TimeControl::new(time_limit),
+            time: TimeControl::new(),
         }
     }
 
