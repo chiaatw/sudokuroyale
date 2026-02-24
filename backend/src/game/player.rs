@@ -20,6 +20,7 @@ pub struct PlayerState {
 
 impl PlayerState {
     pub fn new(puzzle: &Puzzle, time_limit: Duration) -> Self {
+        let _ = time_limit;
         Self {
             current: puzzle.givens().clone(),
             mistakes: 0,

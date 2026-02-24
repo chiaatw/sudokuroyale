@@ -96,7 +96,7 @@ impl Game {
         player: PlayerId,
         expected_revision: u64,
         mv: Move,
-        now: Instant,
+        _now: Instant,
     ) -> MoveOutcome {
         if !matches!(self.state, GameState::InProgress) {
             return MoveOutcome::Rejected {
@@ -201,7 +201,7 @@ impl Game {
 
     pub fn view_for(&mut self, player: PlayerId, now: Instant) -> GameView {
         if matches!(self.state, GameState::InProgress) {
-            if let Some(p) = self.players.get(&player) {
+            if let Some(_p) = self.players.get(&player) {
                
             }
 
@@ -210,7 +210,7 @@ impl Game {
                 PlayerId::PlayerB => PlayerId::PlayerA,
             };
 
-            if let Some(op) = self.players.get(&opponent) {
+            if let Some(_op) = self.players.get(&opponent) {
                
             }
         }
