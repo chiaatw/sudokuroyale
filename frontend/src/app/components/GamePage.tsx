@@ -125,7 +125,14 @@ export function GamePage() {
       const mmLocal = maxMistakesRef.current ?? v.mistakesLeft;
       setMaxMistakes((prev) => (prev == null ? mmLocal : prev));
 
-     targetEndMsRef.current = Date.now() - v.elapsedMs;
+    if (v.state?.startsWith("InProgress")) {
+  
+  targetEndMsRef.current = Date.now() - v.elapsedMs;
+} else {
+
+  targetEndMsRef.current = null;
+  setUiRemainingSeconds(secondsFromRemainingMs(v.elapsedMs));
+}
 
       if (navigatedRef.current) return;
 
