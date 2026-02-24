@@ -119,14 +119,7 @@ impl Game {
             };
         }
 
-        let expired = self.players.get(&player).unwrap().time.is_expired(now);
-        if expired {
-            self.set_loss(player, LoseReason::TimeExpired);
-            return MoveOutcome::Lost {
-                revision: self.revision,
-                reason: LoseReason::TimeExpired,
-            };
-        }
+       
 
         match mv {
             Move::Clear { cell } => {
@@ -209,9 +202,7 @@ impl Game {
     pub fn view_for(&mut self, player: PlayerId, now: Instant) -> GameView {
         if matches!(self.state, GameState::InProgress) {
             if let Some(p) = self.players.get(&player) {
-                if p.time.is_expired(now) && matches!(self.state, GameState::InProgress) {
-                    self.set_loss(player, LoseReason::TimeExpired);
-                }
+               
             }
 
             let opponent = match player {
@@ -220,9 +211,7 @@ impl Game {
             };
 
             if let Some(op) = self.players.get(&opponent) {
-                if op.time.is_expired(now) && matches!(self.state, GameState::InProgress) {
-                    self.set_loss(opponent, LoseReason::TimeExpired);
-                }
+               
             }
         }
 
