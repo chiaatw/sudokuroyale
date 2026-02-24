@@ -354,11 +354,11 @@ fn game_view_to_dto(view: crate::game::view::GameView) -> GameViewDto {
         givens: grid_to_vec(&view.givens),
         current: grid_to_vec(&view.current),
         mistakes_left: view.mistakes_left,
-        remaining_ms: view.remaining_time.as_millis() as u64,
+        elapsed_ms: view.remaining_time.as_millis() as u64,
         opponent_progress: view.opponent_progress.map(|op| OpponentProgressDto {
             filled: op.filled,
             mistakes_left: op.mistakes_left,
-            remaining_ms: op.remaining_time.as_millis() as u64,
+            elapsed_ms: op.remaining_time.as_millis() as u64,
         }),
     }
 }
