@@ -238,7 +238,7 @@ if (v.state === "InProgress" || v.state?.startsWith("InProgress")) {
       apiGet<GameViewDto>(`/match/${matchId}/state`)
         .then(applyView)
         .catch(() => {});
-    }, 8000);
+    }, 1000);
 
     const onVis = () => {
       if (document.visibilityState === "visible") {
