@@ -108,6 +108,8 @@ export function GamePage() {
 
   const [err, setErr] = useState<string | null>(null);
 
+  const [errorPopup, setErrorPopup] = useState(false);
+
   const navigatedRef = useRef(false);
 
   const [maxMistakes, setMaxMistakes] = useState<number | null>(null);
@@ -306,9 +308,17 @@ if (v.state === "InProgress" || v.state?.startsWith("InProgress")) {
         applyView(fresh);
       }
 
-      if (resp.outcome.type === "penalty" && !resp.view) {
-        const fresh = await apiGet<GameViewDto>(`/match/${matchId}/state`);
-        applyView(fresh);
+      if (resp.outcome.type === "penalty") {
+
+        setErrorPopup(true);
+        setTimeout(() => {
+          setErrorPopup(false);
+        }, 1000);
+      
+        if (!resp.view) {
+          const fresh = await apiGet<GameViewDto>(`/match/${matchId}/state`);
+          applyView(fresh);
+        }
       }
     } catch (e: any) {
       setErr(e?.message ?? "Move fehlgeschlagen");
@@ -326,6 +336,13 @@ if (v.state === "InProgress" || v.state?.startsWith("InProgress")) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 flex flex-col p-3 py-4">
+      {errorPopup && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+          <div className="bg-red-500 text-white text-3xl font-bold px-8 py-4 rounded-xl shadow-2xl animate-pulse">
+            +1 Fehler!
+          </div>
+        </div>
+      )}
       {err && (
         <div className="max-w-4xl w-full mx-auto mb-3">
           <div className="bg-red-500/20 border border-red-400/40 text-red-100 rounded-xl p-3 text-sm">
