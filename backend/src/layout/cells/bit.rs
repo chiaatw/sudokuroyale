@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use super::label::index_from_label;
 use super::Cell;
 
-/// Specifies a single cell by its position in a bit field.
+// bezeichnet eine einzelne Zelle anhand ihrer Position in einem Bitfeld
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Bit {
     Value(u128),
@@ -72,7 +72,7 @@ mod tests {
 
     #[test]
     fn test_bit_new_and_index() {
-        // Erstes Bit
+        // erstes Bit
         let bit = Bit::new(1);
         assert_eq!(bit.index(), 0);
         assert_eq!(bit.bit(), 1);

@@ -43,19 +43,19 @@ pub trait ShapeTrait {
     fn label(&self) -> &str;
     fn index(&self) -> usize;
 
-    fn cells(&self, house: Coord) -> CellSet; //returns all cells of one house
-    fn cell_at(&self, house: Coord, index: usize) -> Cell; //returns a single cell of a house
-    fn house(&self, coord: Coord) -> House; //Returns the House struct: Row/Column/Block + Coordinate
+    fn cells(&self, house: Coord) -> CellSet; //Gibt alle Zellen eines Hauses zurück
+    fn cell_at(&self, house: Coord, index: usize) -> Cell; //gibt eine einzelne Zelle eines Hauses zurück
+    fn house(&self, coord: Coord) -> House; // Gibt die House-Struktur zurück: Zeile/Spalte/Block + Koordinate
 
     fn is_row(&self) -> bool;
     fn is_column(&self) -> bool;
     fn is_block(&self) -> bool;
 
-    fn house_iter(&self) -> HouseIter; //Returns an iterator over all houses of this shape
+    fn house_iter(&self) -> HouseIter; // Gibt einen Iterator über alle Häuser dieser Form zurück
 
     fn iter() -> ShapeIter
     where
-        Self: Sized; //Returns an iterator over all shape types
+        Self: Sized; //Gibt einen Iterator über alle Formtypen zurück
 }
 
 pub trait ShapeCells {
@@ -279,30 +279,30 @@ mod tests {
 
     #[test]
     fn cell_at_correct() {
-        // Row 1, index 5 → 9 * 1 + 5 = 14
+        // Zeile 1, Index 5 -> 9*1 + 5 = 14
         let c = Shape::Row.cell(Coord::new(1), Coord::new(5));
         assert_eq!(c.index(), 14);
 
-        // Column 2, index 3 → 2 + 9 * 3 = 29
+        // Spalte 2, Index 3 -> 2 + 9 * 3 = 29
         let c = Shape::Column.cell(Coord::new(2), Coord::new(3));
         assert_eq!(c.index(), 29);
     }
 
     #[test]
     fn cells_row_column_block_first_house() {
-        // Row 0: cells 0..8
+        // Zeile 0: Zellen 0..8
         for i in 0..9 {
             let cell = Shape::Row.cell(Coord::new(0), Coord::new(i));
             assert_eq!(cell.index(), i as u8);
         }
 
-        // Column 0: cells 0,9,18,...
+        // Spalte 0: Zellen 0,9,18,...
         for i in 0..9 {
             let cell = Shape::Column.cell(Coord::new(0), Coord::new(i));
             assert_eq!(cell.index(), (i * 9) as u8);
         }
 
-        // Block 0: first row of first block
+        // Block 0: erste zeile des ersten Blocks
         assert_eq!(Shape::Block.cell(Coord::new(0), Coord::new(0)).index(), 0);
         assert_eq!(Shape::Block.cell(Coord::new(0), Coord::new(1)).index(), 1);
         assert_eq!(Shape::Block.cell(Coord::new(0), Coord::new(2)).index(), 2);

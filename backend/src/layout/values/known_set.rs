@@ -7,7 +7,7 @@ use crate::layout::values::known::{Known, KnownLike};
 
 type Bits = u16;
 
-// Trait for KnownSet-like types
+// Trait für KnownSet-like Typen
 pub trait KnownSetLike: Copy + Eq + Ord {
     fn bits(self) -> Bits;
 
@@ -49,7 +49,7 @@ pub trait KnownSetLike: Copy + Eq + Ord {
     fn invert(&mut self);
 }
 
-// KnownSet type
+// KnownSet Typ
 #[derive(Clone, Copy, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct KnownSet(u16);
 
@@ -188,7 +188,7 @@ impl KnownSetLike for KnownSet {
     }
 }
 
-// Operator implementations
+// Operator Implementierungen
 impl Add<Known> for KnownSet {
     type Output = Self;
     fn add(self, rhs: Known) -> Self {
@@ -261,7 +261,7 @@ impl Not for KnownSet {
     }
 }
 
-// Iterator for KnownSet
+// Iterator für KnownSet
 pub struct KnownSetIter {
     bits: Bits,
 }
@@ -281,7 +281,7 @@ impl Iterator for KnownSetIter {
 
 impl FusedIterator for KnownSetIter {}
 
-// Iterator for Known
+// Iterator für Known
 pub struct KnownIter(u8);
 
 impl KnownIter {
@@ -309,7 +309,7 @@ impl ExactSizeIterator for KnownIter {
     }
 }
 
-// Display / Debug
+// Anzeige / Debugging
 impl fmt::Display for KnownSet {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s: String = Known::iter()

@@ -6,8 +6,8 @@ pub struct Sudoku {
 }
 
 impl Sudoku {
-    /// Creates a Sudoku from a solution grid.
-    /// The current grid starts empty 
+    // Erstellt ein Sudoku aus einem Lösungsraster
+    // Das aktuelle Raster beginnt leer
     pub fn from_solution(solution: Grid) -> Self {
         Self {
             current: Grid::new(),

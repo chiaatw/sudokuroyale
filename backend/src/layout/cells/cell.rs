@@ -7,8 +7,8 @@ use crate::layout::{Coord, House, Shape};
 use super::label::{index_from_label, label_from_index, try_index_from_label};
 use super::{Bit, CellSet};
 
-/// Represents a single grid cell identified by a linear index
-/// running left-to-right, top-to-bottom.
+// Repräsentiert eine einzelne Rasterzelle, die durch einen linearen Index identifiziert wird
+// verläuft von links nach rechts, von oben nach unten
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Cell {
     Index(u8),
@@ -21,7 +21,7 @@ impl Default for Cell {
 }
 
 impl Cell {
-    /// Total number of cells in the grid.
+    /// Gesamtanzahl der Zellen im Raster 
     pub const COUNT: u8 = 81;
 
     pub fn iter() -> CellIter {
@@ -62,7 +62,7 @@ impl Cell {
         Self::new(r * 9 + c)
     }
 
-    /// Parses a cell from its textual label 
+    // Parst eine Zelle aus ihrer Textbezeichnnung 
     pub fn from_str(label: &str) -> Self {
         Self::new(index_from_label(label))
     }

@@ -5,9 +5,9 @@ use crate::io::{show_progress, Cancelable};
 use crate::layout::values::known_set::KnownSetLike;
 use crate::layout::{Cell, Known, KnownSet};
 use crate::puzzle::{Board, ChangeResult, Changer, Strategy};
-/* use crate::solve::strategy_ord::algorithms::find_intersection_removals; */
 
-/// Generates a complete puzzle solution.
+
+// Erzeugt eine vollständige Puzzle-Lösung
 pub struct Generator {
     rng: ThreadRng,
     bar: bool,
@@ -124,16 +124,7 @@ impl Generator {
         best.map(|(c, _)| c)
     }
 
-    /*     fn all_cells(&mut self) -> Vec<Cell> {
-        let mut cells: Vec<Cell> = Vec::with_capacity(81);
-        for i in 0..81 {
-            cells.push(Cell::new(i));
-        }
-        if self.shuffle {
-            cells.shuffle(&mut self.rng);
-        }
-        cells
-    } */
+    
 
     fn shuffle_candidates(&mut self, candidates: KnownSet) -> Vec<Known> {
         let mut shuffled = candidates.iter().collect::<Vec<Known>>();
@@ -170,12 +161,7 @@ mod tests {
         );
     }
 
-    /*     #[test]
-    fn test_all_cells_length_is_81() {
-        let mut generator = Generator::new(false, false);
-        let cells = generator.all_cells();
-        assert_eq!(cells.len(), 81);
-    } */
+    
 
     #[test]
     fn test_shuffle_candidates_is_permutation() {

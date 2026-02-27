@@ -1,6 +1,6 @@
 use crate::layout::{Cell, Value};
 
-/// Represents a 9x9 Sudoku grid as 81 values (row-major).
+// Stellt ein 9x9 Sudoku-Raster als 81 Werte (zeilenweise) dar
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Grid {
     values: [Value; 81],

@@ -11,7 +11,7 @@ use super::Coord;
 type Bits = u16;
 type Size = u8;
 
-/// A set of coordinates encoded as bit flags.
+//Eine als Bit-Flags kodierte Menge von Koordinaten
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum CoordSet {
     Bits(Bits),

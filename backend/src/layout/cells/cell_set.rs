@@ -318,14 +318,14 @@ impl CellSet {
 }
 
 impl From<House> for CellSet {
-    /// Returns a set containing the cells in house
+    // gibt eine Menge zurück, die die Zellen im Haus enthält
     fn from(house: House) -> Self {
         house.cells()
     }
 }
 
 impl From<&str> for CellSet {
-    /// Returns a set containing the cells in labels
+    // Gibt eine Menge zurück, die die Zellen in den Labels enthält
     fn from(labels: &str) -> Self {
         Self::from_str(labels)
     }
@@ -347,7 +347,7 @@ impl IntoIterator for CellSet {
     type Item = Cell;
     type IntoIter = CellIter;
 
-    /// Returns an iterator over the members of this set in row-then-column order
+    // Gibt einen Iterator über die Elemente dieser Menge in Zeilen-dann-Spalten-Reihenfolge zurück
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
