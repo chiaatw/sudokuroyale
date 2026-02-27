@@ -1,18 +1,8 @@
 {
-  "name": "...",
-  "dockerComposeFile": ["../docker-compose.yml"],
+  "name": "SudokuRoyale Backend",
+  "dockerComposeFile": "../docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-
-  "remoteEnv": {
-    "CARGO_HOME": "/home/vscode/.cargo",
-    "RUSTUP_HOME": "/home/vscode/.rustup"
-  },
-  "postCreateCommand": "mkdir -p /home/vscode/.cargo /home/vscode/.rustup",
-
-  "customizations": {
-    "vscode": {
-      "extensions": ["rust-lang.rust-analyzer"]
-    }
-  }
+  "runServices": [],
+  "shutdownAction": "none"
 }
