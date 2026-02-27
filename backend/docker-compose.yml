@@ -24,7 +24,7 @@ services:
       - db
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/sudokuroyale
-    command: sleep infinity
+    command: /bin/sh -c "while sleep 1000; do :; done"
 
 volumes:
   postgres-data:
