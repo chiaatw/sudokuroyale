@@ -5,7 +5,6 @@ use super::{Action, Board, Change, Error, Strategy};
 use crate::layout::{Cell, CellSet, Known, KnownSet};
 use crate::solve::strategy_ord::action::AppliesToBoard;
 
-// Collects actions and errors encountered while modifying a board
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Effects {
     errors: Vec<Error>,
@@ -274,7 +273,6 @@ mod tests {
     }
 
     fn known(n: u8) -> Known {
-        // FIX: bei dir ist Known::new(..) korrekt
         Known::new(n)
     }
 
@@ -283,7 +281,6 @@ mod tests {
     }
 
     fn action_erase(c: Cell, k: Known) -> Action {
-        // FIX: LockedCandidates gibt es nicht in deinem Strategy-Enum
         Action::new_erase(Strategy::IntersectionRemoval, c, k)
     }
 
@@ -444,7 +441,6 @@ mod tests {
         assert!(output.contains(&cell(1).to_string()));
     }
 
-    // Optional: ensure our local helper functions compile (not strictly necessary)
     #[test]
     fn helpers_compile() {
         let _ = action_set(cell(0), known(1));

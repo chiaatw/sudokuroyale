@@ -431,11 +431,8 @@ mod tests {
     }
 
     fn known(n: u8) -> Known {
-        // In deinem Code ist Known::new(..) die richtige Konstruktion (KnownLike ist importiert)
         Known::new(n)
     }
-
-    /* ---------------- Change ---------------- */
 
     #[test]
     fn change_and_logic() {
@@ -452,8 +449,6 @@ mod tests {
         assert!(Change::Valid.changed());
         assert!(Change::Invalid.changed());
     }
-
-    /* ---------------- Board init ---------------- */
 
     #[test]
     fn new_board_is_empty() {
@@ -475,8 +470,6 @@ mod tests {
             assert!(board.cells_with_n_candidates(9).has(cell));
         }
     }
-
-    /* ---------------- set_known / set_given ---------------- */
 
     #[test]
     fn set_known_sets_value() {
@@ -536,8 +529,6 @@ mod tests {
         assert!(!effects.errors().is_empty());
     }
 
-    /* ---------------- Candidate removal ---------------- */
-
     #[test]
     fn remove_candidate_removes_known() {
         let mut board = Board::new();
@@ -559,7 +550,6 @@ mod tests {
         let mut effects = Effects::new();
         let c = cell(5);
 
-        // KnownSet ist nicht direkt iterable -> iter() nutzen
         for k in KnownSet::full().iter() {
             board.remove_candidate(c, k, &mut effects);
         }
@@ -573,19 +563,15 @@ mod tests {
         let mut effects = Effects::new();
         let c = cell(6);
 
-        // Entferne alle bis auf "9"
         let mut to_remove = KnownSet::full();
         let last = known(9);
         to_remove -= last;
 
         board.remove_candidates(c, to_remove, &mut effects);
 
-        // Statt effects.sets() (gibt's nicht), prüfen wir robust am Board-Zustand:
         assert_eq!(board.candidates(c).len(), 1);
         assert_eq!(board.candidates(c).as_single(), Some(last));
     }
-
-    /* ---------------- Iterators & helpers ---------------- */
 
     #[test]
     fn unknown_and_known_iterators() {
@@ -620,12 +606,8 @@ mod tests {
         let _ = format!("{}", board);
     }
 
-    /* ---------------- Strategy smoke (optional) ---------------- */
-
     #[test]
     fn strategy_enum_is_accessible() {
-        // Dieser Test ist nur ein "smoke test", dass Strategy importiert ist
-        // und verhindert unbenutzte-import Refactors, ohne auf Effects-Interna zuzugreifen.
         let _ = Strategy::NakedSingle;
     }
 }

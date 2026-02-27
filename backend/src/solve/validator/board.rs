@@ -3,10 +3,6 @@ use crate::layout::{Cell, CellSet, Known, KnownSet, Value, ValueLike};
 
 use crate::solve::candidates::{recompute_all_candidates, update_after_set_known, Candidates};
 
-/// Board state:
-/// - values: 81 cells row-major
-/// - givens: which cells are fixed clues
-/// - candidates: possible digits for each cell (for solver)
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Board {
     cells: [Value; 81],
@@ -26,31 +22,26 @@ impl Board {
         b
     }
 
-    /// Get value at cell
     #[inline(always)]
     pub fn get(&self, cell: Cell) -> Value {
         self.cells[cell.usize()]
     }
 
-    /// Set value at cell (NO validation, NO candidate updates)
     #[inline(always)]
     pub fn set_raw(&mut self, cell: Cell, value: Value) {
         self.cells[cell.usize()] = value;
     }
 
-    /// Clear cell to unknown (NO validation)
     pub fn clear(&mut self, cell: Cell) {
         self.cells[cell.usize()] = Value::unknown();
         self.recompute_candidates();
     }
 
-    /// Returns givens
     #[inline(always)]
     pub fn givens(&self) -> CellSet {
         self.givens
     }
 
-    /// True if the cell is a given
     #[inline(always)]
     pub fn is_given(&self, cell: Cell) -> bool {
         self.givens.has(cell)
@@ -71,21 +62,17 @@ impl Board {
         self.givens = g;
     }
 
-    /// Returns candidates for a cell
     #[inline(always)]
     pub fn candidates(&self, cell: Cell) -> KnownSet {
         self.candidates.get(cell)
     }
 
-    /// Recompute candidates for all cells
     pub fn recompute_candidates(&mut self) {
         let mut candidates = std::mem::take(&mut self.candidates);
         recompute_all_candidates(self, &mut candidates);
         self.candidates = candidates;
     }
 
-    /// Set a known digit into a cell and update candidates
-    /// No rule validation
     pub fn set_known(&mut self, cell: Cell, known: Known) {
         self.cells[cell.usize()] = Value::from(known);
 
@@ -94,7 +81,6 @@ impl Board {
         self.candidates = candidates;
     }
 
-    /// All known cells as CellSet
     pub fn knowns(&self) -> CellSet {
         let mut set = CellSet::empty();
         for cell in Cell::iter() {
@@ -105,7 +91,6 @@ impl Board {
         set
     }
 
-    /// All unknown cells as CellSet
     pub fn unknowns(&self) -> CellSet {
         let mut set = CellSet::empty();
         for cell in Cell::iter() {
@@ -116,12 +101,10 @@ impl Board {
         set
     }
 
-    /// True if every cell is known and the board is complete
     pub fn is_solved(&self) -> bool {
         self.unknowns().is_empty()
     }
 
-    /// Returns all cells with exactly n candidates
     pub fn cells_with_n_candidates(&self, n: usize) -> CellSet {
         let mut out = CellSet::empty();
         for cell in Cell::iter() {
@@ -132,8 +115,6 @@ impl Board {
         out
     }
 
-    /// Remove a set of candidates from each cell in cells
-    /// Returns the subset of cells that actually changed
     pub fn remove_candidates_from_cells(&mut self, cells: CellSet, remove: KnownSet) -> CellSet {
         if remove.is_empty() || cells.is_empty() {
             return CellSet::empty();

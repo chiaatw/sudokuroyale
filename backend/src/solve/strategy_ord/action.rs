@@ -14,12 +14,10 @@ use crate::symbols::{EMPTY_SET, REMOVE_CANDIDATE, SET_KNOWN};
 use super::SolverAction;
 use super::{Board, Change, Clues, Effects, Strategy, Verdict};
 
-// Something that can be applied to a board and produce effects
 pub trait AppliesToBoard {
     fn apply(&self, board: &mut Board, effects: &mut Effects) -> Change;
 }
 
-// Something that provides visual or logical clues
 pub trait ProvidesClues {
     fn clues(&self) -> &Clues;
     fn has_clues(&self) -> bool;
@@ -151,7 +149,6 @@ impl Action {
         self.strategy == strategy
     }
 
-    /// Gibt alle Zellen zurück, aus denen `known` entfernt wird.
     pub fn erases_from_cells(&self, known: Known) -> CellSet {
         self.erase
             .iter()
@@ -159,7 +156,6 @@ impl Action {
             .fold(CellSet::empty(), |acc, cell| acc + cell)
     }
 
-    /// Gibt alle Kandidaten zurück, die aus `cell` entfernt werden.
     pub fn erases_knowns_from(&self, cell: Cell) -> KnownSet {
         self.erase
             .get(&cell)
@@ -325,10 +321,8 @@ mod tests {
 
     #[test]
     fn erase_cells_erases_all_cells() {
-        // "LockedCandidates" existiert nicht in deinem Strategy-Enum
         let mut action = Action::new(Strategy::IntersectionRemoval);
 
-        // CellSet kann nicht aus Array via Into gebaut werden -> CellSet::of
         let cells: CellSet = CellSet::of(&[cell(0), cell(1), cell(2)]);
         let k = Known::new(3);
 
@@ -403,7 +397,6 @@ mod tests {
         let c = cell(8);
         let k = Known::new(6);
 
-        // "Good" gibt es nicht -> nimm einen existierenden Verdict
         action.clue_cell_for_known(Verdict::Primary, c, k);
 
         assert!(action.has_clues());
@@ -431,7 +424,6 @@ mod tests {
         let action = Action::new_set(Strategy::NakedSingle, c, k);
         let change = action.apply(&mut board, &mut effects);
 
-        // Change ist ein Enum, kein Option -> changed() oder != None
         assert!(change.changed());
         assert!(board.is_known(c));
         assert_eq!(board.known(c), Some(k));

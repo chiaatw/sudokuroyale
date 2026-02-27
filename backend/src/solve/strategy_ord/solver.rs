@@ -6,21 +6,12 @@ use crate::solve::algorithms::brute_force::BruteForceResult;
 use crate::solve::{find_brute_force, Timings, NON_PEER_TECHNIQUES};
 
 pub enum Resolution {
-    /// Returned when the user interrupts the solver
-    /// along with the current puzzle state and actions applied.
     Canceled(Board, Effects, Difficulty),
 
-    /// Returned when the puzzle is made invalid by one of the strategies
-    /// along with the invalid board, the valid actions applied,
-    /// and the action and errors the strategy caused.
     Failed(Board, Effects, Difficulty, Action, Effects),
 
-    /// Returned when the puzzle cannot be solved using the available techniques
-    /// along with the partially completed puzzle and the valid actions applied.
     Unsolved(Board, Effects, Difficulty),
 
-    /// Returned when the puzzle is completely solved along with the solution,
-    /// actions applied to find it, and the highest solver difficulty required.
     Solved(Board, Effects, Difficulty),
 }
 
@@ -34,15 +25,11 @@ impl Resolution {
     }
 }
 
-/// Attempts to solve puzzles using the available strategy algorithms.
 pub struct Solver {
-    /// Applies actions to the board to solve the puzzle.
     changer: Changer,
 
-    /// Allows canceling the solver.
     cancelable: Cancelable,
 
-    /// Verifies after each action that the puzzle remains solvable.
     check: bool,
 }
 

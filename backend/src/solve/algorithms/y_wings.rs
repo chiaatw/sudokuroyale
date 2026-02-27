@@ -1,7 +1,6 @@
 use super::*;
 
 use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
-// Solve wrapper for the Y-Wing strategy
 pub struct YWingSolver;
 
 impl Solver for YWingSolver {
@@ -16,11 +15,9 @@ impl Solver for YWingSolver {
     }
 }
 
-// Finds Y-Wing patterns and returns the corresponding effects
 pub fn find_y_wings(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
-    // Bi-value cells are potential pivots
     let bi_values = board.cells_with_n_candidates(2);
 
     for pivot in bi_values {
@@ -28,7 +25,6 @@ pub fn find_y_wings(board: &Board, single: bool) -> Option<Effects> {
         let peers = pivot.peers() & bi_values;
 
         if peers.len() < 2 {
-            // Need at least two pivot peers to form a Y-Wing
             continue;
         }
 
@@ -41,7 +37,6 @@ pub fn find_y_wings(board: &Board, single: bool) -> Option<Effects> {
             for c2 in k2_peers {
                 let k2_other = board.candidates(c2) - k2;
 
-                // Skip if c1 and c2 see each other or the other candidates don't match
                 if k1_other != k2_other || c1.sees(c2) {
                     continue;
                 }
@@ -53,7 +48,6 @@ pub fn find_y_wings(board: &Board, single: bool) -> Option<Effects> {
                     continue;
                 }
 
-                // Construct the action for this Y-Wing
                 let mut action = Action::new(Strategy::YWing);
                 action.erase_cells(erase, k);
                 action.clue_cell_for_known(Verdict::Secondary, pivot, k1);

@@ -1,8 +1,5 @@
 use std::time::{Duration, Instant};
 
-/// Server-authoritative Stopwatch
-/// - Vor start(now) läuft sie nicht
-/// - Nach start(now) zählt sie hoch (elapsed)
 #[derive(Debug, Clone)]
 pub struct TimeControl {
     started_at: Option<Instant>,
@@ -19,7 +16,6 @@ impl TimeControl {
         }
     }
 
-    /// Vergangene Zeit seit Start
     pub fn elapsed(&self, now: Instant) -> Duration {
         match self.started_at {
             None => Duration::ZERO,
@@ -27,7 +23,6 @@ impl TimeControl {
         }
     }
 
-    /// Für Stoppuhr: nie "expired"
     pub fn is_expired(&self, _now: Instant) -> bool {
         false
     }

@@ -1,11 +1,3 @@
-//! Candidates handling for the solver.
-//!
-//! This module maintains candidate sets (possible digits) for each cell.
-//! It is designed to work with:
-//! - `layout::Cell` as an index (0..80)
-//! - `layout::{Known, KnownSet}` as digit + digit-set bitset
-//! - `solve::validator::Board` as board state (values + givens)
-
 mod store;
 mod update;
 

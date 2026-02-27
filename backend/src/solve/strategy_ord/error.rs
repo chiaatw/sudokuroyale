@@ -2,19 +2,13 @@ use std::fmt;
 
 use crate::layout::{Cell, House, Known, Rectangle};
 
-// Tracks an error encountered while solving a cell or removing a candidate
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum Error {
-    // Cannot solve a cell to a non-candidate
     NotCandidate(Cell, Known),
-    // Cannot solve a cell that is already solved with a different konwn
     AlreadySolved(Cell, Known, Known),
-    // The unsolved cell has no more candidates remaining
     UnsolvableCell(Cell),
-    // An unsolved value has no more candidate cells in the hosue
     UnsolvableHouse(House, Known),
-    // Four cells in two boxes form a deadly rectangle
     DeadlyRectangle(Rectangle),
 }
 
@@ -29,7 +23,6 @@ impl Error {
         }
     }
 
-    //Returns true if the error makes the board invalid
     #[inline(always)]
     pub fn is_invalid(&self) -> bool {
         matches!(
@@ -80,12 +73,10 @@ mod tests {
     }
 
     fn some_house() -> House {
-        // robust: nehme irgendein gültiges House aus einer echten Cell
         cell(0).houses().into_iter().next().unwrap()
     }
 
     fn some_rectangle() -> Rectangle {
-        // robust: nehme irgendein gültiges Rectangle aus dem Iterator
         Rectangle::iter().next().unwrap()
     }
 

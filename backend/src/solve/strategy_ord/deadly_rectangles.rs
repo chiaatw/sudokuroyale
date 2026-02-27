@@ -2,8 +2,6 @@ use crate::layout::values::known::KnownLike;
 use crate::layout::{Cell, Known, Rectangle};
 use crate::puzzle::Board;
 
-/// Finds all existing deadly rectangles in the board.
-///
 /// A deadly rectangle occurs when two cells in one block
 /// and two cells in another block form a rectangle
 /// where the same non-given values appear in opposite corners.
@@ -23,8 +21,6 @@ pub fn find_deadly_rectangles(board: &Board) -> Option<Vec<Rectangle>> {
     (!found.is_empty()).then_some(found)
 }
 
-/// Finds all deadly rectangles that would be formed if the given cell were set
-/// to the given value.
 pub fn creates_deadly_rectangles(
     board: &Board,
     cell: Cell,
@@ -68,7 +64,6 @@ mod tests {
 
     fn test_find(givens: bool) {
         for rectangle in Rectangle::iter() {
-            // FIX: Rectangle corners are methods, not fields
             let tl = rectangle.top_left();
             let tr = rectangle.top_right();
             let bl = rectangle.bottom_left();
@@ -116,7 +111,6 @@ mod tests {
         const KNOWNS: [Known; 4] = [Known::new(1), Known::new(2), Known::new(1), Known::new(2)];
 
         fn test(givens: bool, rectangle: Rectangle) {
-            // FIX: Rectangle corners are methods, not fields
             let cells = [
                 rectangle.top_left(),
                 rectangle.top_right(),

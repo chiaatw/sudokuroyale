@@ -1,14 +1,9 @@
 use crate::layout::{Cell, CellSet, KnownSet};
 
-// Combines multiple peer cells into a unit treated as a single cell
-
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct PseudoCell {
-    // Representative cell, used as pseudo cell
     pub pseudo: Cell,
-    // the actual underlying cells
     pub cells: CellSet,
-    // Candidates shared among these cells
     pub knowns: KnownSet,
 }
 
@@ -59,18 +54,14 @@ mod tests {
     fn pseudo_cell_new_sets_pseudo_and_cells() {
         let cells: CellSet = Cell::new(1) + Cell::new(2) + Cell::new(3);
 
-        // FIX: Known::from(int) -> Known::new(u8)
         let knowns: KnownSet = KnownSet::from_iter([Known::new(1), Known::new(2)]);
 
         let p = PseudoCell::new(cells, knowns);
 
-        // The first cell becomes the pseudo cell
         assert_eq!(p.first(), Cell::new(1));
 
-        // All cells are included
         assert_eq!(p.as_cells(), cells);
 
-        // Shared knowns are correct
         assert_eq!(p.shared_knowns(), knowns);
     }
 
@@ -86,7 +77,6 @@ mod tests {
     fn pseudo_cell_from_trait_for_cellset() {
         let cells: CellSet = Cell::new(4) + Cell::new(5);
 
-        // FIX: Known::from(int) -> Known::new(u8)
         let knowns: KnownSet = KnownSet::from_iter([Known::new(3)]);
 
         let p = PseudoCell::new(cells, knowns);
@@ -99,12 +89,11 @@ mod tests {
     fn pseudo_cell_from_trait_for_cell() {
         let cells: CellSet = Cell::new(7) + Cell::new(8);
 
-        // FIX: Known::from(int) -> Known::new(u8)
         let knowns: KnownSet = KnownSet::from_iter([Known::new(4)]);
 
         let p = PseudoCell::new(cells, knowns);
 
         let c: Cell = p.into();
-        assert_eq!(c, Cell::new(7)); // first cell
+        assert_eq!(c, Cell::new(7)); 
     }
 }

@@ -9,17 +9,14 @@ impl Options {
     const SOLVE_HIDDEN_SINGLES: u8 = 1 << 2;
     const SOLVE_INTERSECTION_REMOVALS: u8 = 1 << 3;
 
-    // No options set
     pub const fn none() -> Self {
         Self(0)
     }
 
-    // only stop on errors
     pub const fn errors() -> Self {
         Self(Self::STOP_ON_ERROR)
     }
 
-    // all options enabled
     pub const fn all() -> Self {
         Self(
             Self::STOP_ON_ERROR
@@ -102,7 +99,6 @@ impl Options {
         self
     }
 
-    // Determines if a strategy should be applied given the current options
     #[inline]
     pub fn should_apply(&self, strategy: Strategy) -> bool {
         match strategy {

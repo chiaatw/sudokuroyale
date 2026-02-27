@@ -5,10 +5,6 @@ use super::*;
 use crate::layout::House;
 use crate::puzzle::{Action, Board, Cell, CellSet, Effects, Known, Strategy};
 
-/// Solver for Singles Chain (Strong-Weak Link / X-Chain) strategy
-///
-/// Detecs chains of candidates confined to pairs across houses and removes candidates
-/// that can be logically deduced from the chain
 pub struct SinglesChainSolver;
 
 impl Solver for SinglesChainSolver {
@@ -23,11 +19,9 @@ impl Solver for SinglesChainSolver {
     }
 }
 
-// Finds al Singles Chains on the board and returns candidate erasures and clues
 pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
-    // Ignore cells that already have a single candidate
     let ignore = board.cells_with_n_candidates(1);
 
     for known in Known::iter() {
@@ -36,7 +30,6 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
             continue;
         }
 
-        // Build the candidate nodes and peer graph
         let mut nodes = CellSet::empty();
         let mut peer_graph: HashMap<Cell, CellSet> = HashMap::new();
 
@@ -51,7 +44,6 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
             }
         }
 
-        // Identify candidate cells that see each other
         let candidates = possibles
             & nodes
                 .iter()
@@ -90,7 +82,6 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
 
                 if sees[node] && chain.is_mismatched() {
                     if chain.all_nodes_in_same_block() {
-                        // degenerate hidden pair, ignore
                         cell_chains.remove(&candidate);
                         break;
                     }
@@ -115,7 +106,6 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
             }
         }
 
-        // Group cells y chain index and create actions
         let mut grouped: HashMap<usize, CellSet> = HashMap::new();
         cell_chains.iter().for_each(|(cell, (index, _))| {
             *grouped.entry(*index).or_default() += *cell;
@@ -137,7 +127,6 @@ pub fn find_singles_chains(board: &Board, single: bool) -> Option<Effects> {
     }
 }
 
-// Tracks a candidate chain
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 struct Chain {
@@ -161,7 +150,6 @@ impl Chain {
         }
     }
 
-    //Returns true if the chain is mismatched (strong/weak link logic)
     pub fn is_mismatched(&self) -> bool {
         match self.color {
             Color::Red => false,
@@ -169,7 +157,6 @@ impl Chain {
         }
     }
 
-    // Returns true if all nodes of the chain are in the same block (degenerate case)
     pub fn all_nodes_in_same_block(&self) -> bool {
         let mut block: Option<House> = None;
         for cell in self.nodes {
@@ -211,13 +198,11 @@ impl Chain {
         self.stack.len().saturating_sub(1)
     }
 
-    // Returns the intersection of peers of first and last nodes in the stack
     pub fn sees(&self) -> CellSet {
         self.stack.first().unwrap().peers() & self.stack.last().unwrap().peers()
     }
 }
 
-// Strong/Weak link coloring
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Color {
     Red,
@@ -233,7 +218,6 @@ impl Color {
     }
 }
 
-// Tracks nodes by color
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Colors((CellSet, CellSet));
 
@@ -273,7 +257,6 @@ mod singles_chain_tests {
         }};
     }
 
-    // helper: reduziere Kandidaten einer Zelle auf genau {k}
     #[allow(dead_code)]
     fn keep_only(board: &mut Board, eff: &mut Effects, c: Cell, k: Known) {
         let keep = {
@@ -283,7 +266,6 @@ mod singles_chain_tests {
         };
         let remove = KnownSet::full() - keep;
         board.remove_candidates_from_cells(cells!(format!("{c:?}")), remove, eff);
-        // ^^ falls cells!(...) kein format akzeptiert: unten ist eine sichere Variante ohne format
     }
 
     #[test]
@@ -308,8 +290,6 @@ mod singles_chain_tests {
         let mut board = Board::new();
         let mut eff = Effects::new();
 
-        // Minimal “Struktur”: ein paar Zellen auf Single-Kandidat reduzieren
-        // (ob das eine Chain erzeugt ist egal – Test prüft nur <=1 action)
         board.remove_candidates_from_cells(cells!("A1"), KnownSet::full() - knowns!("5"), &mut eff);
         board.remove_candidates_from_cells(cells!("A2"), KnownSet::full() - knowns!("5"), &mut eff);
 
@@ -323,9 +303,6 @@ mod singles_chain_tests {
         let mut board = Board::new();
         let mut eff = Effects::new();
 
-        // 4 Zellen im selben Block (A1,A2,B1,B2) mit Kandidat 3 “erzwingen”
-        // Wir reduzieren auf {3}, indem wir alles außer 3 entfernen.
-        // Dafür brauchen wir knowns!-Makro im Testmodul:
         board.remove_candidates_from_cells(
             cells!("A1 A2 B1 B2"),
             KnownSet::full() - knowns!("3"),
@@ -333,7 +310,6 @@ mod singles_chain_tests {
         );
         assert!(!eff.has_errors());
 
-        // Degenerate hidden pair/chain in einem Block soll ignoriert werden
         assert!(find_singles_chains(&board, false).is_none());
     }
 }

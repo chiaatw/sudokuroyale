@@ -5,12 +5,6 @@ use crate::layout::values::known_set::KnownSetLike;
 use crate::layout::{House, HouseSet};
 use crate::puzzle::{Action, Board, Effects, Known, Strategy, Verdict};
 
-/// Solver for Intersection Removal strategies:
-/// Pointing Pair/Triple
-/// Box Line Reduction
-///
-/// Detects candidates confined to a row/column withing a block (Pointing)
-/// and removes candidates from block/line disjoint ares(Box-Line Reduction)
 pub struct IntersectionSolver;
 
 impl Solver for IntersectionSolver {
@@ -25,8 +19,6 @@ impl Solver for IntersectionSolver {
     }
 }
 
-/// Finds intersection removal effects across all blocks
-/// Returns Effects containing candidate erasures and clues
 pub fn find_intersection_removals(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
@@ -45,8 +37,6 @@ pub fn find_intersection_removals(board: &Board, single: bool) -> Option<Effects
     }
 }
 
-/// Checks intersections between a block and given houses (rows, columns)
-/// Applies Pointing Pair/Triple or Box Line Reduction as appropriate
 fn check_intersection(
     board: &Board,
     single: bool,
@@ -68,11 +58,9 @@ fn check_intersection(
             let intersection_candidate_cells_count = intersection_candidate_cells.len();
 
             if intersection_candidate_cells_count < 2 {
-                // ignore hidden single
                 continue;
             }
 
-            // Case 1: Box Line Reduction
             if box_candidates.has(known) && !line_candidates.has(known) {
                 let erase = box_cells & candidate_cells;
                 if !erase.is_empty() {
@@ -94,7 +82,6 @@ fn check_intersection(
                     }
                 }
             }
-            // Case 2: Pointing Pair/Triple
             else if line_candidates.has(known) {
                 let erase = line_cells & candidate_cells;
                 if !erase.is_empty() {
@@ -161,8 +148,6 @@ mod tests {
         let mut board = Board::new();
         let mut eff = Effects::new();
 
-        // Falls set_known in deinem Board existiert (wie in anderen Dateien), ok.
-        // Wenn nicht, diesen Test einfach entfernen.
         board.set_known(
             crate::cell!("A1"),
             crate::layout::values::known::known!("1"),
@@ -181,7 +166,6 @@ mod tests {
 
         assert!(!eff.has_errors());
 
-        // Ohne gezielt konstruierte Kandidatenlage sollte Intersection Removal nicht "zufällig" feuern
         assert!(find_intersection_removals(&board, false).is_none());
     }
 }

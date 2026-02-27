@@ -1,24 +1,18 @@
 use crate::layout::values::known_set::KnownSetLike;
 use crate::layout::{Cell, Known, KnownSet};
 
-/// Candidate store: one KnownSet per cell.
-/// - For known/filled cells: candidates should be empty.
-/// - For unknown cells: candidates is the set of possible digits.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Candidates {
     per_cell: [KnownSet; 81],
 }
 
 impl Candidates {
-    /// Creates a candidates store with all cells = full (1..9).
-    /// Typically you call `recompute_all_candidates(board, &mut candidates)` afterwards.
     pub fn new_full() -> Self {
         Self {
             per_cell: [KnownSet::full(); 81],
         }
     }
 
-    /// Creates a candidates store with all cells = empty.
     pub fn new_empty() -> Self {
         Self {
             per_cell: [KnownSet::empty(); 81],

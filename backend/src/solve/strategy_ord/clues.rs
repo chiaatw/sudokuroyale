@@ -5,7 +5,6 @@ use std::fmt::{self, Write};
 use crate::layout::{Cell, CellSet, Known, KnownSet};
 use crate::symbols::EMPTY_SET;
 
-// Verdicts for clues with color-coded display
 #[derive(Clone, Copy, Debug, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Verdict {
     #[default]
@@ -37,7 +36,6 @@ impl Verdict {
     }
 }
 
-// A single clue linking cells, a known value, and a verdict
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Clue {
     verdict: Verdict,
@@ -45,7 +43,6 @@ pub struct Clue {
     cells: CellSet,
 }
 
-// Collection of clues
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Clues {
     clues: Vec<Clue>,
@@ -171,7 +168,6 @@ mod tests {
     }
 
     fn known(n: u8) -> Known {
-        // FIX: bei dir ist Known::new(...) korrekt, nicht Known::from(u8)
         Known::new(n)
     }
 
@@ -256,7 +252,7 @@ mod tests {
     fn duplicate_cells_merge() {
         let mut clues = Clues::new();
         clues.clue_cell_for_known(Verdict::Set, cell(0), known(1));
-        clues.clue_cell_for_known(Verdict::Set, cell(0), known(1)); // duplicate
+        clues.clue_cell_for_known(Verdict::Set, cell(0), known(1)); 
 
         let collected = clues.collect();
         assert_eq!(collected.len(), 1);
@@ -280,7 +276,6 @@ mod tests {
     fn verdict_color_char_returns_string() {
         let c = 'X';
         assert_eq!(Verdict::None.color_char(c), "X".to_string());
-        // ANSI-Farben nicht stabil testbar, aber String sollte nicht leer sein
         assert!(!Verdict::Set.color_char(c).is_empty());
         assert!(!Verdict::Erase.color_char(c).is_empty());
         assert!(!Verdict::Primary.color_char(c).is_empty());

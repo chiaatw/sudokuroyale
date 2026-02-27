@@ -40,3 +40,115 @@ impl<'r> FromRequest<'r> for AuthUser {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::AuthUser;
+    use rocket::http::{Cookie, Status};
+    use rocket::local::asynchronous::Client;
+    use rocket::{get, routes};
+    use std::sync::Mutex;
+    use uuid::Uuid;
+
+    use crate::user::session::Session;
+    use crate::user::session_repository::SessionRepository;
+
+    #[get("/protected")]
+    fn protected_route(user: AuthUser) -> String {
+        user.user_id.to_string()
+    }
+
+    fn rocket_with_sessions(repo: SessionRepository) -> rocket::Rocket<rocket::Build> {
+        rocket::build()
+            .manage(Mutex::new(repo))
+            .mount("/", routes![protected_route])
+    }
+
+    #[rocket::async_test]
+    async fn authuser_missing_cookie_returns_401() {
+        let repo = SessionRepository::new();
+        let rocket = rocket_with_sessions(repo);
+        let client = Client::tracked(rocket).await.expect("client");
+
+        let resp = client.get("/protected").dispatch().await;
+        assert_eq!(resp.status(), Status::Unauthorized);
+    }
+
+    #[rocket::async_test]
+    async fn authuser_invalid_uuid_cookie_returns_401() {
+        let repo = SessionRepository::new();
+        let rocket = rocket_with_sessions(repo);
+        let client = Client::tracked(rocket).await.expect("client");
+
+        let resp = client
+            .get("/protected")
+            .cookie(Cookie::new("session_id", "not-a-uuid"))
+            .dispatch()
+            .await;
+
+        assert_eq!(resp.status(), Status::Unauthorized);
+    }
+
+    #[rocket::async_test]
+    async fn authuser_unknown_session_returns_401() {
+        let repo = SessionRepository::new();
+        let rocket = rocket_with_sessions(repo);
+        let client = Client::tracked(rocket).await.expect("client");
+
+        let random_session_id = Uuid::new_v4();
+
+        let resp = client
+            .get("/protected")
+            .cookie(Cookie::new("session_id", random_session_id.to_string()))
+            .dispatch()
+            .await;
+
+        assert_eq!(resp.status(), Status::Unauthorized);
+    }
+
+    #[rocket::async_test]
+    async fn authuser_valid_session_returns_200_and_user_id() {
+        let user_id = Uuid::new_v4();
+        let session = Session::new(user_id);
+        let session_id = session.id;
+
+        let mut repo = SessionRepository::new();
+        repo.add_session(session);
+
+        let rocket = rocket_with_sessions(repo);
+        let client = Client::tracked(rocket).await.expect("client");
+
+        let resp = client
+            .get("/protected")
+            .cookie(Cookie::new("session_id", session_id.to_string()))
+            .dispatch()
+            .await;
+
+        assert_eq!(resp.status(), Status::Ok);
+        let body = resp.into_string().await.expect("body");
+        assert_eq!(body, user_id.to_string());
+    }
+
+    #[rocket::async_test]
+    async fn authuser_expired_session_returns_401() {
+        use chrono::{Duration, Utc};
+
+        let user_id = Uuid::new_v4();
+        let mut session = Session::new(user_id);
+        session.expires_at = Utc::now() - Duration::minutes(1);
+        let session_id = session.id;
+
+        let mut repo = SessionRepository::new();
+        repo.add_session(session);
+
+        let rocket = rocket_with_sessions(repo);
+        let client = Client::tracked(rocket).await.expect("client");
+
+        let resp = client
+            .get("/protected")
+            .cookie(Cookie::new("session_id", session_id.to_string()))
+            .dispatch()
+            .await;
+        assert_eq!(resp.status(), Status::Unauthorized);
+    }
+}

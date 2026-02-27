@@ -5,14 +5,12 @@ use crate::solve::strategy_ord::action::AppliesToBoard;
 
 use super::{Action, Board, Effects, Options};
 
-// Indicates the result of a single action
 pub enum ChangeResult {
     None,
     Valid(Board, Effects),
     Invalid(Board, Board, Action, Effects),
 }
 
-// Applies actions to a board based on the selected options
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Changer {
     pub options: Options,
@@ -22,7 +20,6 @@ impl Changer {
     pub const fn new(options: Options) -> Self {
         Self { options }
     }
-    // Sets the given (clue) for a single cell
     pub fn set_given(
         &self,
         board: &Board,
@@ -33,7 +30,6 @@ impl Changer {
         self.apply(board, &Action::new_set(strategy, cell, known))
     }
 
-    // Solves a single cell to one of its candidates
     pub fn set_known(
         &self,
         board: &Board,
@@ -44,7 +40,6 @@ impl Changer {
         self.apply(board, &Action::new_set(strategy, cell, known))
     }
 
-    // Remove a candidate from a single cell
     pub fn remove_candidate(
         &self,
         board: &Board,
@@ -55,7 +50,6 @@ impl Changer {
         self.apply(board, &Action::new_erase(strategy, cell, known))
     }
 
-    // Applies the given action it creates
     pub fn apply(&self, board: &Board, action: &Action) -> ChangeResult {
         let mut after = *board;
         let mut effects = Effects::new();
@@ -69,7 +63,6 @@ impl Changer {
         }
     }
 
-    // Applies all automatic actions to the given board
     pub fn apply_all(&self, board: &mut Board, actions: &Effects) -> ChangeResult {
         let mut effects = actions.clone();
         let mut after = board.clone();
@@ -139,7 +132,6 @@ mod tests {
     }
 
     fn known(n: u8) -> Known {
-        // In deinem Code ist Known::new(..) die korrekte Konstruktion
         Known::new(n)
     }
 
@@ -150,8 +142,6 @@ mod tests {
     fn changer_stop_on_error() -> Changer {
         Changer::new(Options::errors())
     }
-
-    /* ---------------- set_known ---------------- */
 
     #[test]
     fn set_known_valid() {
@@ -204,8 +194,6 @@ mod tests {
         }
     }
 
-    /* ---------------- set_given ---------------- */
-
     #[test]
     fn set_given_marks_given() {
         let board = Board::new();
@@ -222,14 +210,11 @@ mod tests {
         }
     }
 
-    /* ---------------- remove_candidate ---------------- */
-
     #[test]
     fn remove_candidate_valid() {
         let board = Board::new();
         let changer = changer_default();
 
-        // LockedCandidates existiert nicht -> IntersectionRemoval (oder eine andere Strategie, die bei dir existiert)
         let result =
             changer.remove_candidate(&board, Strategy::IntersectionRemoval, cell(2), known(4));
 
@@ -254,8 +239,6 @@ mod tests {
 
         assert!(matches!(result, ChangeResult::None));
     }
-
-    /* ---------------- apply_all ---------------- */
 
     #[test]
     fn apply_all_applies_effects() {
@@ -294,8 +277,6 @@ mod tests {
             _ => panic!("expected ChangeResult::Valid"),
         }
     }
-
-    /* ---------------- safety ---------------- */
 
     #[test]
     fn changer_does_not_panic_on_empty_actions() {

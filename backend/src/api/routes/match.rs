@@ -71,7 +71,6 @@ pub fn join_match_route(
                     .ok_or(Status::NotFound)?;
                 let meta = session.meta.clone();
 
-                // lobby update state wenn gestartet
                 Some(snapshot_from_meta(match_id, &meta, None))
             } else {
                 None
@@ -296,7 +295,6 @@ pub fn apply_move_route(
         return Err(Status::Conflict);
     }
 
-    // dto view nur einmal bauen
     let dto_view = game_view_to_dto(view);
 
     let hub_for_ws = hub.inner().clone();          
@@ -485,7 +483,7 @@ pub fn match_ws_route(
                         msg = stream.next() => {
                             match msg {
                                 None => break,             
-                                Some(Ok(_)) => { /* ignore client messages */ }
+                                Some(Ok(_)) => {}
                                 Some(Err(e)) => return Err(e),
                             }
                         }
@@ -498,7 +496,6 @@ pub fn match_ws_route(
                                         .await?;
                                 }
                                 Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {
-                                    // wenn Client hinterher Snapshot neu senden
                                     let snapshot = build_snapshot().await?;
                                     stream
                                         .send(Message::Text(serde_json::to_string(&snapshot).unwrap()))

@@ -2,7 +2,6 @@ use crate::puzzle::{Board, Difficulty, Effects, Strategy};
 
 use super::algorithms;
 
-/// Names and categorizes a solver technique.
 #[derive(Clone, Copy, Debug)]
 pub struct Technique {
     strategy: Strategy,
@@ -47,7 +46,6 @@ impl Technique {
 
 type TechniqueFunc = fn(&Board, bool) -> Option<Effects>;
 
-/// All techniques implemented by this solver.
 #[rustfmt::skip]
 pub const TECHNIQUES: [Technique; 25] = [
     Technique::new(Strategy::Peer, algorithms::find_peers),
@@ -84,11 +82,9 @@ pub const TECHNIQUES: [Technique; 25] = [
     Technique::new(Strategy::Fireworks, algorithms::find_fireworks),
     Technique::new(Strategy::WXYZWing, algorithms::find_wxyz_wings),
 
-    // BUG causes unavoidable rectangles in several puzzles which UR fixes
     Technique::new(Strategy::Bug, algorithms::find_bugs),
 ];
 
-/// All techniques except finding peers.
 #[rustfmt::skip]
 pub const NON_PEER_TECHNIQUES: [Technique; 24] = [
     TECHNIQUES[1],  TECHNIQUES[2],  TECHNIQUES[3],  TECHNIQUES[4],  TECHNIQUES[5],
@@ -98,7 +94,6 @@ pub const NON_PEER_TECHNIQUES: [Technique; 24] = [
     TECHNIQUES[21], TECHNIQUES[22], TECHNIQUES[23], TECHNIQUES[24],
 ];
 
-/// All techniques that cannot be handled automatically by the [`Board`].
 #[rustfmt::skip]
 pub const MANUAL_TECHNIQUES: [Technique; 22] = [
     TECHNIQUES[3],  TECHNIQUES[4],  TECHNIQUES[5],  TECHNIQUES[6],  TECHNIQUES[7],

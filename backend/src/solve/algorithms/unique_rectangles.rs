@@ -26,7 +26,6 @@ impl Solver for UniqueRectangleSolver {
     }
 }
 
-// Entry point
 pub fn find_unique_rectangles(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
@@ -307,8 +306,6 @@ impl Candidate {
         let roof = rectangle.cells() - floor;
         let roof_pair = roof.as_pair().unwrap();
 
-        // the floor and roof are formed by the diagonals;
-        // the only important part is that lefts and rights are on the same side.
         let (floor_left, floor_right) = sort_by_column(floor1, floor2);
         let (roof_left, roof_right) = sort_by_column(roof_pair.0, roof_pair.1);
 
@@ -345,7 +342,6 @@ impl Candidate {
 
     fn check(&self, board: &Board, single: bool, effects: &mut Effects) -> bool {
         if self.diagonal {
-            // type 5 is related to type 1, and type 4 destroys the unique rectangle
             if self.check_type_five(board, effects) && single {
                 return true;
             }
@@ -378,7 +374,6 @@ impl Candidate {
         action.erase_cells(cells, extra);
         action.clue_cells_for_knowns(Verdict::Primary, self.rectangle.cells(), self.pair);
         action.clue_cells_for_known(Verdict::Secondary, self.roof, extra);
-        // println!("type 2 {} - {}", self.rectangle, action);
 
         effects.add_action(action)
     }
@@ -401,7 +396,6 @@ impl Candidate {
                 .collect();
 
             for size in 2..=4 {
-                // find naked tuples
                 if size < self.roof_extras.len() {
                     continue;
                 }
@@ -444,7 +438,6 @@ impl Candidate {
             }
         }
 
-        // println!("type 3 {} - {}", self.rectangle, action);
         effects.add_action(action)
     }
 
@@ -458,7 +451,6 @@ impl Candidate {
             let pair1_required = board.house_candidate_cells(house, self.pair1) == self.roof;
             let pair2_required = board.house_candidate_cells(house, self.pair2) == self.roof;
             if pair1_required == pair2_required {
-                // not a type 4, and puzzle is invalid if both are required
                 continue;
             }
 
@@ -473,7 +465,6 @@ impl Candidate {
             action.clue_cells_for_knowns(Verdict::Primary, self.floor, self.pair);
             action.clue_cells_for_known(Verdict::Secondary, self.roof, required);
 
-            // println!("type 4 {} - {}", self.rectangle, action);
             if effects.add_action(action) {
                 return true;
             }
@@ -506,7 +497,6 @@ impl Candidate {
             action.clue_cells_for_knowns(Verdict::Primary, self.roof, self.pair);
             action.clue_cells_for_knowns(Verdict::Primary, self.floor, self.pair - erase);
 
-            // println!("type 5 {} - {}", self.rectangle, action);
             effects.add_action(action)
         } else {
             false
@@ -557,9 +547,6 @@ mod tests {
 
     #[test]
     fn no_false_positive_with_some_knowns() {
-        // Ein bisschen "Rauschen": ein paar feste Zahlen setzen.
-        // Das soll i.d.R. KEIN Unique Rectangle erzwingen.
-        // (Wenn dein Kandidatenmodell hier doch etwas findet, kannst du den Test entfernen.)
         let mut board = Board::new();
         let mut eff = Effects::new();
 

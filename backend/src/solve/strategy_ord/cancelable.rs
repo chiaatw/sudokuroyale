@@ -42,7 +42,7 @@ mod tests {
     #[test]
     fn test_cancel_sets_signal() {
         let c = Cancelable::new();
-        c.clear(); // sicherstellen, dass Signal false ist
+        c.clear(); 
         assert!(!c.is_canceled());
 
         c.cancel();

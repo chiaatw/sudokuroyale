@@ -8,9 +8,6 @@ use crate::puzzle::{Action, Board, Cell, CellSet, Effects, Known, KnownSet, Stra
 use crate::layout::cells::cell_set::CellIteratorUnion;
 use crate::layout::values::known::KnownLike;
 
-/// Solver for the XY-Chain strategy
-///
-/// Detects XY-Chains on the board and produces candidate eliminations
 pub struct XYChainSolver;
 
 impl Solver for XYChainSolver {
@@ -25,14 +22,12 @@ impl Solver for XYChainSolver {
     }
 }
 
-/// Finds all XY-Chains on the board and returns their effects
 pub fn find_xy_chains(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
     let bi_values = board.cells_with_n_candidates(2);
     let mut forest = Forest::new();
 
-    // Build graph nodes for all bi-value cells
     for cell in bi_values {
         forest.add_node(board, cell);
     }
@@ -43,7 +38,6 @@ pub fn find_xy_chains(board: &Board, single: bool) -> Option<Effects> {
 
         for graph in forest.graphs.values() {
             if graph.nodes.len() < 4 {
-                // Ignore too small graphs
                 continue;
             }
 
@@ -52,7 +46,6 @@ pub fn find_xy_chains(board: &Board, single: bool) -> Option<Effects> {
                 continue;
             }
 
-            // Find starting cells for chains
             let starts = erasables.iter().fold(CellSet::empty(), |acc, cell| {
                 acc | (cell.peers() & candidates & graph.cells[k.usize()])
             });
@@ -90,7 +83,6 @@ pub fn find_xy_chains(board: &Board, single: bool) -> Option<Effects> {
     }
 }
 
-/// Forest of connected graphs representing bi-value cells
 struct Forest {
     graphs: HashMap<Cell, Graph>,
 }
@@ -102,11 +94,9 @@ impl Forest {
         }
     }
 
-    /// Adds a new node to the appropriate graph, or creates a new graph if necessary
     fn add_node(&mut self, board: &Board, cell: Cell) {
         let node = Rc::new(Node::new(board, cell));
 
-        // Identify which graphs the node can connect to
         let mut sees = self
             .graphs
             .iter()
@@ -133,8 +123,6 @@ impl Forest {
     }
 }
 
-/// Graph of connected bi-value cells
-/// Index by candidate
 #[allow(dead_code)]
 struct Graph {
     root: Cell,
@@ -199,7 +187,6 @@ impl Graph {
     }
 }
 
-/// Node representing a single bi-value cell
 #[allow(dead_code)]
 struct Node {
     cell: Cell,
@@ -247,7 +234,6 @@ impl Node {
     }
 }
 
-/// Chain of nodes for XY-Chain search
 #[allow(dead_code)]
 struct Chain {
     head: Rc<Link>,
@@ -302,7 +288,6 @@ impl Chain {
     }
 }
 
-/// Shared link in a chain of nodes
 #[allow(dead_code)]
 struct Link {
     tail: Option<Rc<Link>>,
@@ -338,7 +323,6 @@ impl Link {
     }
 }
 
-/// Tracks shortest unique chains for a starting known
 #[allow(dead_code)]
 struct Found {
     known: Known,
@@ -393,7 +377,6 @@ impl Found {
     }
 }
 
-/// Adds a new chain candidate, removing redundant chains
 fn add_candidate(new: &Rc<Chain>, chains: &mut Vec<Rc<Chain>>) {
     let mut remove: Vec<usize> = Vec::new();
     let mut add = true;

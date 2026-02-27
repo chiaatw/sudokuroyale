@@ -6,7 +6,6 @@ use crate::layout::values::known_set::KnownIteratorUnion;
 use crate::layout::values::known_set::KnownSetLike;
 use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
 use itertools::Itertools;
-// Trait-based solver for the Fireworks strategy
 pub struct FireworksSolver;
 
 impl Solver for FireworksSolver {
@@ -21,7 +20,6 @@ impl Solver for FireworksSolver {
     }
 }
 
-// Core Fireworks detection logic
 pub fn find_fireworks(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
@@ -146,8 +144,6 @@ mod tests {
         let mut board = Board::new();
         let mut eff = Effects::new();
 
-        // Falls set_known bei dir existiert (wie in anderen Dateien), ok.
-        // Sonst diesen Test entfernen.
         board.set_known(
             crate::cell!("A1"),
             crate::layout::values::known::known!("1"),

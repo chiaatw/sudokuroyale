@@ -281,3 +281,4 @@ fn count_filled(grid: &Grid) -> u8 {
     }
     count
 }
+

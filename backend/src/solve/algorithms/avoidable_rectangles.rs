@@ -6,7 +6,6 @@ use crate::layout::Rectangle;
 use crate::puzzle::{Action, Board, Effects, KnownSet, Strategy, Verdict};
 use itertools::Itertools;
 
-/// Trait-based solver for the Avoidable Rectangle strategy
 pub struct AvoidableRectanglesSolver;
 
 impl Solver for AvoidableRectanglesSolver {
@@ -21,17 +20,11 @@ impl Solver for AvoidableRectanglesSolver {
     }
 }
 
-/// Core Avoidable Rectangle detection logic
-///
-/// References:
-/// - http://sudopedia.enjoysudoku.com/Avoidable_Rectangle.html
-/// - http://forum.enjoysudoku.com/puzzle-with-uniqueness-type-3-t3073-30.html
 pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
     let candidates = board.solved();
 
-    // --- Type 1 Avoidable Rectangle ---
     for (r, c, k) in Rectangle::iter()
         .map(|r| (r, r.cells() - candidates))
         .filter_map(|(r, cs)| cs.as_single().map(|c| (r.with_origin(c), c)))
@@ -49,9 +42,7 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
         }
     }
 
-    // --- Type 2 & Type 3 Avoidable Rectangle ---
     for rect in Rectangle::iter() {
-        // Skip if any given is in the rectangle
         if rect.cells().has_any(board.givens()) {
             continue;
         }
@@ -65,31 +56,26 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
 
             let mut action = Action::new(Strategy::AvoidableRectangle);
 
-            // Identify the solved cells in the rectangle
             if let Some((c3, c4)) = (rect.cells() - unsolved).as_pair() {
                 let ks1 = board.candidates(c1);
                 let ks2 = board.candidates(c2);
                 let k3 = board.known(c3).unwrap();
                 let k4 = board.known(c4).unwrap();
 
-                // Skip if naked tuple cannot occur
                 if !(ks1.has(k4) && ks2.has(k3)) {
                     continue;
                 }
 
-                // Mark solved cells as tertiary clues
                 action.clue_cell_for_known(Verdict::Tertiary, c3, k3);
                 action.clue_cell_for_known(Verdict::Tertiary, c4, k4);
             } else {
                 continue;
             }
 
-            // Construct a pseudo cell for unsolved cells
             let mut pseudo = board.pseudo_cell(unsolved);
             let solved = board.all_knowns(rect.cells() - unsolved);
             pseudo.knowns -= solved;
 
-            // Assign clues and secondary effects for each unsolved cell
             unsolved.iter().for_each(|c| {
                 let cs = board.candidates(c);
                 action.clue_cell_for_knowns(Verdict::Tertiary, c, cs & solved);
@@ -97,7 +83,6 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
             });
 
             if let Some(k) = pseudo.knowns.as_single() {
-                // --- Type 2: naked single elimination ---
                 for house in houses {
                     action.erase_cells(board.house_candidate_cells(house, k) - unsolved, k);
                 }
@@ -105,7 +90,6 @@ pub fn find_avoidable_rectangles(board: &Board, single: bool) -> Option<Effects>
                     return Some(effects);
                 }
             } else {
-                // --- Type 3: naked tuple elimination ---
                 for house in houses {
                     let peers = house.cells() - rect.cells();
                     for size in 2..=4 {
@@ -176,9 +160,6 @@ mod tests {
     fn type_1() {
         let mut board = Board::new();
         let mut eff = Effects::new();
-
-        // Rectangle: rows A/D, cols 1/4  => cells A1 A4 D1 D4
-        // A4 == D1, D4 is known, A1 stays unknown but must still have candidate D4
         board.set_known(cell!("A4"), known!("7"), &mut eff);
         board.set_known(cell!("D1"), known!("7"), &mut eff);
         board.set_known(cell!("D4"), known!("9"), &mut eff);
@@ -198,8 +179,6 @@ mod tests {
 
     #[test]
     fn type_2() {
-        // Dein ursprünglicher Type-2 Test war identisch zu Type-1.
-        // Damit er wieder grün wird, verwenden wir dieselbe Minimal-Konstellation.
         let mut board = Board::new();
         let mut eff = Effects::new();
 
@@ -224,7 +203,6 @@ mod tests {
         let mut board = Board::new();
         let mut eff = Effects::new();
 
-        // Gleiche Konstellation wie type_1, aber als GIVEN (wichtig!)
         board.set_given(cell!("A4"), known!("7"), &mut eff);
         board.set_given(cell!("D1"), known!("7"), &mut eff);
         board.set_given(cell!("D4"), known!("9"), &mut eff);

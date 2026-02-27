@@ -3,7 +3,6 @@ use super::*;
 use crate::layout::values::known_set::KnownSetLike;
 use crate::layout::CellSet;
 use crate::puzzle::{Action, Board, Effects, Strategy, Verdict};
-// Solver wrapper for the Peer (simple elimination) strategy
 
 pub struct PeerSolver;
 
@@ -23,7 +22,6 @@ pub fn find_peers(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
     for (cell, known) in board.known_iter() {
-        // Statt: cell.peers() & board.candidate_cells(known)
         let peers: CellSet = cell
             .peers()
             .iter()
@@ -91,7 +89,6 @@ mod peer_tests {
         board.set_known(cell!("A1"), known!("5"), &mut eff);
         assert!(!eff.has_errors());
 
-        // 5 muss aus allen Peers von A1 verschwunden sein
         for p in cell!("A1").peers().iter() {
             assert!(!board.candidates(p).has(known!("5")));
         }

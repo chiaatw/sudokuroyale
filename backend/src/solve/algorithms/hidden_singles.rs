@@ -78,8 +78,6 @@ mod hidden_single_tests {
         let mut board = Board::new();
         let mut eff = Effects::new();
 
-        // Optional: falls set_known bei dir existiert (wie in anderen Dateien), ok.
-        // Sonst diesen Test entfernen.
         board.set_known(
             crate::cell!("A1"),
             crate::layout::values::known::known!("1"),

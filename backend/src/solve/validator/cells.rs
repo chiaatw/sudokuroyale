@@ -1,10 +1,6 @@
 use crate::layout::{Cell, ValueLike};
 use crate::solve::validator::{Board, HouseKind, ValidationError};
 
-/// Validates Sudoku "cell rules" for the whole board:
-/// - Unknown values are allowed
-/// - Known values must be 1..=9
-/// - No duplicates within any row/col/block
 pub fn validate_cells(board: &Board) -> Result<(), ValidationError> {
     // rows
     for r in 0..9 {
@@ -30,7 +26,6 @@ fn check_unit(
     kind: HouseKind,
     index: usize,
 ) -> Result<(), ValidationError> {
-    // Track first occurrence of each value 1..9
     let mut seen: [Option<Cell>; 10] = [None; 10];
 
     for &cell in &cells {
@@ -38,7 +33,7 @@ fn check_unit(
         let raw = v.raw() as usize;
 
         if raw == 0 {
-            continue; // unknown allowed
+            continue; 
         }
         if raw > 9 {
             return Err(ValidationError::InvalidValue { cell, value: v });
@@ -60,7 +55,6 @@ fn check_unit(
     Ok(())
 }
 
-/// Row unit (0..8), returns 9 cells.
 fn unit_row(r: usize) -> [Cell; 9] {
     let mut out = [Cell::new(0); 9];
     let base = r * 9;
@@ -70,7 +64,6 @@ fn unit_row(r: usize) -> [Cell; 9] {
     out
 }
 
-/// Column unit (0..8), returns 9 cells.
 fn unit_col(c: usize) -> [Cell; 9] {
     let mut out = [Cell::new(0); 9];
     for i in 0..9 {
@@ -79,13 +72,11 @@ fn unit_col(c: usize) -> [Cell; 9] {
     out
 }
 
-/// Block unit (0..8), numbering left-to-right, top-to-bottom.
-/// block 0 = top-left, 1 = top-middle, 2 = top-right, ..., 8 = bottom-right.
 fn unit_block(b: usize) -> [Cell; 9] {
     let mut out = [Cell::new(0); 9];
 
-    let br = (b / 3) * 3; // block row (0,3,6)
-    let bc = (b % 3) * 3; // block col (0,3,6)
+    let br = (b / 3) * 3; 
+    let bc = (b % 3) * 3; 
 
     let mut k = 0;
     for dr in 0..3 {

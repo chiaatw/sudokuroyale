@@ -1,3 +1,5 @@
+// WS unter Zuhilfenahme von KI erstellt
+
 use std::collections::HashMap;
 
 use tokio::sync::{broadcast, RwLock};

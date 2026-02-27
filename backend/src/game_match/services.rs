@@ -16,8 +16,6 @@ use crate::layout::{Cell, Grid};
 use crate::match_state::GameSession;
 use crate::puzzle::{Board, Changer, Options}; 
 
-/// Neues Match erstellen – synchron, bekommt user_id direkt
-/// Legt automatisch eine GameSession an (meta + game=None)
 pub fn create_match(match_repo: &mut MatchRepository, user_id: &Uuid) -> Uuid {
     let meta = GameMatch::new(*user_id);
     let match_id = meta.id;
@@ -29,7 +27,6 @@ pub fn create_match(match_repo: &mut MatchRepository, user_id: &Uuid) -> Uuid {
 }
 
 pub fn join_match(match_repo: &mut MatchRepository, user_id: &Uuid, match_id: &Uuid) -> bool {
-    // Session holen (nicht nur Meta)
     let session = match match_repo.find_session_by_id_mut(match_id) {
         Some(s) => s,
         None => return false,
@@ -90,7 +87,6 @@ pub fn leave_match_by_user(
     false
 }
 
-/// Hilfsfunktion: Solver-Board -> Game-Grid
 fn board_to_grid(board: &Board) -> Grid {
     let mut grid = Grid::new();
     for i in 0..81 {
@@ -106,13 +102,11 @@ pub(crate) fn generate_puzzle_mvp() -> Option<GamePuzzle> {
 
     let changer = Changer::new(Options::errors());
 
-    // Gesamt-Retries: erst solved finden, dann Finder anwenden
     for attempt in 1..=120 {
         eprintln!("gen: attempt {}", attempt);
 
         let cancelable = Cancelable::new();
 
-        // 1) solved board erzeugen
         let mut gen = Generator::new(true, false);
         let solved = match gen.generate(&changer, &cancelable) {
             Some(b) if b.known_count() == 81 => b,
@@ -131,7 +125,6 @@ pub(crate) fn generate_puzzle_mvp() -> Option<GamePuzzle> {
 
         let solution = solved.clone();
 
-        // 2) Finder: aus solved -> givens (Puzzle)
         let mut finder = Finder::new(28, 5, false);
         eprintln!("gen: starting finder...");
         let (givens_board, _effects) = finder.backtracking_find(solved);
@@ -139,13 +132,11 @@ pub(crate) fn generate_puzzle_mvp() -> Option<GamePuzzle> {
         let clues = givens_board.known_count();
         eprintln!("gen: finder clues={}", clues);
 
-        // 3) Guards: kaputte Ergebnisse verwerfen und weiter versuchen
         if clues < 17 || clues > 81 {
             eprintln!("gen: guard failed (clues={}), retrying", clues);
             continue;
         }
 
-        // 4) Puzzle bauen
         let givens_grid = board_to_grid(&givens_board);
         let solution_grid = board_to_grid(&solution);
 

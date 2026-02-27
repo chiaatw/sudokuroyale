@@ -33,7 +33,6 @@ impl GameSession {
         }
     }
 
-    /// Mappt User -> PlayerSlot
     pub fn player_for_user(&self, user_id: &Uuid) -> Option<PlayerId> {
         if self.meta.player1_id == *user_id {
             return Some(PlayerId::PlayerA);
@@ -48,7 +47,6 @@ impl GameSession {
         self.last_activity_at = Utc::now();
     }
 
-    /// Startet Spiel, schaltet Match auf RUNNING
     pub fn start_game(&mut self, puzzle: Puzzle, time_limit: Duration, now: Instant) -> bool {
         if self.meta.status != MatchStatus::Ready {
             return false;

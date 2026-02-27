@@ -13,7 +13,6 @@ const MINIMUM_KNOWNS_TO_BE_UNIQUELY_SOLVABLE: usize = 17;
 const MAXIMUM_SOLUTIONS: usize = 1_000_000;
 const DEFAULT_MAXIMUM_SOLUTIONS: usize = 1_000;
 
-// Brute-force Sudoku solver implementing the Solver trait
 pub struct BruteForceSolver {
     pub log: bool,
     pub pause: u32,
@@ -65,17 +64,14 @@ impl BruteForceSolver {
 
     fn find_brute_force(&self, board: &Board, single: bool) -> BruteForceResult {
         if board.is_fully_solved() {
-            // Already solved, nothing to do
             return BruteForceResult::AlreadySolved;
         }
         if board.known_count() < MINIMUM_KNOWNS_TO_BE_UNIQUELY_SOLVABLE {
-            // Too few clues
             return BruteForceResult::TooFewKnowns;
         }
 
         let empty = board.unknowns() & board.cells_with_n_candidates(0);
         if !empty.is_empty() {
-            //Unsolvable cells exist
             return BruteForceResult::UnsolvableCells(empty);
         }
 
@@ -171,7 +167,6 @@ pub enum BruteForceResult {
     MultipleSolutions(Vec<Board>),
 }
 
-// Internal stack entry for DFS
 struct Entry {
     board: Board,
     cell: Cell,
@@ -197,19 +192,12 @@ mod tests {
     use super::*;
 
     fn solved_board() -> Board {
-        // Ein vollständig gelöstes Board ohne Parser zu bauen ist aufwendig.
-        // Daher: wir bauen ein Board, das nach deiner Board-API als "fully solved" gilt.
-        //
-        // Wenn Board::new() schon leer ist, musst du hier ggf. eine Helper-Funktion
-        // nutzen, die du im Projekt bereits hast (z.B. Board::from_solution()).
-        //
-        // FALLBACK: Wenn es keine einfache Möglichkeit gibt, markiere den Test ignore.
         Board::new()
     }
 
     #[test]
     fn too_few_knowns_returns_too_few_knowns() {
-        let board = Board::new(); // 0 knowns
+        let board = Board::new(); 
         let solver = BruteForceSolver::new(false, 0, 100);
 
         match solver.find_brute_force(&board, true) {
@@ -220,18 +208,12 @@ mod tests {
 
     #[test]
     fn max_solutions_is_clamped_to_default_when_out_of_range() {
-        // max_solutions darf nicht 0 sein; dein new() clamped dann auf DEFAULT_MAXIMUM_SOLUTIONS
         let solver = BruteForceSolver::new(false, 0, 0);
         assert_eq!(solver.max_solutions, DEFAULT_MAXIMUM_SOLUTIONS);
     }
 
     #[test]
     fn already_solved_board_returns_already_solved() {
-        // Dieser Test ist nur gültig, wenn du eine einfache Möglichkeit hast,
-        // ein "fully solved" Board zu erzeugen.
-        //
-        // Wenn Board::new() NICHT fully solved ist (sehr wahrscheinlich), dann:
-        // -> Test ignorieren oder Board-Builder implementieren.
         let board = solved_board();
         let solver = BruteForceSolver::new(false, 0, 100);
 
@@ -251,12 +233,10 @@ mod tests {
         let a = solver.find_brute_force(&board, true);
         let b = super::find_brute_force(&board, true);
 
-        // Beide sollten bei 0 knowns TooFewKnowns liefern.
         assert!(matches!(a, BruteForceResult::TooFewKnowns));
         assert!(matches!(b, BruteForceResult::TooFewKnowns));
     }
 
-    // Helper um Debug-Ausgabe ohne Board/Vec zu erzwingen
     fn discr(r: BruteForceResult) -> &'static str {
         match r {
             BruteForceResult::AlreadySolved => "AlreadySolved",

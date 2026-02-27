@@ -3,7 +3,6 @@ use super::*;
 use crate::layout::{House, HouseSet, Shape};
 use crate::puzzle::{Action, Board, Cell, Effects, Known, Strategy, Verdict};
 use itertools::Itertools;
-// Solver wrapper for the Skyscraper strategy
 pub struct SkyscraperSolver;
 
 impl Solver for SkyscraperSolver {
@@ -22,7 +21,6 @@ impl SkyscraperSolver {
     fn find_skyscrapers(&self, board: &Board, single: bool) -> Option<Effects> {
         let mut effects = Effects::new();
 
-        // Check rows first, then columns
         if !self.check_houses(
             board,
             single,
@@ -57,14 +55,11 @@ impl SkyscraperSolver {
         for known in Known::iter() {
             let candidate_cells = board.candidate_cells(known);
 
-            // Closure for checking a candidate skyscraper
             let mut check_candidate = |f1: Cell, c1: Cell, f2: Cell, c2: Cell| -> bool {
                 if c1.house(cross) == c2.house(cross) {
-                    // degenerate X-Wing
                     return false;
                 }
                 if (candidate_cells & f1.house(cross).cells()).len() == 2 {
-                    // degenerate Singles Chain
                     return false;
                 }
 
@@ -141,7 +136,6 @@ mod tests {
         let via_solver = solver.apply(&board, false);
         let via_fn = find_skyscrapers(&board, false);
 
-        // beides sollte identisch sein (beides None auf leerem Board)
         assert_eq!(via_solver.is_some(), via_fn.is_some());
     }
 
@@ -157,21 +151,13 @@ mod tests {
 
     #[test]
     fn does_not_panic_on_trivial_board() {
-        // Minimal “Noise”: ein paar givens/knowns setzen (wenn API das erlaubt).
-        // Falls set_known bei dir ein &mut Effects braucht, nimm die Alternative unten.
         let board = Board::new();
         let solver = SkyscraperSolver;
 
-        // Diese Zeilen nur nutzen, wenn dein Board die Signatur hat:
-        // board.set_known(cell, known, &mut effects)
         let eff = Effects::new();
-        // safe: wenn diese API existiert, ok; wenn nicht, lösch die 3 Zeilen einfach.
-        // board.set_known(crate::layout::cells::cell::cell!("A1"), crate::layout::values::known::known!("1"), &mut eff);
-        // board.set_known(crate::layout::cells::cell::cell!("B2"), crate::layout::values::known::known!("2"), &mut eff);
-        // board.set_known(crate::layout::cells::cell::cell!("C3"), crate::layout::values::known::known!("3"), &mut eff);
+
         let _ = eff;
 
-        // Hauptsache: Call darf nicht panicen.
         let _ = solver.apply(&board, false);
     }
 }

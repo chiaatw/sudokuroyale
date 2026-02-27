@@ -133,7 +133,6 @@ mod tests {
 
     #[test]
     fn does_not_panic_on_trivial_board() {
-        // Minimal “noise”: falls du später knowns setzt, soll das hier nicht crashen.
         let board = Board::new();
         let solver = TwoStringKiteSolver;
 

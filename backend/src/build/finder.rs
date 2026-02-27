@@ -157,4 +157,56 @@ mod tests {
 
         assert!(result_board.known_count() <= 81);
     }
+
+    #[test]
+    fn test_shuffle_cells_empty_set_returns_empty_vec() {
+        let mut finder = Finder::new(20, 10, false);
+        let board = Board::new();
+
+        let set = board.knowns();
+        assert_eq!(set.iter().count(), 0, "expected empty known set for new board");
+
+        let shuffled = finder.shuffle_cells(set);
+        assert!(shuffled.is_empty(), "shuffling an empty set must yield empty vec");
+    }
+
+    #[test]
+    fn test_backtracking_find_clues_ge_81_returns_input_board_unchanged() {
+        let mut finder = Finder::new(81, 999, false);
+        let board = Board::new();
+
+        let input_known = board.known_count();
+        let (result_board, _effects) = finder.backtracking_find(board);
+
+        assert_eq!(
+            result_board.known_count(),
+            input_known,
+            "when clues >= 81 finder should not attempt to remove anything"
+        );
+    }
+
+    #[test]
+    fn test_backtracking_find_never_increases_known_count() {
+        let mut finder = Finder::new(20, 0, false); 
+        let board = Board::new();
+
+        let input_known = board.known_count();
+        let (result_board, _effects) = finder.backtracking_find(board);
+
+        assert!(
+            result_board.known_count() <= input_known,
+            "finder must never increase number of clues"
+        );
+    }
+
+    #[test]
+    fn test_has_unique_solution_via_bf_empty_board_is_not_unique() {
+        let finder = Finder::new(20, 10, false);
+        let board = Board::new();
+
+        assert!(
+            !finder.has_unique_solution_via_bf(&board),
+            "empty board should not have a unique solution"
+        );
+    }
 }

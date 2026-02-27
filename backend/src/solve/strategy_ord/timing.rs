@@ -6,8 +6,6 @@ use itertools::Itertools;
 use crate::io::{format_number, format_runtime};
 use crate::puzzle::Strategy;
 
-/// Tracks the number of times a strategy was called, the number of times it found a solution,
-/// and the total time spent in the strategy.
 pub struct Timings {
     timings: HashMap<Strategy, HashMap<usize, (usize, Duration)>>,
     found: usize,

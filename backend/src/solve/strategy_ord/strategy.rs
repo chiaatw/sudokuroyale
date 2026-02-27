@@ -1,30 +1,14 @@
 use std::fmt;
 
-/// Identifies the logic used to solve cells and remove candidates
-///
-/// Strategy is intentionally a simple enum
-/// fast to copy
-/// easy to match
-/// exhaustive and compiler checked
-///
-///
-
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Strategy {
-    // The player or parser has provided a given clue
     Given,
-    // The player has solved a cell
     Solve,
-    // The player has erased a candidate from a cell
     Erase,
-
-    // Remove candidates from peers of a solved cell
     Peer,
 
-    // A cell with one candidate remaining may be solved
     NakedSingle,
-    // A candidate that may only appear in one cell in a house may be solved
     HiddenSingle,
 
     NakedPair,
@@ -36,7 +20,6 @@ pub enum Strategy {
     NakedQuad,
     HiddenQuad,
 
-    // Produces pointing pairs/triples and box/line reductions
     IntersectionRemoval,
     PointingPair,
     PointingTriple,
@@ -65,7 +48,6 @@ pub enum Strategy {
 }
 
 impl Strategy {
-    /// Difficulty classification
 
     #[inline(always)]
     pub const fn difficulty(self) -> Difficulty {
@@ -106,7 +88,6 @@ impl Strategy {
         }
     }
 
-    // Human-readable label
     #[inline(always)]
     pub const fn label(self) -> &'static str {
         match self {
@@ -160,7 +141,6 @@ impl fmt::Display for Strategy {
     }
 }
 
-// Groups solvers by difficulty
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Difficulty {
@@ -177,23 +157,18 @@ mod tests {
 
     #[test]
     fn test_strategy_difficulty() {
-        // Trivial
         assert_eq!(Strategy::Given.difficulty(), Difficulty::Trivial);
         assert_eq!(Strategy::NakedSingle.difficulty(), Difficulty::Trivial);
 
-        // Basic
         assert_eq!(Strategy::NakedPair.difficulty(), Difficulty::Basic);
         assert_eq!(Strategy::BoxLineReduction.difficulty(), Difficulty::Basic);
 
-        // Tough
         assert_eq!(Strategy::XWing.difficulty(), Difficulty::Tough);
         assert_eq!(Strategy::Bug.difficulty(), Difficulty::Tough);
 
-        // Diabolical
         assert_eq!(Strategy::Jellyfish.difficulty(), Difficulty::Diabolical);
         assert_eq!(Strategy::Skyscraper.difficulty(), Difficulty::Diabolical);
 
-        // Extreme
         assert_eq!(Strategy::BruteForce.difficulty(), Difficulty::Extreme);
     }
 

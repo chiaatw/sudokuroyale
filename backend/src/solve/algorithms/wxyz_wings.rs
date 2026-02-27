@@ -5,21 +5,12 @@ use crate::layout::cells::cell_set::{CellIteratorUnion, CellSetIteratorUnion};
 use crate::layout::values::known_set::KnownSetLike;
 use crate::puzzle::{Action, Board, Cell, CellSet, Effects, Known, KnownSet, Strategy, Verdict};
 
-/// Solver interface implemented by all strategies
 pub trait Solver {
-    /// Returns the strategy identifier
     fn strategy(&self) -> Strategy;
 
-    /// Applies the strategy to the board
-    ///
-    /// If single is true, the solver stops after the first successful action
     fn apply(&self, board: &Board, single: bool) -> Option<Effects>;
 }
 
-/// WXYZ-Wing strategy solver
-///
-/// This solver detects WXYZ-Wing patters consisting of combinations of bi-value, tri-value and quad-value cells
-/// and produces candidate eliminations based on restricted and non-restricted candidates
 pub struct WXYZWingSolver;
 
 impl Solver for WXYZWingSolver {
@@ -34,11 +25,9 @@ impl Solver for WXYZWingSolver {
     }
 }
 
-// Finds all WXYZ-Wing patterns on the board and returns their effects
 pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
     let mut effects = Effects::new();
 
-    // Group cells by exact candidate sets
     let pairs_by_candidates = board.cell_candidates_with_n_candidates(2).fold(
         HashMap::new(),
         |mut map: HashMap<KnownSet, CellSet>, (cell, candidates)| {
@@ -63,7 +52,6 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
         },
     );
 
-    // Quad-based WXYZ-Wing candidate sets
     let quad_sets = quads_by_candidates
         .iter()
         .map(|(candidates, cells)| {
@@ -84,7 +72,6 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
         })
         .collect_vec();
 
-    // Triple based WXYZ-Wing candidate sets with disjoint grouping
     let triple_sets = triples_by_candidates
         .iter()
         .map(|(candidates, cells)| {
@@ -121,7 +108,6 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
         })
         .collect_vec();
 
-    // Tracks bi-value cells that see each other
     let seen_bi_values: HashMap<Cell, CellSet> =
         pairs_by_candidates
             .iter()
@@ -141,19 +127,15 @@ pub fn find_wxyz_wings(board: &Board, single: bool) -> Option<Effects> {
 
     let bi_values = board.cells_with_n_candidates(2);
 
-    // Validates a WXYZ-wIng and applies its action if found
     let mut check_wing = |wing: CellSet| -> bool {
-        // Ignore XY chains
         if (wing & bi_values) == wing {
             return false;
         }
 
-        // Ignore naked quads
         if wing.share_any_house() {
             return false;
         }
 
-        // Ignore naked pairs
         if (wing & bi_values).iter().any(|cell| {
             seen_bi_values
                 .get(&cell)
@@ -313,7 +295,6 @@ mod tests {
 
     #[test]
     fn no_panic_on_empty_board_multiple_mode() {
-        // Einfach ein Stabilitäts-/Smoke-Test: darf nicht crashen.
         let board = Board::new();
         let _ = find_wxyz_wings(&board, false);
     }
