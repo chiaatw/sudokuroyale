@@ -25,6 +25,8 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/sudokuroyale
     user: vscode
+    ports:
+      - "8000:8000"
     command: /bin/sh -c "while sleep 1000; do :; done"
 
 volumes:
