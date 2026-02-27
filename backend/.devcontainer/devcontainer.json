@@ -1,0 +1,13 @@
+{
+    "name": "SudokuRoyale Backend",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/workspace",
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "rust-lang.rust-analyzer"
+        ]
+      }
+    }
+  }
