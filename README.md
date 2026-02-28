@@ -9,19 +9,19 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
 ## Tech Stack
 
 ### Backend
-Rust
-Rocket
-SQLx
-Tokio
-Serde
-PostgreSQL
+- Rust
+- Rocket
+- SQLx
+- Tokio
+- Serde
+- PostgreSQL
 
 ### Frontend
-React
-Vite
+- React
+- Vite
 
 ### Infrastruktur
-Docker 
+- Docker 
 
 ## Setup
 
@@ -29,8 +29,10 @@ Docker
 - Docker
 - Rust
 - Node.js
+- ggf. PostgreSQL wenn Start mit Docker nicht funktioniert
 
 ### Starten des Backends und der Datenbank
+- NUR Backend Folder in einem VSCode Window öffnen
 - Backend Folder in Dev Containers: Reopen in Container öffnen
 - psql "$DATABASE_URL" -f migrations/001_create_users.sql im Terminal für Migration der Datenbank
 
@@ -38,6 +40,7 @@ Docker
 - cargo run
 
 ### Start frontend
+- gesamtes Projekt in weiterem VSCode Window öffnen
 - cd frontend
 - npm install
 - npm run dev
