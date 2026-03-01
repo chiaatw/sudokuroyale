@@ -30,7 +30,7 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
 ### Infrastruktur
 - Docker 
 
-## Setup
+## Setup für Windows Mac möglicherweise andere Commands/Setup
 
 ### Requirements
 - Docker
