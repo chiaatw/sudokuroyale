@@ -51,7 +51,7 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
 ### Start frontend
 - gesamtes Projekt in weiterem VSCode Window öffnen
 - cd frontend
-- npm install
+- npm install (falls Node.js nicht installiert: winget install, OpenJS.NodeJS.LTS)
 - npm run dev
 - ersten Network Link abrufen (wenn beide Spieler auf einem Gerät, muss der Link einmal im Inkognito Fenster abgerufen werden)
 
