@@ -82,14 +82,19 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
 - cd backend
 - Backend mit cargo run starten
 
-## AI Usage
+## extern Tools Usage
 - ChatGPT
   - WS und DTO's größtenteils unter Zuhilfenahme von KI erstellt für Match
   - Unterstützen für Implementierung von Serializing
   - Revision Handling
   - Allgemeine Unterstützung beim Error-Handling
   - Unterstützung bei der Einrichtung von Docker und DevContainer
-  - Unterstützung beim Fehlerkorrigeren während der Umstellung von In-Memory-Logik auf     eine Datenbankanbindung 
+  - Unterstützung beim Fehlerkorrigeren während der Umstellung von In-Memory-Logik auf     eine Datenbankanbindung
+  - Unterstützung beim Debugging einzelner Backend-Routen
+  - Formulierung einzelner API-Wrapper im Frontend
+
+- Figma
+  - UI Design wurde mit Hilfe von Figma erstellt und anschließend entsprechend ergänzt/angepasst
 
 ## Testing
 - Tests zum Überprüfen von Generator, ob Sudokus korrekt generiert werden
