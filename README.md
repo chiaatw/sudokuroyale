@@ -4,7 +4,14 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
 - Sudoku Solver und Puzzle Generator
 - Fehlerlimit
 - Win/Lose Logik
-- Live Gegner Fortschritt Tracking
+- Fehleranzeige
+- Benutzerregistrierung und Login
+- Match Board
+- Resultpages
+- Sitzungsverwaltung (Session-Management)
+- Geschützte Endpunkte für authentifizierte Nutzer
+- Erstellung und Beitritt zu Multiplayer-Matches
+- Persistente Speicherung der Daten mit PostgreSQL
 
 ## Tech Stack
 
@@ -74,3 +81,15 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
 - Migration ausführen mit: $env:DATABASE_URL="postgres://postgres:postgres@localhost:5432/sudokuroyale" in powershell
 - cd backend
 - Backend mit cargo run starten
+
+## AI Usage
+- ChatGPT
+  - WS und DTO's größtenteils unter Zuhilfenahme von KI erstellt für Match
+  - Unterstützen für Implementierung von Serializing
+  - Revision Handling
+
+## Testing
+- Tests zum Überprüfen von Generator, ob Sudokus korrekt generiert werden
+- Tests zum Überprüfen der Solve Algorithmen
+- Tests der Board Repräsentation und Board Erstellung
+
