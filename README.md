@@ -92,6 +92,7 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
   - Unterstützung beim Fehlerkorrigeren während der Umstellung von In-Memory-Logik auf     eine Datenbankanbindung
   - Unterstützung beim Debugging einzelner Backend-Routen
   - Formulierung einzelner API-Wrapper im Frontend
+  - Unterstützung bei der Strukturierung einzelner Servicefunktionen im Game-Match Modul
 
 - Figma
   - UI Design wurde mit Hilfe von Figma erstellt und anschließend entsprechend ergänzt/angepasst
