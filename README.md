@@ -33,8 +33,10 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
 
 ### Starten des Backends und der Datenbank
 - NUR Backend Folder in einem VSCode Window öffnen
-- Backend Folder in Dev Containers: Reopen in Container öffnen
-- psql "$DATABASE_URL" -f migrations/001_create_users.sql im Terminal für Migration der Datenbank
+- Devcontainer Extension von Windows installieren
+- Docker/Docker Desktop installieren und öffnen
+- Backend Folder in Dev Containers: Reopen in Container öffnen in Strg + Shift + P
+- "psql "$DATABASE_URL" -f migrations/001_create_users.sql" im Terminal für Migration der Datenbank eingeben
 
 ### Start backend im DevContainer
 - cargo run
@@ -49,17 +51,13 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
 ## Sudoku Registrierungs Requirements
 - Email: r"^[^@\s]+@[^@\s]+\.[^@\s]+$", zB. Test@sudoku.de
 - Nutzername Requirements:
-  - Zwischen 3 und 20 Zeichen lang sein
-  - Nur Buchstaben, Zahlen und Unterstriche enthalten
+  - Mindestens 1 Zeichen lang sein
 - Passwort Requirements:
-  - Mindestens 8 Zeichen lang sein
-  - Mindestens einen Großbuchstaben enthalten
-  - Mindestens eine Zahl enthalten
-  - Mindestens ein Sonderzeichen enthalten
+  - Mindestens 3 Zeichen lang sein
   z.B. Test1234!
 
 ## How to Play 
-1. Registrierung und Anmeldung mit zwei verschiedenen Usern (normal + inkognito Fenster)
+1. Registrierung und Anmeldung mit zwei verschiedenen Usern (normal + mindestens ein User im inkognito Fenster öffnen)
 2. Match erstellen von einem Client und Match Link kopieren
 3. Match Link bei dem zweiten Client unter Match beitreten einfügen
 4. Match startet automatisch sobald beide Spieler beigetreten sind
@@ -67,8 +65,11 @@ Sudoku Royale ist ein Realtime Multiplayer Sudoku Spiel in dem zwei Spieler gege
 6. Nach Beenden eines Spiels zur Lobby zurückkehren und ein weiteres Spiel starten
 
 ## Alternatives Setup mithilfe PostgreSQL
-- PostgreSQL lokal installieren, Version 17
+- PostgreSQL lokal installieren, Version 17.9
+- alle Components installieren, Port auf Default lassen
+- Stackbuilder: PostgreSQL 17 (x64) on port 5432
 - Datenbank erstellen
+- CREATE DATABASE sudokuroyale
 - DATABASE_URL setzen postgres://username:password@localhost:5432/sudokuroyale
 - Migration ausführen mit: $env:DATABASE_URL="postgres://postgres:postgres@localhost:5432/sudokuroyale" in powershell
 - cd backend
