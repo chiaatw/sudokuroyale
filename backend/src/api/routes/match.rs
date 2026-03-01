@@ -508,7 +508,6 @@ pub fn match_ws_route(
                 }
             } 
 
-            // Cleanup nach Disconnect
             hub.cleanup_room_if_unused(match_id).await;
 
             Ok(())

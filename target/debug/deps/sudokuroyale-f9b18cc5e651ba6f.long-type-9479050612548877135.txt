@@ -1,1 +1,0 @@
-Map<std::slice::Iter<'_, &(layout::cells::cell::Cell, KnownSet)>, {closure@src\solve\algorithms\unique_rectangles.rs:424:70: 424:78}>

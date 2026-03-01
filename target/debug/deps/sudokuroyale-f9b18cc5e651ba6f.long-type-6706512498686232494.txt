@@ -1,1 +1,0 @@
-Filter<std::slice::Iter<'_, (layout::cells::cell::Cell, KnownSet)>, {closure@src\solve\algorithms\unique_rectangles.rs:404:29: 404:42}>

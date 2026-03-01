@@ -1,1 +1,0 @@
-std::iter::Map<Filter<std::iter::Map<shape::HouseIter, {closure@src\solve\algorithms\fish.rs:97:18: 97:25}>, {closure@src\solve\algorithms\fish.rs:99:21: 99:33}>, {closure@src\solve\algorithms\fish.rs:100:18: 100:34}>

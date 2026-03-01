@@ -1,1 +1,0 @@
-std::iter::Map<std::slice::Iter<'_, (House, CellSet, HouseSet)>, {closure@src\solve\algorithms\fish.rs:109:22: 109:39}>
